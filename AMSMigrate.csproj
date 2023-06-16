@@ -1,0 +1,79 @@
+﻿<Project Sdk="Microsoft.NET.Sdk">
+
+  <PropertyGroup>
+    <OutputType>Exe</OutputType>
+    <TargetFramework>net6.0</TargetFramework>
+    <ImplicitUsings>enable</ImplicitUsings>
+    <Nullable>enable</Nullable>
+    <GeneratePackageOnBuild>False</GeneratePackageOnBuild>
+    <Title>Azure Media Services Asset Migration Tool</Title>
+    <Authors>Azure Media Services</Authors>
+	  <DockerDefaultTargetOS>Linux</DockerDefaultTargetOS>
+	  <DockerfileContext>.</DockerfileContext>
+	  <PackageLicenseFile>LICENSE</PackageLicenseFile>
+	  <EnforceCodeStyleInBuild>True</EnforceCodeStyleInBuild>
+	  <Description>A command line tool to migrate your media assets from Azure Media Services.</Description>
+	  <PackageProjectUrl>https://github.com/Azure/azure-media-migration</PackageProjectUrl>
+	  <PackageReadmeFile>README.md</PackageReadmeFile>
+	  <RepositoryUrl>https://github.com/Azure/azure-media-migration</RepositoryUrl>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <PackageReference Include="Azure.Identity" Version="1.9.0" />
+    <PackageReference Include="Azure.Monitor.Query" Version="1.2.0" />
+    <PackageReference Include="Azure.ResourceManager.Media" Version="1.2.0" />
+    <PackageReference Include="Azure.ResourceManager.Storage" Version="1.1.1" />
+    <PackageReference Include="Azure.Security.KeyVault.Secrets" Version="4.5.0" />
+    <PackageReference Include="Azure.Storage.Blobs" Version="12.16.0" />
+    <PackageReference Include="FFMpegCore" Version="5.1.0" />
+    <PackageReference Include="Microsoft.Extensions.Logging" Version="7.0.0" />
+    <PackageReference Include="Microsoft.Extensions.Logging.Console" Version="7.0.0" />
+    <PackageReference Include="Microsoft.Extensions.Logging.TraceSource" Version="7.0.0" />
+    <PackageReference Include="Microsoft.VisualStudio.Azure.Containers.Tools.Targets" Version="1.18.1" />
+    <PackageReference Include="Spectre.Console" Version="0.47.0" />
+    <PackageReference Include="System.CommandLine" Version="2.0.0-beta4.22272.1" />
+    <PackageReference Include="System.Text.RegularExpressions" Version="4.3.1" />
+    <PackageReference Include="System.Threading.Channels" Version="7.0.0" />
+    <PackageReference Include="vertical-spectreconsolelogger" Version="0.10.1-dev.20230510.16" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <None Update="LICENSE">
+      <Pack>True</Pack>
+      <PackagePath>\</PackagePath>
+    </None>
+    <None Update="packager-linux-x64">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+      <PackagePath>tools\$(TargetFramework)\any\%(Filename)%(Extension)</PackagePath>
+	</None>
+    <None Update="packager-osx-x64">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+      <PackagePath>tools\$(TargetFramework)\any\%(Filename)%(Extension)</PackagePath>
+	</None>
+    <None Update="packager-win-x64.exe">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+	  <PackagePath>tools\$(TargetFramework)\any\%(Filename)%(Extension)</PackagePath>
+    </None>
+    <None Update="README.md">
+      <Pack>True</Pack>
+      <PackagePath>\</PackagePath>
+    </None>
+  </ItemGroup>
+  <PropertyGroup>
+    <ShakaWin>https://github.com/shaka-project/shaka-packager/releases/download/v2.6.1/packager-win-x64.exe</ShakaWin>
+    <ShakaLinux>https://github.com/shaka-project/shaka-packager/releases/download/v2.6.1/packager-linux-x64</ShakaLinux>
+    <ShakaOSX>https://github.com/shaka-project/shaka-packager/releases/download/v2.6.1/packager-osx-x64</ShakaOSX>
+    <Company>Microsoft Corporation</Company>
+  </PropertyGroup>
+  <Target Name="DownloadShakaPackager" BeforeTargets="Build">
+	<DownloadFile SourceUrl="$(ShakaWin)" DestinationFolder="$(MSBuildProjectDirectory)">
+      <Output TaskParameter="DownloadedFile" ItemName="Content" />
+    </DownloadFile>
+    <DownloadFile SourceUrl="$(ShakaLinux)" DestinationFolder="$(MSBuildProjectDirectory)">
+      <Output TaskParameter="DownloadedFile" ItemName="Content" />
+    </DownloadFile>
+    <DownloadFile SourceUrl="$(ShakaOSX)" DestinationFolder="$(MSBuildProjectDirectory)">
+	  <Output TaskParameter="DownloadedFile" ItemName="Content" />
+    </DownloadFile>
+  </Target>
+</Project>
