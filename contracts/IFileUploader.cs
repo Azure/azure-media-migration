@@ -3,6 +3,8 @@ namespace AMSMigrate.Contracts
 {
     public interface IFileUploader
     {
+        Uri GetDestinationUri(string container, string fileName);
+
         Task UploadAsync(
             string container,
             string fileName,

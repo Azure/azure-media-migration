@@ -1,73 +1,97 @@
 ﻿using AMSMigrate.Ams;
+using AMSMigrate.Azure;
 using AMSMigrate.Contracts;
 using Azure.Storage.Blobs;
+using Azure.Storage.Blobs.Specialized;
 using Microsoft.Extensions.Logging;
 
 namespace AMSMigrate.Transform
 {
     public record AssetDetails(string AssetName, BlobContainerClient Container, Manifest? Manifest, ClientManifest? ClientManifest);
 
-    internal abstract class StorageTransform : ITransform<AssetDetails>
+    internal abstract class StorageTransform : ITransform<AssetDetails, AssetMigrationResult>
     {
         protected readonly AssetOptions _options;
         private readonly TemplateMapper _templateMapper;
         protected readonly ILogger _logger;
+        protected readonly IFileUploader _fileUploader;     
 
         public StorageTransform(
             AssetOptions options,
             TemplateMapper templateMapper,
+            IFileUploader fileUploader,
             ILogger logger)
         {
-            _logger = logger;
             _options = options;
             _templateMapper = templateMapper;
+            _fileUploader = fileUploader;
+            _logger = logger;
         }
 
-        public Task<MigrationResult> RunAsync(AssetDetails details, CancellationToken cancellationToken)
+        public Task<AssetMigrationResult> RunAsync(AssetDetails details, CancellationToken cancellationToken)
         {
             var outputPath = _templateMapper.ExpandPathTemplate(details.Container, _options.PathTemplate);
-            return RunAsync(details, outputPath, cancellationToken); ;
+            return RunAsync(details, outputPath, cancellationToken);
         }
 
-        public async Task<MigrationResult> RunAsync(
+        public async Task<AssetMigrationResult> RunAsync(
             AssetDetails details,
             (string Container, string Path) outputPath,
             CancellationToken cancellationToken)
         {
+            var result = new AssetMigrationResult();
             _logger.LogTrace("Asset {asset} is in format: {format}.", details.AssetName, details.Manifest?.Format);
             if (details.Manifest != null && details.Manifest.IsLive)
             {
                 _logger.LogWarning("Skipping asset {asset} which is from a running live event. Rerun the migration after the live event is stopped.", details.AssetName);
-                return MigrationStatus.Skipped;
+                result.Status = MigrationStatus.Skipped;
+                return result;
             }
 
             if (IsSupported(details))
             {
-                var result = await TransformAsync(details, outputPath, cancellationToken);
-
-                if (result)
+                try
                 {
-                    //upload a dummy blob to mark migration done.
-                    if (_options.MarkCompleted)
-                    {
-                        await details.Container.MarkCompletedAsync(cancellationToken);
-                    }
-                    return MigrationStatus.Success;
+                    var path = await TransformAsync(details, outputPath, cancellationToken);
+                    result.Status = MigrationStatus.Success;
+                    result.Uri = _fileUploader.GetDestinationUri(outputPath.Container, path);
                 }
-                else
+                catch (Exception)
                 {
-                    return MigrationStatus.Failure;
+                    result.Status = MigrationStatus.Failure;
                 }
             }
 
-            return MigrationStatus.Skipped;
+            return result;
         }
 
-        public abstract bool IsSupported(AssetDetails details);
+        protected abstract bool IsSupported(AssetDetails details);
 
-        public abstract Task<bool> TransformAsync(
+        protected abstract Task<string> TransformAsync(
             AssetDetails details,
             (string Container, string Prefix) outputPath,
             CancellationToken cancellationToken = default);
+
+        protected async Task UploadBlobAsync(
+            BlockBlobClient blob,
+            (string Container, string Prefix) outputPath,
+            CancellationToken cancellationToken)
+        {
+            var (container, prefix) = outputPath;
+            var blobName = prefix == null ? blob.Name : $"{prefix}{blob.Name}";
+            // hack optimization for direct blob copy.
+            if (_fileUploader is AzureStorageUploader uploader)
+            {
+                await uploader.UploadBlobAsync(container, blobName, blob, cancellationToken);
+            }
+            else
+            {
+                var progress = new Progress<long>(progress =>
+                 _logger.LogTrace("Upload progress for {name}: {progress}", blobName, progress));
+
+                var result = await blob.DownloadStreamingAsync(cancellationToken: cancellationToken);
+                await _fileUploader.UploadAsync(container, blobName, result.Value.Content, progress, cancellationToken);
+            }
+        }
     }
 }

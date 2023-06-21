@@ -1,6 +1,7 @@
 ﻿using AMSMigrate.Contracts;
 using Azure.Core;
 using Microsoft.Extensions.Logging;
+using Spectre.Console;
 
 namespace AMSMigrate.Ams
 {
@@ -13,9 +14,10 @@ namespace AMSMigrate.Ams
 
         public AccountMigrator(
             GlobalOptions options,
+            IAnsiConsole console,
             ILogger<AccountMigrator> logger,
             TokenCredential credential) : 
-            base(options, credential)
+            base(options, console, credential)
         {
             _logger = logger;
         }

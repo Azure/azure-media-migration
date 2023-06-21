@@ -16,12 +16,15 @@ namespace AMSMigrate.Ams
         protected readonly AzureResourceProvider _resourceProvider;
         protected readonly GlobalOptions _globalOptions;
         protected readonly MetricsQueryClient _metricsQueryClient;
+        protected readonly IAnsiConsole _console;
 
         public BaseMigrator(
             GlobalOptions options,
+            IAnsiConsole console,
             TokenCredential credential)
         {
             _globalOptions = options;
+            _console = console;
             _resourceProvider = new AzureResourceProvider(credential, options);
             _metricsQueryClient = new MetricsQueryClient(credential);
         }
@@ -77,14 +80,14 @@ namespace AMSMigrate.Ams
             return totalAssets;
         }
 
-        protected static async Task ShowProgressAsync(
+        protected async Task ShowProgressAsync(
             string description,
             string unit,
             double totalValue,
             ChannelReader<double> reader,
             CancellationToken cancellationToken)
         {
-            await AnsiConsole
+            await _console
             .Progress()
             .AutoRefresh(true)
             .AutoClear(true)

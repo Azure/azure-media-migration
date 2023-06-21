@@ -9,17 +9,18 @@ namespace AMSMigrate.Transform
     internal class TransformFactory
     {
         private readonly IList<StorageTransform> _storageTransforms;
-        private readonly List<ITransform<AssetRecord>> _assetTransforms = new List<ITransform<AssetRecord>>();
+        private readonly List<AssetTransform> _assetTransforms 
+            = new List<AssetTransform>();
 
         public TransformFactory(
             ILoggerFactory loggerFactory,
             AssetOptions options,
             TemplateMapper templateMapper,
             PackagerFactory packagerFactory,
-            IFileUploader uploader)
+            ICloudProvider cloudProvider)
         {
             _storageTransforms = new List<StorageTransform>();
-
+            var uploader = cloudProvider.GetStorageProvider(options);
             if (options.Packager != Packager.None)
             {
                 _storageTransforms.Add(
@@ -41,12 +42,12 @@ namespace AMSMigrate.Transform
             Debug.Assert(_storageTransforms.Count > 0, "No transform selected based on the options provided");
             _assetTransforms.AddRange(_storageTransforms.Select(
                 t => new AssetTransform(options, templateMapper, t, loggerFactory.CreateLogger<AssetTransform>()))
-                .Cast<ITransform<AssetRecord>>());
+                );
         }
 
-        public IEnumerable<ITransform<AssetDetails>> StorageTransforms => _storageTransforms;
+        public IEnumerable<StorageTransform> StorageTransforms => _storageTransforms;
 
-        public IEnumerable<ITransform<AssetRecord>> AssetTransforms => _assetTransforms;
+        public IEnumerable<AssetTransform> AssetTransforms => _assetTransforms;
 
         public ITransform<MediaTransformResource> TransformTransform => throw new NotImplementedException();
     }

@@ -1,4 +1,6 @@
 ﻿using Microsoft.Extensions.Logging;
+using System.IO;
+using System.Text;
 using System.Xml.Serialization;
 
 namespace AMSMigrate.Contracts
@@ -242,7 +244,7 @@ namespace AMSMigrate.Contracts
             {
                 logger.LogWarning("Unknown attribute when parsing client manifest {attr}", args.Attr);
             };
-            var manifest = serializer.Deserialize(content) as ClientManifest;
+            var manifest = serializer.Deserialize(new StreamReader(content, Encoding.UTF8)) as ClientManifest;
             if (manifest == null) throw new ArgumentException("Invalid data", nameof(content));
             manifest.FileName = filename;
             return manifest;

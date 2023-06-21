@@ -33,12 +33,26 @@ namespace AMSMigrate.Ams
                 _globalOptions.AccountName, cancellationToken);
         }
 
+        public async Task<BlobServiceClient> GetStorageAccountAsync(
+            MediaServicesAccountResource account,
+            CancellationToken cancellationToken)
+        {
+            var storage = account.Data.StorageAccounts[0];
+            var resource = await _resourceGroup.GetStorageAccountAsync(storage.Id.Name, cancellationToken: cancellationToken);
+            return GetStorageAccount(resource);
+        }
+
         public async Task<(BlobServiceClient, ResourceIdentifier)> GetStorageAccount(CancellationToken cancellationToken)
         {
             StorageAccountResource storage = 
                 await _resourceGroup.GetStorageAccountAsync(_globalOptions.AccountName, cancellationToken: cancellationToken);
+            return (GetStorageAccount(storage), storage.Id);
+        }
+
+        private BlobServiceClient GetStorageAccount(StorageAccountResource storage)
+        {
             var uri = storage.Data.PrimaryEndpoints.BlobUri!;
-            return (new BlobServiceClient(uri, _credentials), storage.Id);
+            return new BlobServiceClient(uri, _credentials);
         }
     }
 }

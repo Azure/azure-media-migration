@@ -16,14 +16,14 @@ namespace AMSMigrate.Pipes
 
         public MultiFileStream(
             BlobContainerClient container,
-            MediaStream track,
-            string trackPrefix,
+            Track track,
+            ClientManifest manifest,
             ILogger logger)
         {
             _container = container;
             _logger = logger;
-            _track = track;
-            _trackPrefix = trackPrefix;
+            (_track, _) = manifest.GetStream(track);
+            _trackPrefix = track.Source;
         }
 
         public async Task DownloadAsync(Stream stream, CancellationToken cancellationToken)
@@ -92,7 +92,7 @@ namespace AMSMigrate.Pipes
 
         public override string GetStreamArguments()
         {
-            return "-f mp4 -seekable 0";
+            return "-f mp4";
         }
 
         public override async Task WriteAsync(Stream stream, CancellationToken cancellationToken)

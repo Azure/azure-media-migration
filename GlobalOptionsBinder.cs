@@ -63,15 +63,14 @@ Visit https://learn.microsoft.com/en-us/azure/media-services/latest/filter-order
 
         protected override GlobalOptions GetBoundValue(BindingContext bindingContext)
         {
-            var logFile = $"MigrationLog_{DateTime.Now:HH_mm_ss}.txt";
-
             return new GlobalOptions(
                 bindingContext.ParseResult.GetValueForOption(_subscription)!,
                 bindingContext.ParseResult.GetValueForOption(_resourceGroup)!,
                 bindingContext.ParseResult.GetValueForOption(_mediaAccount)!,
+                CloudType.Azure, //TODO: add an option.
                 bindingContext.ParseResult.GetValueForOption(_filter),
                 bindingContext.ParseResult.GetValueForOption(_logLevel),
-                logFile
+                bindingContext.ParseResult.GetValueForOption(_logDirectory)!
             );
         }
 
@@ -79,6 +78,7 @@ Visit https://learn.microsoft.com/en-us/azure/media-services/latest/filter-order
         {
             var command = new RootCommand("Azure Media Services migration tool");
             command.AddGlobalOption(_logLevel);
+            command.AddGlobalOption(_logDirectory);
             command.AddGlobalOption(_subscription);
             command.AddGlobalOption(_resourceGroup);
             command.AddGlobalOption(_mediaAccount);

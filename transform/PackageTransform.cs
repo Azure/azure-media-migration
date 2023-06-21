@@ -7,7 +7,6 @@ namespace AMSMigrate.Transform
 {
     internal class PackageTransform : StorageTransform
     {
-        private readonly IFileUploader _fileUploader;
         private readonly PackagerFactory _packagerFactory;
 
         public PackageTransform(
@@ -16,41 +15,22 @@ namespace AMSMigrate.Transform
             TemplateMapper templateMapper,
             IFileUploader uploader,
             PackagerFactory factory)
-            : base(options, templateMapper, logger)
+            : base(options, templateMapper, uploader, logger)
         {
-            _fileUploader = uploader;
             _packagerFactory = factory;
         }
 
         // If manifest is present then we can package it.
-        public override bool IsSupported(AssetDetails details)
+        protected override bool IsSupported(AssetDetails details)
         {
             if (details.Manifest == null)
             {
                 return false;
             }
-            if (details.ClientManifest != null && details.ClientManifest.HasDiscontinuities())
-            {
-                if (details is AssetRecord)
-                {
-                    return true;
-                }
-                else
-                {
-                    _logger.LogWarning("Asset {asset} which is a live archive has discontinuities cannot be converted!", details.AssetName);
-                    return false;
-                }
-            }
-            if (!details.Manifest.Tracks.All(t => t is TextTrack && 
-                (t.IsMultiFile || !t.Source.EndsWith(".vtt") || t.Parameters.Any(p => p.Name == BasePackager.TRANSCRIPT_SOURCE))))
-            {
-                _logger.LogWarning("Asset {asset} has No VTT text track present. Captions wont be converted.", details.AssetName);
-            }
-
-            return true;
+            return details.Manifest.Format.StartsWith("mp4");
         }
 
-        public override async Task<bool> TransformAsync(
+        protected override async Task<string> TransformAsync(
             AssetDetails details,
             (string Container, string Prefix) outputPath,
             CancellationToken cancellationToken = default)
@@ -72,6 +52,13 @@ namespace AMSMigrate.Transform
                 var inputFiles = packager.Inputs;
                 var inputPaths = inputFiles.Select(f => Path.Combine(workingDirectory, f))
                     .ToArray();
+
+                // Anything not package and can be uploaded is uploaded directly.
+                var blobs = await container.GetListOfBlobsRemainingAsync(manifest, cancellationToken);
+                allTasks.Add(Task.WhenAll(blobs.Select(async blob =>
+                {
+                    await UploadBlobAsync(blob, outputPath, cancellationToken);
+                })));
 
                 if (packager.UsePipeForInput)
                 {
@@ -147,15 +134,15 @@ namespace AMSMigrate.Transform
             }
             catch (Exception ex)
             {
-                _logger.LogError("Failed to migrate asset {name} Error:{ex}", container.Name, ex);
-                return false;
+                _logger.LogError("Failed to migrate asset {name} Error:{ex}", assetName, ex);
+                throw;
             }
             finally
             {
                 Directory.Delete(workingDirectory, true);
             }
 
-            return true;
+            return $"{outputPath.Prefix}{Path.GetFileNameWithoutExtension(manifest.FileName)}";
         }
 
         private UploadPipe CreateUpload(string filePath, UploadHelper helper)

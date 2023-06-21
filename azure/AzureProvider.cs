@@ -1,9 +1,8 @@
-﻿using AMSMigrate.Azure;
-using AMSMigrate.Contracts;
+﻿using AMSMigrate.Contracts;
 using Azure.Core;
 using Microsoft.Extensions.Logging;
 
-namespace AMSMigrate.azure
+namespace AMSMigrate.Azure
 {
     internal class AzureProvider : ICloudProvider
     {
@@ -12,8 +11,7 @@ namespace AMSMigrate.azure
 
         public AzureProvider(
             ILoggerFactory loggerFactory,
-            TokenCredential credentials,
-            KeyOptions keyOptions) 
+            TokenCredential credentials) 
         {
             _credentials = credentials;
             _loggerFactory = loggerFactory;

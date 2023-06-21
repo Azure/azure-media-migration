@@ -21,11 +21,16 @@ namespace AMSMigrate.Azure
         {
             _options = options;
             _logger = logger;
-            if (!Uri.TryCreate(options.StorageAccount, UriKind.Absolute, out var storageUri))
+            if (!Uri.TryCreate(options.StoragePath, UriKind.Absolute, out var storageUri))
             {
-                storageUri = new Uri($"https://{options.StorageAccount}.blob.core.windows.net");
+                storageUri = new Uri($"https://{options.StoragePath}.blob.core.windows.net");
             }
             _blobServiceClient = new BlobServiceClient(storageUri, credential);
+        }
+
+        public Uri GetDestinationUri(string container, string fileName)
+        {
+            return new Uri(_blobServiceClient.Uri, $"/{container}/{fileName}");
         }
 
         public async Task UploadAsync(
@@ -59,7 +64,8 @@ namespace AMSMigrate.Azure
         {
             var container = _blobServiceClient.GetBlobContainerClient(containerName);
             var outputBlob = container.GetBlockBlobClient(fileName);
-            await outputBlob.StartCopyFromUriAsync(blob.Uri, cancellationToken: cancellationToken);
+            var operation = await outputBlob.StartCopyFromUriAsync(blob.Uri, cancellationToken: cancellationToken);
+            await operation.WaitForCompletionAsync(cancellationToken);
         }
     }
 }

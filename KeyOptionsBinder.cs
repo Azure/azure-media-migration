@@ -62,7 +62,7 @@ Can use ${KeyId} ${KeyName} in the template.")
                 bindingContext.ParseResult.GetValueForOption(_batchSize)
             );
         }
+
+        public KeyOptions GetValue(BindingContext bindingContext) => GetBoundValue(bindingContext);
     }
-
-
 }

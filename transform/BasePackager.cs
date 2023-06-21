@@ -150,8 +150,7 @@ namespace AMSMigrate.Transform
                 if (tracks.Count == 1 && tracks[0].IsMultiFile)
                 {
                     var track = tracks[0];
-                    var (stream, index) = _assetDetails.ClientManifest!.GetStream(track);
-                    var multiFileStream = new MultiFileStream(_assetDetails.Container, stream, track.Source, _logger);
+                    var multiFileStream = new MultiFileStream(_assetDetails.Container, track, _assetDetails.ClientManifest!, _logger);
                     return new MultiFilePipe(file, multiFileStream);
                 }
                 else
@@ -200,8 +199,7 @@ namespace AMSMigrate.Transform
             if (tracks.Count == 1 && tracks[0].IsMultiFile)
             {
                 var track = tracks[0];
-                var (stream, index) = _assetDetails.ClientManifest!.GetStream(track);
-                var multiFileStream = new MultiFileStream(_assetDetails.Container, stream, track.Source, _logger);
+                var multiFileStream = new MultiFileStream(_assetDetails.Container, track, _assetDetails.ClientManifest!, _logger);
                 source = new MultiFilePipe(filePath, multiFileStream);
             }
             else

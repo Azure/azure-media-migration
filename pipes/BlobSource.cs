@@ -29,7 +29,7 @@ namespace AMSMigrate.Pipes
             {
                 format = "mp4"; // fallback to mp4.
             }
-            return $"-f {format} -seekable 0";
+            return $"-f {format}";
         }
 
         public async Task WriteAsync(Stream outputStream, CancellationToken cancellationToken)

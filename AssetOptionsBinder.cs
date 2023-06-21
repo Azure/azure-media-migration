@@ -8,8 +8,8 @@ namespace AMSMigrate
     internal class AssetOptionsBinder : BinderBase<AssetOptions>
     {
         private readonly Option<string> _storageAccount = new(
-            aliases: new[] { "--storage-account", "-a" },
-            description: @"The storage account name to upload the migrated assets.
+            aliases: new[] { "--storage-account", "-o" },
+            description: @"The storage account to upload the migrated assets.
 This is specific to the cloud you are migrating to.
 For Azure specify the storage account name or the URL <https://accountname.blob.core.windows.net>")
         {
@@ -46,7 +46,7 @@ e.g., videos/${AssetName} will upload to a container named 'videos' with path be
         private readonly Option<bool> _markComplete = new(
             aliases: new[] { "-m", "--mark-complete" },
             () => true,
-            description: @"Mark completed assets. (Creates a empty blob to mark)");
+            description: @"Mark completed assets by writing metadata on the container");
 
         private readonly Option<bool> _skipMigrated = new(
             aliases: new[] { "--skip-migrated" },
@@ -134,5 +134,7 @@ e.g., videos/${AssetName} will upload to a container named 'videos' with path be
                 bindingContext.ParseResult.GetValueForOption(_batchSize)
             );
         }
+
+        public AssetOptions GetValue(BindingContext bindingContext) => GetBoundValue(bindingContext);
     }
 }
