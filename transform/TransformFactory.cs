@@ -38,7 +38,7 @@ namespace AMSMigrate.Transform
             }
 
 
-            // There should be atleast one transform.
+            // There should be at least one transform.
             Debug.Assert(_storageTransforms.Count > 0, "No transform selected based on the options provided");
             _assetTransforms.AddRange(_storageTransforms.Select(
                 t => new AssetTransform(options, templateMapper, t, loggerFactory.CreateLogger<AssetTransform>()))

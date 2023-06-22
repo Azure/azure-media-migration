@@ -48,7 +48,7 @@ namespace AMSMigrate.Contracts
 
         public StreamType Type { get; }
 
-        // Check if the track is storead as one file per fragment.
+        // Check if the track is stored as one file per fragment.
         public bool IsMultiFile => string.IsNullOrEmpty(Path.GetExtension(Source));
     }
 

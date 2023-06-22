@@ -51,7 +51,7 @@ namespace AMSMigrate.Transform
                 if (manifests.Length > 1)
                 {
                     logger.LogWarning(
-                    "Multiple manifsets (.ism) present in container {name}. Only processing the first one {manifest}",
+                    "Multiple manifests (.ism) present in container {name}. Only processing the first one {manifest}",
                     container.Name,
                     manifests[0].Name);
                 }

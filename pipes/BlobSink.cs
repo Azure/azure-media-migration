@@ -30,10 +30,10 @@ namespace AMSMigrate.Pipes
         private readonly string _filename;
         private readonly ILogger _logger;
 
-        public UploadSink(IFileUploader uploader, string contianer, string filename, ILogger logger)
+        public UploadSink(IFileUploader uploader, string container, string filename, ILogger logger)
         {
             _uploader = uploader;
-            _container = contianer;
+            _container = container;
             _filename = filename;
             _logger = logger;
         }

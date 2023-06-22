@@ -85,7 +85,7 @@ namespace AMSMigrate.Ams
                     expandedValue = expandedValue.Replace(match.Value, value);
                 }
             }
-            _logger.LogTrace("Template {template} expaned to {value}", template, expandedValue);
+            _logger.LogTrace("Template {template} expanded to {value}", template, expandedValue);
             return expandedValue;
         }
 
