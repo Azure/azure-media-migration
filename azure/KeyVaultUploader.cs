@@ -23,7 +23,7 @@ namespace AMSMigrate.Azure
 
         public async Task UploadAsync(string secretName, string secretValue, CancellationToken cancellationToken)
         {
-            _logger.LogInformation("Saving secret {name} to key valut {vault}", secretName, _keyOptions.KeyVaultUri);
+            _logger.LogInformation("Saving secret {name} to key vault {vault}", secretName, _keyOptions.KeyVaultUri);
             await _secretClient.SetSecretAsync(secretName, secretValue, cancellationToken);
         }
     }

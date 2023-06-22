@@ -104,7 +104,7 @@ namespace AMSMigrate.Ams
                 .AddColumn("Count")
                 .AddRow("Total", $"{stats.Total}")
                 .AddRow("[green]Already Migrated[/]", $"[green]{stats.Migrated}[/]")
-                .AddRow("[gray]Skiped[/]", $"[gray]{stats.Skipped}[/]")
+                .AddRow("[gray]Skipped[/]", $"[gray]{stats.Skipped}[/]")
                 .AddRow("[green]Successful[/]", $"[green]{stats.Successful}[/]")
                 .AddRow("[red]Failed[/]", $"[red]{stats.Failed}[/]")
                 .AddRow("[orange3]Deleted[/]", $"[orange3]{stats.Deleted}[/]");

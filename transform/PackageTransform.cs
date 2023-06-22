@@ -44,7 +44,7 @@ namespace AMSMigrate.Transform
             var outputDirectory = Path.Combine(workingDirectory, "output");
             Directory.CreateDirectory(outputDirectory);
 
-            // TODO: Dont assume implementation.
+            // TODO: Don't assume implementation.
             var packager = _packagerFactory.GetPackager(details, cancellationToken);
             try
             {

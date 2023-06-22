@@ -11,7 +11,7 @@ namespace AMSMigrate.Ams
     {
         private readonly ILogger _logger;
         private readonly KeyOptions _keyOptions;
-        private readonly ISecretUploader _secretUplaoder;
+        private readonly ISecretUploader _secretUploader;
         private readonly TemplateMapper _templateMapper;
 
         public KeysMigrator(
@@ -27,7 +27,7 @@ namespace AMSMigrate.Ams
             _logger = logger;
             _keyOptions = keyOptions;
             _templateMapper = templateMapper;
-            _secretUplaoder = cloudProvider.GetSecretProvider(keyOptions);
+            _secretUploader = cloudProvider.GetSecretProvider(keyOptions);
         }
 
         public override async Task MigrateAsync(CancellationToken cancellationToken)
@@ -64,7 +64,7 @@ namespace AMSMigrate.Ams
                 {
                     _logger.LogInformation("Migrating content key {id}", key.Id);
                     var secretName = _templateMapper.ExpandKeyTemplate(key, _keyOptions.KeyTemplate);
-                    await _secretUplaoder.UploadAsync(secretName, key.Value, cancellationToken);
+                    await _secretUploader.UploadAsync(secretName, key.Value, cancellationToken);
                 }
             }
             catch (Exception ex)

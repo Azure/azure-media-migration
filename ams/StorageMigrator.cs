@@ -85,7 +85,7 @@ namespace AMSMigrate.Ams
             {
                 new BarChartItem("Assets", value.Total),
                 new BarChartItem("AlreadyMigrated", value.Migrated, Color.Green),
-                new BarChartItem("Skiped", value.Skipped, Color.Grey),
+                new BarChartItem("Skipped", value.Skipped, Color.Grey),
                 new BarChartItem("Successful", value.Successful, Color.Green),
                 new BarChartItem("Failed", value.Failed, Color.Red),
                 new BarChartItem("Deleted", value.Deleted, Color.Orange3)
@@ -186,7 +186,7 @@ namespace AMSMigrate.Ams
                 .AddRow("Total", $"{total}")
                 .AddRow("Assets", $"{stats.Total}")
                 .AddRow("[green]Already Migrated[/]", $"[green]{stats.Migrated}[/]")
-                .AddRow("[gray]Skiped[/]", $"[gray]{stats.Skipped}[/]")
+                .AddRow("[gray]Skipped[/]", $"[gray]{stats.Skipped}[/]")
                 .AddRow("[green]Successful[/]", $"[green]{stats.Successful}[/]")
                 .AddRow("[red]Failed[/]", $"[red]{stats.Failed}[/]")
                 .AddRow("[orange3]Deleted[/]", $"[orange3]{stats.Deleted}[/]");

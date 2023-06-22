@@ -27,7 +27,7 @@ A command line tool to migrate your data from Azure Media Services.
 This tool helps you to migrate your media data from Azure Media Services (AMS). 
 It can be packaged to be streamed directly from Azure storage without any service.
 
-The tool supports both [ffmpeg](https://ffmpeg.org/) and [shaka-packager](https://github.com/shaka-project/shaka-packager) to conver the videos to directly streamable format.
+The tool supports both [ffmpeg](https://ffmpeg.org/) and [shaka-packager](https://github.com/shaka-project/shaka-packager) to convert the videos to directly streamable format.
 The content is converted to CMAF format with both a DASH and HLS manifest to support a wide range of devices.
 The default is shaka packager because it can use pipes to reduce the temporary storage required but can changed via the command line.
 
@@ -38,7 +38,7 @@ The default is shaka packager because it can use pipes to reduce the temporary s
 * Marks migrated assets and provides summary.
 
 ## Open Issues
-* Live assets with discontinuiities are not supported.
+* Live assets with discontinuities are not supported.
 * Captions in TTML are not migrated.
 * Direct migration from an Azure Storage account without using the AMS API.
 
@@ -51,11 +51,11 @@ The identity used to migrate must have 'Contributor' role on the Azure Media Ser
 The tool supports various types of migration depending on the asset format and the command line options.
 * It can simply upload the files to the new storage account.
 * For assets created by live events, it can convert to MP4 files and then upload.
-* For direct streaming, it can convers the assets to CMAF files with a DASH and HLS manifest.
+* For direct streaming, it can convert the assets to CMAF files with a DASH and HLS manifest.
 
 # Temporary storage needed.
 The tool uses temporary storage space for format conversion and uses pipes where possible to minimize storage usage.
-Smooth Streaming assets or assets from live events dont need to be downloaded locally.
+Smooth Streaming assets or assets from live events don't need to be downloaded locally.
 
 ## Linux
 * The only storage needed is for manifests when using shaka packager.
@@ -63,8 +63,8 @@ Smooth Streaming assets or assets from live events dont need to be downloaded lo
 
 ## Windows
 * Shaka packager writes the packaged files to local disk first before uploading due to a windows specific bug.
-* Using ffmpeg needs doulbe the local disk space when packaging MP4 files.
-* Smooth Streaming assets or assets from live events dont need to be downloaded locally.
+* Using ffmpeg needs double the local disk space when packaging MP4 files.
+* Smooth Streaming assets or assets from live events don't need to be downloaded locally.
 
 ## Migrate to an Azure Storage Account.
 

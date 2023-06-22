@@ -22,7 +22,7 @@ For Azure specify the storage account name or the URL <https://accountname.blob.
             () => "${AssetId}/",
             description: @"Path template to determine the final path in the storage where files are uploaded.
 Can use ${AssetName} ${AssetId} ${ContainerName} or ${LocatorId}.
-e.g., videos/${AssetName} will upload to a container named 'videos' with path begining with the asset name.")
+e.g., videos/${AssetName} will upload to a container named 'videos' with path beginning with the asset name.")
         {
             Arity = ArgumentArity.ZeroOrOne
         };
@@ -54,9 +54,9 @@ e.g., videos/${AssetName} will upload to a container named 'videos' with path be
             description: @"Skip assets that have been migrated already.");
 
         private readonly Option<bool> _copyNonStreamable = new(
-            aliases: new[] { "--copy-nonstremable" },
+            aliases: new[] { "--copy-nonstreamable" },
             () => true,
-            description: @"Copy non-stremable assets (Assets without .ism file) as is.");
+            description: @"Copy non-streamable assets (Assets without .ism file) as is.");
 
         private readonly Option<bool> _overwrite = new(
             aliases: new[] { "-y", "--overwrite" },

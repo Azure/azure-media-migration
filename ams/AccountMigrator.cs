@@ -26,8 +26,8 @@ namespace AMSMigrate.Ams
         {
             _logger.LogInformation("Begin migration for media account: {name}", _globalOptions.AccountName);
             var account = await _resourceProvider.GetMediaAccountAsync(cancellationToken);
-            //TODO: Migrate everyting like assets, keys, transforms etc.
-            _logger.LogInformation("Finshed migration for account {name}", _globalOptions.AccountName);
+            //TODO: Migrate everything like assets, keys, transforms etc.
+            _logger.LogInformation("Finished migration for account {name}", _globalOptions.AccountName);
         }
     }
 }
