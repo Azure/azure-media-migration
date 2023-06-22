@@ -1,10 +1,11 @@
 ﻿using AMSMigrate.Ams;
-using AMSMigrate.azure;
 using AMSMigrate.Azure;
 using AMSMigrate.Contracts;
+using AMSMigrate.Local;
 using AMSMigrate.Transform;
 using Azure.Core;
 using Azure.Identity;
+using Azure.Storage.Blobs;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Logging;
 using Spectre.Console;
@@ -27,14 +28,16 @@ namespace AMSMigrate
             var globalOptionsBinder = new GlobalOptionsBinder();
             var rootCommand = globalOptionsBinder.GetCommand();
 
-            var analyzeCommand = new Command("analyze", @"Analyze assets for migration and generate report.
+            var analysisOptionsBinder = new AnalysisOptionsBinder();
+            var analyzeCommand = analysisOptionsBinder.GetCommand("analyze", @"Analyze assets for migration and generate report.
 Example(s):
 amsmigrate analyze -s <subscriptionid> -g <resourcegroup> -n <account>
 This will analyze the given media account and produce a summary report.");
             rootCommand.Add(analyzeCommand);
             analyzeCommand.SetHandler(async context => {
-                var options = globalOptionsBinder.GetValue(context.BindingContext);
-                await AnalyzeAssetsAsync(options, context.GetCancellationToken());
+                var globalOptions = globalOptionsBinder.GetValue(context.BindingContext);
+                var analysisOptions = analysisOptionsBinder.GetValue(context.BindingContext);
+                await AnalyzeAssetsAsync(globalOptions, analysisOptions, context.GetCancellationToken());
             });
 
             var description = @"Migrate Assets
@@ -45,43 +48,33 @@ This migrates the assets to a different storage account in your subscription.";
             var assetsCommand = assetOptionsBinder.GetCommand("assets", description);
             rootCommand.Add(assetsCommand);
             assetsCommand.SetHandler(
-                async (globalOptions, assetOptions) => await MigrateAssetsAsync(globalOptions, assetOptions),
-                globalOptionsBinder,
-                assetOptionsBinder
-                );
+                async context =>
+                {
+                    var globalOptions = globalOptionsBinder.GetValue(context.BindingContext);
+                    var assetOptions = assetOptionsBinder.GetValue(context.BindingContext);
+                    await MigrateAssetsAsync(globalOptions, assetOptions, context.GetCancellationToken());
+                });
 
             var storageCommand = assetOptionsBinder.GetCommand("storage", @"Directly migrate the assets from the storage account.
 Doesn't require the Azure media services to be running.");
             rootCommand.Add(storageCommand);
-            storageCommand.SetHandler(async (globalOptions, assetOptions) =>
-                await MigrateAssetsFromStorageAsync(globalOptions, assetOptions),
-                globalOptionsBinder,
-                assetOptionsBinder);
+            storageCommand.SetHandler(async context =>
+            {
+                var globalOptions = globalOptionsBinder.GetValue(context.BindingContext);
+                var assetOptions = assetOptionsBinder.GetValue(context.BindingContext);
+                await MigrateAssetsFromStorageAsync(globalOptions, assetOptions, context.GetCancellationToken());
+            });
 
             var keyOptionsBinder = new KeyOptionsBinder();
             var keysCommand = keyOptionsBinder.GetCommand();
             rootCommand.Add(keysCommand);
             keysCommand.SetHandler(
-                async (globalOptions, keyOptions) => await MigrateKeysAsync(globalOptions, keyOptions),
-                globalOptionsBinder,
-                keyOptionsBinder);
-
-            var transformsCommand = new Command("transforms", "Migrate Transforms");
-            rootCommand.Add(transformsCommand);
-            transformsCommand.SetHandler(context =>
-            {
-                Console.Error.WriteLine("Transform migration not implemented yet!!");
-                context.ExitCode = -1;
-            });
-
-
-            var eventsCommand = new Command("live", "Migrate Live Events");
-            rootCommand.Add(eventsCommand);
-            eventsCommand.SetHandler(context =>
-            {
-                Console.Error.WriteLine("Live Event migration not implemented yet!!");
-                context.ExitCode = -1;
-            });
+                async context =>
+                {
+                    var globalOptions = globalOptionsBinder.GetValue(context.BindingContext);
+                    var keyOptions = keyOptionsBinder.GetValue(context.BindingContext);
+                    await MigrateKeysAsync(globalOptions, keyOptions, context.GetCancellationToken());
+                });
 
             var parser = new CommandLineBuilder(rootCommand)
                 .UseDefaults()
@@ -106,6 +99,8 @@ Doesn't require the Azure media services to be running.");
 
         static IServiceCollection SetupServices(GlobalOptions options, TraceListener? listener = null)
         {
+            var console = AnsiConsole.Console;
+
             var collection = new ServiceCollection()
                 .AddSingleton<TokenCredential>(
                     new DefaultAzureCredential(new DefaultAzureCredentialOptions
@@ -114,18 +109,17 @@ Doesn't require the Azure media services to be running.");
                         ExcludeInteractiveBrowserCredential = true
                     }))
                 .AddSingleton(options)
+                .AddSingleton(console)
+                .AddSingleton<IMigrationTracker<BlobContainerClient, AssetMigrationResult>, AssetMigrationTracker>()
                 .AddSingleton<TemplateMapper>()
                 .AddSingleton<TransMuxer>()
                 .AddSingleton<TransformFactory>()
                 .AddSingleton<AzureResourceProvider>()
-                .AddSingleton<ICloudProvider, AzureProvider>()
-                .AddSingleton<IFileUploader, AzureStorageUploader>()
-                .AddSingleton<ISecretUploader, KeyVaultUploader>()
                 .AddLogging(builder =>
                 {
                     builder
-                        .SetMinimumLevel(options.LogLevel)
-                        .AddSpectreConsole(builder => builder.SetMinimumLevel(options.LogLevel));
+                        .SetMinimumLevel(LogLevel.Trace)
+                        .AddSpectreConsole(builder => builder.SetMinimumLevel(LogLevel.Information).UseConsole(console));
                         //.AddSimpleConsole(options => { options.SingleLine = true; })
                         if (listener != null)
                         {
@@ -134,13 +128,27 @@ Doesn't require the Azure media services to be running.");
                             builder.AddTraceSource(logSwitch, listener);
                         }
                 });
+            if (options.CloudType == CloudType.Local)
+            {
+                collection.AddSingleton<ICloudProvider, LocalFileProvider>();
+            }
+            else
+            {
+                collection
+                    .AddSingleton<ICloudProvider, AzureProvider>();
+            }
+
             return collection;
         }
 
-        static async Task AnalyzeAssetsAsync(GlobalOptions globalOptions, CancellationToken cancellationToken)
+        static async Task AnalyzeAssetsAsync(
+            GlobalOptions globalOptions,
+            AnalysisOptions analysisOptions,
+            CancellationToken cancellationToken)
         {
             using var listener = new TextWriterTraceListener(globalOptions.LogFile);
             var collection = SetupServices(globalOptions, listener)
+                .AddSingleton(analysisOptions)
                 .AddSingleton<AssetAnalyzer>();
             var provider = collection.BuildServiceProvider();
             var logger = provider.GetRequiredService<ILogger<Program>>();
@@ -149,7 +157,10 @@ Doesn't require the Azure media services to be running.");
             logger.LogInformation("See file {file} for detailed logs.", globalOptions.LogFile);
         }
 
-        static async Task MigrateAssetsAsync(GlobalOptions globalOptions, AssetOptions assetOptions)
+        static async Task MigrateAssetsAsync(
+            GlobalOptions globalOptions,
+            AssetOptions assetOptions,
+            CancellationToken cancellationToken)
         {
             using var listener = new TextWriterTraceListener(globalOptions.LogFile);
             var collection = SetupServices(globalOptions, listener)
@@ -159,11 +170,14 @@ Doesn't require the Azure media services to be running.");
             var provider = collection.BuildServiceProvider();
             var logger = provider.GetRequiredService<ILogger<Program>>();
             logger.LogDebug("Writing logs to {file}", globalOptions.LogFile);
-            await provider.GetRequiredService<AssetMigrator>().MigrateAsync(default);
+            await provider.GetRequiredService<AssetMigrator>().MigrateAsync(cancellationToken);
             logger.LogInformation("See file {file} for detailed logs.", globalOptions.LogFile);
         }
 
-        static async Task MigrateAssetsFromStorageAsync(GlobalOptions globalOptions, AssetOptions assetOptions)
+        static async Task MigrateAssetsFromStorageAsync(
+            GlobalOptions globalOptions,
+            AssetOptions assetOptions,
+            CancellationToken cancellationToken)
         {
             using var listener = new TextWriterTraceListener(globalOptions.LogFile);
             var collection = SetupServices(globalOptions, listener)
@@ -173,11 +187,14 @@ Doesn't require the Azure media services to be running.");
             var provider = collection.BuildServiceProvider();
             var logger = provider.GetRequiredService<ILogger<Program>>();
             logger.LogDebug("Writing logs to {file}", globalOptions.LogFile);
-            await provider.GetRequiredService<StorageMigrator>().MigrateAsync(default);
+            await provider.GetRequiredService<StorageMigrator>().MigrateAsync(cancellationToken);
             logger.LogInformation("See file {file} for detailed logs.", globalOptions.LogFile);
         }
 
-        static async Task MigrateKeysAsync(GlobalOptions globalOptions, KeyOptions keyOptions)
+        static async Task MigrateKeysAsync(
+            GlobalOptions globalOptions,
+            KeyOptions keyOptions,
+            CancellationToken cancellationToken)
         {
             using var listener = new TextWriterTraceListener(globalOptions.LogFile);
             var collection = SetupServices(globalOptions, listener)
@@ -185,7 +202,7 @@ Doesn't require the Azure media services to be running.");
                 .AddSingleton(keyOptions);
             var provider = collection.BuildServiceProvider();
             var migrator = provider.GetRequiredService<KeysMigrator>();
-            await migrator.MigrateAsync(default);
+            await migrator.MigrateAsync(cancellationToken);
         }
     }
 }

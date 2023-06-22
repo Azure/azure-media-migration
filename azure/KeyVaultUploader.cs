@@ -3,7 +3,7 @@ using Azure.Core;
 using Azure.Security.KeyVault.Secrets;
 using Microsoft.Extensions.Logging;
 
-namespace AMSMigrate.azure
+namespace AMSMigrate.Azure
 {
     internal class KeyVaultUploader : ISecretUploader
     {

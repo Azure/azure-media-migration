@@ -7,7 +7,7 @@ namespace AMSMigrate.Ams
 {
     static class AmsExtensions
     {
-        public static async Task<BlobContainerClient> GetContainer(this MediaAssetResource asset, CancellationToken cancellationToken)
+        public static async Task<BlobContainerClient> GetContainerAsync(this MediaAssetResource asset, CancellationToken cancellationToken)
         {
             var content = new MediaAssetStorageContainerSasContent
             {
@@ -24,6 +24,11 @@ namespace AMSMigrate.Ams
             }
 
             return new BlobContainerClient(urls[0]);
+        }
+
+        public static BlobContainerClient GetContainer(this BlobServiceClient storage, MediaAssetResource asset)
+        {
+            return storage.GetBlobContainerClient(asset.Data.Container);
         }
 
         public static async Task<StreamingLocatorResource?> GetStreamingLocatorAsync(

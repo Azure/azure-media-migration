@@ -3,6 +3,8 @@ using AMSMigrate.Transform;
 using Azure;
 using Azure.Core;
 using Azure.ResourceManager.Media;
+using Azure.ResourceManager.Media.Models;
+using Azure.Storage.Blobs;
 using Microsoft.Extensions.Logging;
 using Spectre.Console;
 using System.Diagnostics;
@@ -17,18 +19,22 @@ namespace AMSMigrate.Ams
         private readonly ILogger _logger;
         private readonly TransformFactory _transformFactory;
         private readonly AssetOptions _options;
+        private readonly IMigrationTracker<BlobContainerClient, AssetMigrationResult> _tracker;
 
         public AssetMigrator(
-            ILogger<AssetMigrator> logger,
             GlobalOptions globalOptions,
             AssetOptions assetOptions,
+            IAnsiConsole console,
             TokenCredential credential,
+            IMigrationTracker<BlobContainerClient, AssetMigrationResult> tracker,
+            ILogger<AssetMigrator> logger,
             TransformFactory transformFactory):
-            base(globalOptions, credential)
+            base(globalOptions, console, credential)
         {
+            _options = assetOptions;
+            _tracker = tracker;
             _logger = logger;
             _transformFactory = transformFactory;
-            _options = assetOptions;
         }
 
         public override async Task MigrateAsync(CancellationToken cancellationToken)
@@ -52,13 +58,14 @@ namespace AMSMigrate.Ams
 
         private async Task<AssetStats> MigrateAsync(MediaServicesAccountResource account, ChannelWriter<double> writer, CancellationToken cancellationToken)
         {
+            var storage = await _resourceProvider.GetStorageAccountAsync(account, cancellationToken);
             var stats = new AssetStats();
             var orderBy = "properties/created";
             var assets = account.GetMediaAssets()
                 .GetAllAsync(_globalOptions.ResourceFilter, orderby: orderBy, cancellationToken: cancellationToken);
             await MigrateInBatches(assets, async assets =>
             {
-                var results = await Task.WhenAll(assets.Select(async asset => await MigrateAsync(account, asset, cancellationToken)));
+                var results = await Task.WhenAll(assets.Select(async asset => await MigrateAsync(account, storage, asset, cancellationToken)));
                 stats.Total += results.Length;
                 foreach (var result in results)
                 {
@@ -101,36 +108,61 @@ namespace AMSMigrate.Ams
                 .AddRow("[green]Successful[/]", $"[green]{stats.Successful}[/]")
                 .AddRow("[red]Failed[/]", $"[red]{stats.Failed}[/]")
                 .AddRow("[orange3]Deleted[/]", $"[orange3]{stats.Deleted}[/]");
-            AnsiConsole.Write(table);
+            _console.Write(table);
         }
 
-        public async Task<MigrationResult> MigrateAsync(MediaServicesAccountResource account, MediaAssetResource asset, CancellationToken cancellationToken)
+        public async Task<MigrationResult> MigrateAsync(
+            MediaServicesAccountResource account,
+            BlobServiceClient storage,
+            MediaAssetResource asset,
+            CancellationToken cancellationToken)
         {
             _logger.LogInformation("Migrating asset: {name} ...", asset.Data.Name);
-            var container = await asset.GetContainer(cancellationToken);
-            if (await container.IsMigrated(cancellationToken))
-                return MigrationStatus.AlreadyMigrated;
+            var container = storage.GetContainer(asset);
+            if (_options.SkipMigrated)
+            {
+                var status = await _tracker.GetMigrationStatusAsync(container, cancellationToken);
+                if (status.Status == MigrationStatus.Success)
+                {
+                    _logger.LogDebug("Asset: {name} has already been migrated.", asset.Data.Name);
+                    return MigrationStatus.AlreadyMigrated;
+                }
+            }
 
             try
             {
+                var result = new AssetMigrationResult();
+                if (asset.Data.StorageEncryptionFormat != MediaAssetStorageEncryptionFormat.None)
+                {
+                    _logger.LogWarning("Skipping asset {name} as it is encrypted  using {format}", asset.Data.Name, asset.Data.StorageEncryptionFormat);
+                    return result;
+                }
                 var details = await asset.GetDetailsAsync(_logger, cancellationToken);
                 var record = new AssetRecord(account, asset, details);
                 foreach (var transform in _transformFactory.AssetTransforms)
                 {
-                    var result = await transform.RunAsync(record, cancellationToken);
+                    result = (AssetMigrationResult) await transform.RunAsync(record, cancellationToken);
                     if (result.Status != MigrationStatus.Skipped)
                     {
-                        if (_options.DeleteMigrated && result.Status == MigrationStatus.Success)
-                        {
-                            _logger.LogWarning("Deleting asset {name} after migration", asset.Data.Name);
-                            await asset.DeleteAsync(WaitUntil.Completed, cancellationToken);
-                        }
-                        return result;
+                        break;
                     }
                 }
 
-                _logger.LogWarning("Skipping asset {name} because it is not in a supported format!!!", asset.Data.Name);
-                return MigrationStatus.Skipped;
+                if (result.Status == MigrationStatus.Skipped)
+                {
+                    _logger.LogWarning("Skipping asset {name} because it is not in a supported format!!!", asset.Data.Name);
+                }
+
+                if (_options.MarkCompleted) 
+                {
+                    await _tracker.UpdateMigrationStatus(container, result, cancellationToken);
+                }
+                if (_options.DeleteMigrated && result.Status == MigrationStatus.Success)
+                {
+                    _logger.LogWarning("Deleting asset {name} after migration", asset.Data.Name);
+                    await asset.DeleteAsync(WaitUntil.Completed, cancellationToken);
+                }
+                return result;
             }
             catch (Exception ex)
             {

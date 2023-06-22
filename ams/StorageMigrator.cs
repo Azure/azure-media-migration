@@ -15,17 +15,21 @@ namespace AMSMigrate.Ams
         private readonly ILogger _logger;
         private readonly TransformFactory _transformFactory;
         private readonly AssetOptions _assetOptions;
+        private readonly IMigrationTracker<BlobContainerClient, AssetMigrationResult> _tracker;
 
         public StorageMigrator(
             GlobalOptions options,
             AssetOptions assetOptions,
+            IAnsiConsole console,
+            IMigrationTracker<BlobContainerClient, AssetMigrationResult> tracker,
             TokenCredential credentials,
             TransformFactory transformFactory,
             ILogger<StorageMigrator> logger) :
-            base(options, credentials)
+            base(options, console, credentials)
         {
-            _transformFactory = transformFactory;
             _assetOptions = assetOptions;
+            _tracker = tracker;
+            _transformFactory = transformFactory;
             _logger = logger;
         }
 
@@ -51,7 +55,7 @@ namespace AMSMigrate.Ams
             //WriteSummary(totalContainers, stats);
         }
 
-        public static async Task DisplayChartAsync(
+        public async Task DisplayChartAsync(
             string description,
             double maxValue,
             ChannelReader<AssetStats> stats)
@@ -60,7 +64,7 @@ namespace AMSMigrate.Ams
                 .Width(60)
                 .WithMaxValue(maxValue)
                 .Label($"{description} ({maxValue})");
-            await AnsiConsole.Live(chart)
+            await _console.Live(chart)
                 .AutoClear(false)
                 .StartAsync(async context =>
                 {
@@ -93,30 +97,41 @@ namespace AMSMigrate.Ams
             BlobContainerItem container,
             CancellationToken cancellationToken)
         {
+            var result = new AssetMigrationResult();
             var containerClient = storageClient.GetBlobContainerClient(container.Name);
             // Check if already migrated.
-            if (_assetOptions.SkipMigrated && await containerClient.IsMigrated(cancellationToken))
+            if (_assetOptions.SkipMigrated)
             {
-                _logger.LogInformation("Asset: {name} has already been migrated.", container.Name);
-                return MigrationStatus.AlreadyMigrated;
+                result = await _tracker.GetMigrationStatusAsync(containerClient, cancellationToken);
+                if (result.Status == MigrationStatus.Success)
+                {
+                    _logger.LogDebug("Asset: {name} has already been migrated.", container.Name);
+                    result.Status = MigrationStatus.AlreadyMigrated;
+                    return result;
+                }
             }
 
             var assetDetails = await containerClient.GetDetailsAsync(_logger, cancellationToken);
             var transforms = _transformFactory.StorageTransforms;
+            var status = MigrationStatus.Skipped;
             foreach (var transform in transforms)
             {
-                var result = await transform.RunAsync(assetDetails, cancellationToken);
-
-                if (result.Status == MigrationStatus.Success && _assetOptions.DeleteMigrated)
-                {
-                    _logger.LogWarning("Deleting container {name} after migration", container.Name);
-                    await storageClient.DeleteBlobContainerAsync(container.Name, cancellationToken: cancellationToken);
-                }
+                result = await transform.RunAsync(assetDetails, cancellationToken);
 
                 if (result.Status != MigrationStatus.Skipped)
-                    return result;
+                    break;
             }
-            return MigrationStatus.Skipped;
+            
+            if (_assetOptions.MarkCompleted)
+            {
+                await _tracker.UpdateMigrationStatus(containerClient, result, cancellationToken);
+            }
+            if (status == MigrationStatus.Success && _assetOptions.DeleteMigrated)
+            {
+                _logger.LogWarning("Deleting container {name} after migration", container.Name);
+                await storageClient.DeleteBlobContainerAsync(container.Name, cancellationToken: cancellationToken);
+            }
+            return result;
         }
         
         private async Task<AssetStats> MigrateAsync(
@@ -163,7 +178,7 @@ namespace AMSMigrate.Ams
             return stats;
         }
 
-        private static void WriteSummary(double total, AssetStats stats)
+        private void WriteSummary(double total, AssetStats stats)
         {
             var table = new Table()
                 .AddColumn("Container Type")
@@ -175,7 +190,7 @@ namespace AMSMigrate.Ams
                 .AddRow("[green]Successful[/]", $"[green]{stats.Successful}[/]")
                 .AddRow("[red]Failed[/]", $"[red]{stats.Failed}[/]")
                 .AddRow("[orange3]Deleted[/]", $"[orange3]{stats.Deleted}[/]");
-            AnsiConsole.Write(table);
+            _console.Write(table);
         }
     }
 }

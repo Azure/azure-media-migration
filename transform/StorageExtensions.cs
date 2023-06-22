@@ -5,7 +5,6 @@ using Azure.Storage.Blobs;
 using Azure.Storage.Blobs.Models;
 using Azure.Storage.Blobs.Specialized;
 using Microsoft.Extensions.Logging;
-using System.Text;
 
 namespace AMSMigrate.Transform
 {
@@ -22,19 +21,6 @@ namespace AMSMigrate.Transform
             ".ismx",
             ".mpi"
         };
-
-        public static async Task<bool> IsMigrated(this BlobContainerClient container, CancellationToken cancellationToken)
-        {
-            var blobClient = container.GetBlockBlobClient(MigratedBlobName);
-            return await blobClient.ExistsAsync(cancellationToken);
-        }
-
-        public static async Task MarkCompletedAsync(this BlobContainerClient container, CancellationToken cancellationToken)
-        {
-            var done = container.GetBlockBlobClient("__migrated");
-            var data = Encoding.UTF8.GetBytes("Done");
-            await done.UploadAsync(new MemoryStream(data), cancellationToken: cancellationToken);
-        }
 
         public static async Task<Manifest?> LookupManifestAsync(
             this BlobContainerClient container,
@@ -102,7 +88,7 @@ namespace AMSMigrate.Transform
             return manifest;
         }
 
-        public static async Task<IList<BlockBlobClient>> GetListOfBlobsAsync(
+        public static async Task<IEnumerable<BlockBlobClient>> GetListOfBlobsAsync(
             this BlobContainerClient container,
             CancellationToken cancellationToken,
             Manifest? manifest = null)
@@ -113,36 +99,62 @@ namespace AMSMigrate.Transform
                 return manifest.Body.Tracks
                     .Select(track => track.Source)
                     .Distinct() // select distinct names since single file can have multiple tracks and hence repeated in .ism
-                    .Select(track => container.GetBlockBlobClient(track))
-                    .ToList();
+                    .Select(track => container.GetBlockBlobClient(track));
             }
 
-            // else list the blobs from the storage.
+            return await GetListOfBlobsAsync(container, cancellationToken);
+        }
+
+        public static async Task<IEnumerable<BlockBlobClient>> GetListOfBlobsAsync(
+            this BlobContainerClient container,
+            CancellationToken cancellationToken)
+        {
+            // list the blobs from the storage.
             var pages = container.GetBlobsByHierarchyAsync(delimiter: "/", cancellationToken: cancellationToken).AsPages();
             await foreach (var page in pages)
             {
                 return page.Values
                     .Where(b => b.IsBlob && !ExcludedFiles.Contains(Path.GetExtension(b.Blob.Name)))
                     .Where(b => b.Blob.Name != MigratedBlobName)
-                    .Select(b => container.GetBlockBlobClient(b.Blob.Name))
-                    .ToList();
+                    .Select(b => container.GetBlockBlobClient(b.Blob.Name));
             }
 
             return Array.Empty<BlockBlobClient>();
         }
 
-        public static async Task<AssetDetails> GetDetailsAsync(this MediaAssetResource asset, ILogger logger, CancellationToken cancellationToken)
+        /// <summary>
+        /// List of remaining blobs not specified in the manifest.
+        /// </summary>
+        public static async Task<IEnumerable<BlockBlobClient>> GetListOfBlobsRemainingAsync(
+            this BlobContainerClient container,
+            Manifest manifest,
+            CancellationToken cancellationToken)
         {
-            var container = await asset.GetContainer(cancellationToken);
-            return await container.GetDetailsAsync(logger, cancellationToken, asset.Data.Name);
+            var blobs = await GetListOfBlobsAsync(container, cancellationToken);
+            return blobs.Where(blob => !manifest.Tracks.Any(t => t.Source == blob.Name));
         }
 
-        public static async Task<AssetDetails> GetDetailsAsync(this BlobContainerClient container, ILogger logger, CancellationToken cancellationToken, string? name = null)
+        public static async Task<AssetDetails> GetDetailsAsync(
+            this MediaAssetResource asset,
+            ILogger logger,
+            CancellationToken cancellationToken,
+            bool includeClientManifest = true)
+        {
+            var container = await asset.GetContainerAsync(cancellationToken);
+            return await container.GetDetailsAsync(logger, cancellationToken, asset.Data.Name, includeClientManifest);
+        }
+
+        public static async Task<AssetDetails> GetDetailsAsync(
+            this BlobContainerClient container,
+            ILogger logger,
+            CancellationToken cancellationToken,
+            string? name = null,
+            bool includeClientManifest = true)
         {
             name = name ?? container.Name;
             var manifest = await container.LookupManifestAsync(name, logger, cancellationToken);
             ClientManifest? clientManifest = null;
-            if (manifest != null && manifest.IsLiveArchive)
+            if (manifest != null && includeClientManifest && manifest.IsLiveArchive)
             {
                 clientManifest = await container.GetClientManifestAsync(manifest, logger, cancellationToken);
             }

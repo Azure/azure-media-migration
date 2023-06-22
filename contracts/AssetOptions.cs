@@ -1,7 +1,7 @@
 ﻿namespace AMSMigrate.Contracts
 {
     public record AssetOptions(
-        string StorageAccount,
+        string StoragePath,
         Packager Packager,
         string PathTemplate,
         string WorkingDirectory,

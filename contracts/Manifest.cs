@@ -1,4 +1,5 @@
 ﻿using Microsoft.Extensions.Logging;
+using System.Text;
 using System.Xml.Serialization;
 
 namespace AMSMigrate.Contracts
@@ -113,7 +114,7 @@ namespace AMSMigrate.Contracts
             {
                 logger.LogTrace("Unknown attribute in manifest {args}", args.Attr);
             };
-            var manifest = serializer.Deserialize(stream) as Manifest;
+            var manifest = serializer.Deserialize(new StreamReader(stream, Encoding.UTF8)) as Manifest;
             if (manifest == null) throw new ArgumentException("Invalid data", nameof(stream));
             manifest.FileName = filename;
             return manifest;

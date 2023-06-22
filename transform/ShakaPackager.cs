@@ -1,5 +1,4 @@
-﻿using AMSMigrate.Contracts;
-using Microsoft.Extensions.Logging;
+﻿using Microsoft.Extensions.Logging;
 using System.ComponentModel;
 using System.Reflection;
 using System.Runtime.InteropServices;
@@ -39,7 +38,6 @@ namespace AMSMigrate.Transform
             {
                 _logger.LogDebug("Transmuxing FMP4 asset with multiple tracks in a single file into regular MP4 file.");
                 TransmuxedDownload = true;
-                UsePipeForInput = false;
             }
             else if (assetDetails.ClientManifest != null && assetDetails.ClientManifest.HasDiscontinuities())
             {

@@ -2,6 +2,7 @@
 using Azure.Core;
 using Azure.ResourceManager.Media;
 using Microsoft.Extensions.Logging;
+using Spectre.Console;
 using System.Threading.Channels;
 
 namespace AMSMigrate.Ams
@@ -16,16 +17,17 @@ namespace AMSMigrate.Ams
         public KeysMigrator(
             GlobalOptions globalOptions,
             KeyOptions keyOptions,
+            IAnsiConsole console,
             ILogger<AccountMigrator> logger,
             TemplateMapper templateMapper,
-            ISecretUploader secretUploader,
+            ICloudProvider cloudProvider,
             TokenCredential credential) : 
-            base(globalOptions, credential)
+            base(globalOptions, console, credential)
         {
             _logger = logger;
             _keyOptions = keyOptions;
             _templateMapper = templateMapper;
-            _secretUplaoder = secretUploader;
+            _secretUplaoder = cloudProvider.GetSecretProvider(keyOptions);
         }
 
         public override async Task MigrateAsync(CancellationToken cancellationToken)

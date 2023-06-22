@@ -15,7 +15,7 @@ namespace AMSMigrate.Transform
         }
     }
 
-    class AssetTransform : ITransform<AssetRecord>
+    class AssetTransform : ITransform<AssetRecord, AssetMigrationResult>
     {
         private readonly StorageTransform _transform;
         private readonly TemplateMapper _templateMapper;
@@ -34,7 +34,7 @@ namespace AMSMigrate.Transform
             _transform = transform;
         }
 
-        public async Task<MigrationResult> RunAsync(AssetRecord record, CancellationToken cancellationToken)
+        public async Task<AssetMigrationResult> RunAsync(AssetRecord record, CancellationToken cancellationToken)
         {
             var output = _templateMapper.ExpandAssetTemplate(record.Asset, _options.PathTemplate);
             return await _transform.RunAsync(record, output, cancellationToken);
