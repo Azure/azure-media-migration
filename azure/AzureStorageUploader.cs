@@ -44,6 +44,7 @@ namespace AMSMigrate.Azure
                 "Uploading to {fileName} in container {container} of account: {account}...",
                 fileName, containerName, _blobServiceClient.AccountName);
             var container = _blobServiceClient.GetBlobContainerClient(containerName);
+            await container.CreateIfNotExistsAsync(cancellationToken: cancellationToken);
             var outputBlob = container.GetBlockBlobClient(fileName);
             var options = new BlobUploadOptions
             {
@@ -63,6 +64,7 @@ namespace AMSMigrate.Azure
             CancellationToken cancellationToken)
         {
             var container = _blobServiceClient.GetBlobContainerClient(containerName);
+            await container.CreateIfNotExistsAsync(cancellationToken: cancellationToken);
             var outputBlob = container.GetBlockBlobClient(fileName);
             var operation = await outputBlob.StartCopyFromUriAsync(blob.Uri, cancellationToken: cancellationToken);
             await operation.WaitForCompletionAsync(cancellationToken);
