@@ -69,7 +69,7 @@ Smooth Streaming assets or assets from live events don't need to be downloaded l
 ## Migrate to an Azure Storage Account.
 
 Ensure that the Identity you are using to migrate has the following permissions
-* 'Storage Blob Delegator' role on the storage account to which you are migrating.
+* 'Storage Blob Data Contributor' role on the storage account to which you are migrating.
 
 
 # Optional FFmpeg dependency
