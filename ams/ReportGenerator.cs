@@ -68,8 +68,8 @@ namespace AMSMigrate.Ams
             foreach (var result in results)
             {
                 _writer.Write($"<tr><td>{result.AssetName}</td><td>{result.Status}</td><td>");
-                if (result.Uri != null)
-                    _writer.Write($"<a href=\"{result.Uri}\">{result.Uri}</a>");
+                if (result.OutputPath != null)
+                    _writer.Write($"<a href=\"{result.OutputPath}\">{result.OutputPath}</a>");
                 _writer.WriteLine($"</td></tr>");
             }
         }

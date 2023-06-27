@@ -11,5 +11,9 @@ namespace AMSMigrate.Contracts
             Stream content,
             IProgress<long> progress,
             CancellationToken cancellationToken);
+
+        Task UpdateOutputStatus(
+            string containerName,
+            CancellationToken cancellationToken);
     }
 }

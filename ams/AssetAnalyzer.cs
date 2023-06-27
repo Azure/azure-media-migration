@@ -1,4 +1,5 @@
-﻿using AMSMigrate.Contracts;
+﻿using AMSMigrate.Azure;
+using AMSMigrate.Contracts;
 using AMSMigrate.Transform;
 using Azure.Core;
 using Azure.ResourceManager.Media;
@@ -22,7 +23,6 @@ namespace AMSMigrate.Ams
     internal class AssetAnalyzer : BaseMigrator
     {
         private readonly ILogger _logger;
-        private readonly AnalyzeTransform _analyzer;
         private readonly AnalysisOptions _analysisOptions;
         private readonly IMigrationTracker<BlobContainerClient, AssetMigrationResult> _tracker;
 
@@ -38,12 +38,11 @@ namespace AMSMigrate.Ams
             _analysisOptions = analysisOptions;
             _tracker = tracker;
             _logger = logger;
-            _analyzer = new AnalyzeTransform(tracker, logger);
         }
 
         private async Task<AnalysisResult> AnalyzeAsync(MediaAssetResource asset, BlobServiceClient storage, CancellationToken cancellationToken)
         {
-            var result = new AnalysisResult(asset.Data.Name, null, 0, MigrationStatus.Skipped);
+            var result = new AnalysisResult(asset.Data.Name, MigrationStatus.NotMigrated, 0);
             _logger.LogDebug("Analyzing asset: {asset}", asset.Data.Name);
             try
             {
@@ -51,35 +50,53 @@ namespace AMSMigrate.Ams
                 if (!await container.ExistsAsync(cancellationToken))
                 {
                     _logger.LogWarning("Container {name} missing for asset {asset}", container.Name, asset.Data.Name);
-                    result.Status = MigrationStatus.Failure;
+                    result.Status = MigrationStatus.Failed;
                     return result;
                 }
 
-                if (_analysisOptions.AnalysisType == AnalysisType.Detailed)
+                // The asset container exists, try to check the metadata list first.
+                var migrateResult = await _tracker.GetMigrationStatusAsync(container, cancellationToken);
+
+                if (migrateResult.Status != MigrationStatus.Completed && migrateResult.Status != MigrationStatus.Failed)
                 {
+                    // Do further check only when the Status in Metadata is not Completed nor Failed.
+
                     if (asset.Data.StorageEncryptionFormat != MediaAssetStorageEncryptionFormat.None)
                     {
-                        _logger.LogWarning("Skipping asset {name} as it is encrypted", asset.Data.Name);
-                        return result;
-                    }
-                    var assetDetails = await container.GetDetailsAsync(_logger, cancellationToken, asset.Data.Name, false);
-                    return await _analyzer.RunAsync(assetDetails, cancellationToken);
-                }
-                else
-                {
-                    if (await container.ExistsAsync(cancellationToken))
-                    {
+                        _logger.LogWarning("Asset {name} is encrypted", asset.Data.Name);
 
+                        migrateResult.AssetType = AssetMigrationResult.AssetType_Encrypted;
                     }
-                    var status = await _tracker.GetMigrationStatusAsync(container, cancellationToken);
-                    result.Status = status.Status;
-                    result.Uri = status.Uri;
+                    else
+                    {
+                        var assetDetails = await container.GetDetailsAsync(_logger, cancellationToken, asset.Data.Name, false);
+
+                        if (assetDetails.Manifest == null)
+                        {
+                            migrateResult.AssetType = AssetMigrationResult.AssetType_NonIsm;
+                        }
+                        else
+                        {
+                            migrateResult.AssetType = assetDetails.Manifest.Format;
+                            migrateResult.ManifestName = assetDetails.Manifest.FileName?.Replace(".ism", "");
+                        }                        
+                    }
+
+                    if (!migrateResult.IsSupportedAsset)
+                    {
+                        migrateResult.Status = MigrationStatus.Skipped;
+                    }
                 }
+
+                result.Status = migrateResult.Status;
+                result.OutputPath = migrateResult.OutputPath;
+                result.AssetType = migrateResult.AssetType;
+                result.ManifestName = migrateResult.ManifestName;
             }
             catch (Exception ex)
             {
                 _logger.LogError(ex, "Failed to analyze asset {name}", asset.Data.Name);
-                result.Status = MigrationStatus.Failure;
+                result.Status = MigrationStatus.Failed;
             }
             return result;
         }
@@ -116,26 +133,26 @@ namespace AMSMigrate.Ams
                 var results = await Task.WhenAll(tasks);
                 reportGenerator?.WriteRows(results);
                 statistics.TotalAssets += assets.Length;
-                statistics.Migrated += results.Count(r => r.Status == MigrationStatus.Success);
-                statistics.Failed += results.Count(r => r.Status == MigrationStatus.Failure);
+                statistics.Migrated += results.Count(r => r.Status == MigrationStatus.Completed);
+                statistics.Failed += results.Count(r => r.Status == MigrationStatus.Failed);
                 statistics.Skipped += results.Count(r => r.Status == MigrationStatus.Skipped);
                 await writer.WriteAsync(statistics.TotalAssets, cancellationToken);
                 foreach (var result in results)
                 {
                     if (result == null) continue;
-                    if (result.Format != null)
+                    if (result.IsStreamable)
                     {
                         statistics.StreamableAssets++;
                     }
 
-                    var format = result.Format ?? "unknown";
-                    if (assetTypes.ContainsKey(format))
+                    var assetType = result.AssetType ?? "unknown";
+                    if (assetTypes.ContainsKey(assetType))
                     {
-                        assetTypes[format] += 1;
+                        assetTypes[assetType] += 1;
                     }
                     else
                     {
-                        assetTypes.Add(format, 1);
+                        assetTypes.Add(assetType, 1);
                     }
                     if (result.Locators == 0)
                     {

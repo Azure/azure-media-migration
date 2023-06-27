@@ -97,13 +97,15 @@ namespace AMSMigrate.Ams
             BlobContainerItem container,
             CancellationToken cancellationToken)
         {
-            var result = new AssetMigrationResult();
             var containerClient = storageClient.GetBlobContainerClient(container.Name);
+
+            // Get the inital migration status from the container level's metadata list.
+            var result = await _tracker.GetMigrationStatusAsync(containerClient, cancellationToken);
+
             // Check if already migrated.
             if (_assetOptions.SkipMigrated)
             {
-                result = await _tracker.GetMigrationStatusAsync(containerClient, cancellationToken);
-                if (result.Status == MigrationStatus.Success)
+                if (result.Status == MigrationStatus.Completed)
                 {
                     _logger.LogDebug("Asset: {name} has already been migrated.", container.Name);
                     result.Status = MigrationStatus.AlreadyMigrated;
@@ -111,22 +113,49 @@ namespace AMSMigrate.Ams
                 }
             }
 
-            var assetDetails = await containerClient.GetDetailsAsync(_logger, cancellationToken);
-            var transforms = _transformFactory.StorageTransforms;
-            var status = MigrationStatus.Skipped;
-            foreach (var transform in transforms)
-            {
-                result = await transform.RunAsync(assetDetails, cancellationToken);
+            var assetDetails = await containerClient.GetDetailsAsync(_logger, cancellationToken);            
 
-                if (result.Status != MigrationStatus.Skipped)
-                    break;
+            // AssetType and ManifestName are not supposed to change for a specific input asset,
+            // Set AssetType and manifest from the input container before doing the actual transforming.
+            if (assetDetails.Manifest != null)
+            {
+                result.AssetType = assetDetails.Manifest.Format;
+                result.ManifestName = assetDetails.Manifest.FileName?.Replace(".ism", "");
+            }
+            else
+            {
+                result.AssetType = AssetMigrationResult.AssetType_NonIsm;
+            }
+
+            if (result.IsSupportedAsset)
+            {
+                var transforms = _transformFactory.StorageTransforms;
+
+                foreach (var transform in transforms)
+                {
+                    var transformResult = await transform.RunAsync(assetDetails, cancellationToken);
+
+                    result.Status = transformResult.Status;
+                    result.OutputPath = transformResult.OutputPath;
+
+                    if (result.Status == MigrationStatus.Failed)
+                    {
+                        break;
+                    }
+                }
+            }
+            else
+            {
+                // The asset type is not supported in this milestone,
+                // Mark the status as Skipped for caller to do the statistics.
+                result.Status = MigrationStatus.Skipped;
             }
             
             if (_assetOptions.MarkCompleted)
             {
                 await _tracker.UpdateMigrationStatus(containerClient, result, cancellationToken);
             }
-            if (status == MigrationStatus.Success && _assetOptions.DeleteMigrated)
+            if (result.Status == MigrationStatus.Completed && _assetOptions.DeleteMigrated)
             {
                 _logger.LogWarning("Deleting container {name} after migration", container.Name);
                 await storageClient.DeleteBlobContainerAsync(container.Name, cancellationToken: cancellationToken);
@@ -151,7 +180,7 @@ namespace AMSMigrate.Ams
                 {
                     switch (result.Status)
                     {
-                        case MigrationStatus.Success:
+                        case MigrationStatus.Completed:
                             ++stats.Successful;
                             if (_assetOptions.DeleteMigrated)
                             {
