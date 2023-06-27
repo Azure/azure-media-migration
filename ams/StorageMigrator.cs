@@ -1,5 +1,6 @@
 ﻿using AMSMigrate.Contracts;
 using AMSMigrate.Transform;
+using Azure;
 using Azure.Core;
 using Azure.Storage.Blobs;
 using Azure.Storage.Blobs.Models;
@@ -39,16 +40,30 @@ namespace AMSMigrate.Ams
             var (storageClient, accountId) = await _resourceProvider.GetStorageAccount(cancellationToken);
             _logger.LogInformation("Begin migration of containers from account: {name}", storageClient.AccountName);
             double totalContainers = await GetStorageBlobMetricAsync(accountId, cancellationToken);
+            _logger.LogInformation("The total count of containers of the storage account is {count}.", totalContainers);
 
             var channel = Channel.CreateBounded<AssetStats>(1);
             var writer = channel.Writer;
+
+            var containers = storageClient.GetBlobContainersAsync(
+                               prefix: _globalOptions.ResourceFilter ?? "asset-", cancellationToken: cancellationToken);
+
+            if (_globalOptions.ResourceFilter != null)
+            {
+                // When a filter is used, it usually inlcude a small list of assets,
+                // The accurate total count of containers can be extracted in advance without much perf hit.
+                totalContainers = containers.ToListAsync().Result.Count;
+            }
+
+            _logger.LogInformation("The total input container to handle in this run is {count}.", totalContainers);
 
             //var progress = CreateProgressAsync("Migrate Containers", totalContainers, channel.Reader, cancellationToken);
             var progress = DisplayChartAsync(
                 "Container Migration",
                 totalContainers,
                 channel.Reader);
-            var stats = await MigrateAsync(storageClient, writer, cancellationToken);
+
+            var stats = await MigrateAsync(storageClient, containers, writer, cancellationToken);
             _logger.LogInformation("Finished migration of containers from account: {name}. Time : {time}", storageClient.AccountName, watch.Elapsed);
             await progress;
 
@@ -165,12 +180,12 @@ namespace AMSMigrate.Ams
         
         private async Task<AssetStats> MigrateAsync(
             BlobServiceClient storageClient,
+            AsyncPageable<BlobContainerItem> containers,
             ChannelWriter<AssetStats> writer,
             CancellationToken cancellationToken)
         {
             var stats = new AssetStats();
-            var containers = storageClient.GetBlobContainersAsync(
-                prefix: _globalOptions.ResourceFilter ?? "asset-", cancellationToken: cancellationToken);
+
             await MigrateInBatches(containers, async containers =>
             {
                 var tasks = containers.Select(container => MigrateAsync(storageClient, container, cancellationToken));

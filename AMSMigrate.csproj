@@ -32,6 +32,7 @@
     <PackageReference Include="Microsoft.VisualStudio.Azure.Containers.Tools.Targets" Version="1.18.1" />
     <PackageReference Include="Spectre.Console" Version="0.47.0" />
     <PackageReference Include="System.CommandLine" Version="2.0.0-beta4.22272.1" />
+    <PackageReference Include="System.Linq.Async.Queryable" Version="6.0.1" />
     <PackageReference Include="System.Text.RegularExpressions" Version="4.3.1" />
     <PackageReference Include="System.Threading.Channels" Version="7.0.0" />
     <PackageReference Include="vertical-spectreconsolelogger" Version="0.10.1-dev.20230510.16" />
