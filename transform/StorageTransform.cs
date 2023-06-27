@@ -4,6 +4,8 @@ using AMSMigrate.Contracts;
 using Azure.Storage.Blobs;
 using Azure.Storage.Blobs.Specialized;
 using Microsoft.Extensions.Logging;
+using System.ComponentModel;
+using System.Reflection.Metadata;
 
 namespace AMSMigrate.Transform
 {
@@ -40,6 +42,7 @@ namespace AMSMigrate.Transform
             CancellationToken cancellationToken)
         {
             var result = new AssetMigrationResult();
+
             _logger.LogTrace("Asset {asset} is in format: {format}.", details.AssetName, details.Manifest?.Format);
             if (details.Manifest != null && details.Manifest.IsLive)
             {
@@ -53,12 +56,12 @@ namespace AMSMigrate.Transform
                 try
                 {
                     var path = await TransformAsync(details, outputPath, cancellationToken);
-                    result.Status = MigrationStatus.Success;
-                    result.Uri = _fileUploader.GetDestinationUri(outputPath.Container, path);
+                    result.Status = MigrationStatus.Completed;
+                    result.OutputPath = _fileUploader.GetDestinationUri(outputPath.Container, path);
                 }
                 catch (Exception)
                 {
-                    result.Status = MigrationStatus.Failure;
+                    result.Status = MigrationStatus.Failed;
                 }
             }
 
@@ -91,6 +94,16 @@ namespace AMSMigrate.Transform
 
                 var result = await blob.DownloadStreamingAsync(cancellationToken: cancellationToken);
                 await _fileUploader.UploadAsync(container, blobName, result.Value.Content, progress, cancellationToken);
+            }
+        }
+
+        protected async Task UpdateOutputStatus(
+            string containerName,
+            CancellationToken cancellationToken)
+        {
+            if (_fileUploader is AzureStorageUploader uploader)
+            {
+                await uploader.UpdateOutputStatus(containerName, cancellationToken);
             }
         }
     }

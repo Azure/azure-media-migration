@@ -7,21 +7,20 @@ namespace AMSMigrate.Transform
 {
     class AnalysisResult : AssetMigrationResult
     {
-        public AnalysisResult(string assetName, string? format, int locators, MigrationStatus status, Uri? uri = null)
-            : base(status, uri)
+        public AnalysisResult(string assetName, MigrationStatus status, int locators, Uri? outputPath = null, string? assetType = null, string? manifestName = null)
+            : base(status, outputPath, assetType, manifestName)
         {
             AssetName = assetName;
-            Format = format;
             Locators = locators;
         }
 
-        public string? Format { get; }
-
         public int Locators { get; internal set; }
 
-        public string AssetName { get; set; }
+        public string AssetName { get; set; }        
     }
     
+    /* TODO:  This class is not required anymore.
+     
     internal class AnalyzeTransform : ITransform<AssetDetails, AnalysisResult>
     {
         private readonly ILogger _logger;
@@ -40,7 +39,7 @@ namespace AMSMigrate.Transform
             var (assetName, container, manifest, _) = asset;
             // Check if already migrated.
             var status = await _tracker.GetMigrationStatusAsync(container, cancellationToken);
-            return new AnalysisResult(assetName, manifest?.Format, 0, status.Status);
+            return new AnalysisResult(assetName, status.Status, 0, status.OutputPath, status.AssetType, status.ManifestName);
         }
-    }
+    } */
 }

@@ -1,4 +1,6 @@
-﻿using AMSMigrate.Contracts;
+﻿using AMSMigrate.Ams;
+using AMSMigrate.Contracts;
+using Azure.Storage.Blobs;
 using Microsoft.Extensions.Logging;
 
 namespace AMSMigrate.Local
@@ -37,5 +39,15 @@ namespace AMSMigrate.Local
             using var file = File.OpenWrite(Path.Combine(baseDir, Path.GetFileName(fileName)));
             await content.CopyToAsync(file, cancellationToken);
         }
+
+#pragma warning disable CS1998 // Async method lacks 'await' operators and will run synchronously
+        public async Task UpdateOutputStatus(
+            string containerName,
+            CancellationToken cancellationToken)
+        {
+            // Make it no op for local file provider.
+            return;
+        }
+#pragma warning restore CS1998
     }
 }

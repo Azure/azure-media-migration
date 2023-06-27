@@ -4,8 +4,8 @@ namespace AMSMigrate.Contracts
     public enum MigrationStatus
     {
         NotMigrated,
-        Success,
-        Failure,
+        Completed,
+        Failed,
         Skipped,
         AlreadyMigrated
     }

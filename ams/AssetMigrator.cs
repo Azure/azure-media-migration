@@ -71,7 +71,7 @@ namespace AMSMigrate.Ams
                 {
                     switch (result.Status)
                     {
-                        case MigrationStatus.Success:
+                        case MigrationStatus.Completed:
                             ++stats.Successful;
                             if (_options.DeleteMigrated)
                             {
@@ -119,32 +119,66 @@ namespace AMSMigrate.Ams
         {
             _logger.LogInformation("Migrating asset: {name} ...", asset.Data.Name);
             var container = storage.GetContainer(asset);
+
+            // Get the inital migration status from the container level's metadata list.
+            var result = await _tracker.GetMigrationStatusAsync(container, cancellationToken);
+
             if (_options.SkipMigrated)
             {
-                var status = await _tracker.GetMigrationStatusAsync(container, cancellationToken);
-                if (status.Status == MigrationStatus.Success)
+                if (result.Status == MigrationStatus.Completed)
                 {
                     _logger.LogDebug("Asset: {name} has already been migrated.", asset.Data.Name);
-                    return MigrationStatus.AlreadyMigrated;
+
+                    result.Status = MigrationStatus.AlreadyMigrated;
+
+                    return result;
                 }
             }
 
             try
             {
-                var result = new AssetMigrationResult();
                 if (asset.Data.StorageEncryptionFormat != MediaAssetStorageEncryptionFormat.None)
                 {
-                    _logger.LogWarning("Skipping asset {name} as it is encrypted  using {format}", asset.Data.Name, asset.Data.StorageEncryptionFormat);
-                    return result;
+                    _logger.LogWarning("Asset {name} is encrypted  using {format}", asset.Data.Name, asset.Data.StorageEncryptionFormat);
+                    result.AssetType = AssetMigrationResult.AssetType_Encrypted;
                 }
-                var details = await asset.GetDetailsAsync(_logger, cancellationToken);
-                var record = new AssetRecord(account, asset, details);
-                foreach (var transform in _transformFactory.AssetTransforms)
+                else
                 {
-                    result = (AssetMigrationResult) await transform.RunAsync(record, cancellationToken);
-                    if (result.Status != MigrationStatus.Skipped)
+                    var details = await asset.GetDetailsAsync(_logger, cancellationToken);
+                    var record = new AssetRecord(account, asset, details);
+
+                    // AssetType and ManifestName are not supposed to change for a specific input asset,
+                    // Set AssetType and manifest from the asset container before doing the actual transforming.
+                    if (details.Manifest != null)
                     {
-                        break;
+                        result.AssetType = details.Manifest.Format;
+                        result.ManifestName = details.Manifest.FileName?.Replace(".ism", "");
+                    }
+                    else
+                    {
+                        result.AssetType = AssetMigrationResult.AssetType_NonIsm;
+                    }
+
+                    if (result.IsSupportedAsset)
+                    {
+                        foreach (var transform in _transformFactory.AssetTransforms)
+                        {
+                            var transformResult = (AssetMigrationResult)await transform.RunAsync(record, cancellationToken);
+
+                            result.Status = transformResult.Status;
+                            result.OutputPath = transformResult.OutputPath;
+
+                            if (result.Status == MigrationStatus.Failed)
+                            {
+                                break;
+                            }
+                        }
+                    }
+                    else
+                    {
+                        // The asset type is not supported in this milestone,
+                        // Mark the status as Skipped for caller to do the statistics.
+                        result.Status = MigrationStatus.Skipped;
                     }
                 }
 
@@ -157,7 +191,7 @@ namespace AMSMigrate.Ams
                 {
                     await _tracker.UpdateMigrationStatus(container, result, cancellationToken);
                 }
-                if (_options.DeleteMigrated && result.Status == MigrationStatus.Success)
+                if (_options.DeleteMigrated && result.Status == MigrationStatus.Completed)
                 {
                     _logger.LogWarning("Deleting asset {name} after migration", asset.Data.Name);
                     await asset.DeleteAsync(WaitUntil.Completed, cancellationToken);
@@ -167,7 +201,7 @@ namespace AMSMigrate.Ams
             catch (Exception ex)
             {
                 _logger.LogError(ex, "Failed to migrate asset {name}.", asset.Data.Name);
-                return MigrationStatus.Failure;
+                return MigrationStatus.Failed;
             }
         }
     }
