@@ -27,10 +27,11 @@ namespace AMSMigrate.Ams
         }
 
         public async Task<MediaServicesAccountResource> GetMediaAccountAsync(
+            string mediaAccountName,
             CancellationToken cancellationToken)
         {
             return await _resourceGroup.GetMediaServicesAccountAsync(
-                _globalOptions.AccountName, cancellationToken);
+                mediaAccountName, cancellationToken);
         }
 
         public async Task<BlobServiceClient> GetStorageAccountAsync(
@@ -42,10 +43,10 @@ namespace AMSMigrate.Ams
             return GetStorageAccount(resource);
         }
 
-        public async Task<(BlobServiceClient, ResourceIdentifier)> GetStorageAccount(CancellationToken cancellationToken)
+        public async Task<(BlobServiceClient, ResourceIdentifier)> GetStorageAccount(string storageAccountName,CancellationToken cancellationToken)
         {
             StorageAccountResource storage = 
-                await _resourceGroup.GetStorageAccountAsync(_globalOptions.AccountName, cancellationToken: cancellationToken);
+                await _resourceGroup.GetStorageAccountAsync(storageAccountName, cancellationToken: cancellationToken);
             return (GetStorageAccount(storage), storage.Id);
         }
 

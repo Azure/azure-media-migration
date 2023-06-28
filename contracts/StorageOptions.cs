@@ -1,11 +1,11 @@
 ﻿namespace AMSMigrate.Contracts
 {
-    public record AssetOptions(
+    public record StorageOptions(
         string AccountName,
-        string StoragePath,        
+        string StoragePath,
         Packager Packager,
         string PathTemplate,
-        string? ResourceFilter,
+        string? Prefix,
         string WorkingDirectory,
         bool CopyNonStreamable,
         bool OverWrite,

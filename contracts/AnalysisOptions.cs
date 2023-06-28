@@ -7,5 +7,5 @@
         Report
     }
 
-    public record AnalysisOptions(AnalysisType AnalysisType, int BatchSize);
+    public record AnalysisOptions(string AccountName, string? ResourceFilter, AnalysisType AnalysisType, int BatchSize);
 }

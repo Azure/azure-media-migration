@@ -40,23 +40,6 @@ namespace AMSMigrate
             Arity = ArgumentArity.ExactlyOne
         };
 
-        private readonly Option<string> _mediaAccount = new Option<string>(
-            aliases: new[] { "--account-name", "-n" },
-            description: "Azure Media Services Account name")
-        {
-            IsRequired = true,
-            Arity = ArgumentArity.ExactlyOne
-        };
-
-        private readonly Option<string?> _filter = new Option<string?>(
-            aliases: new[] { "--resource-filter", "-f" },
-            description: @"An ODATA condition to filter the resources.
-e.g.: ""name eq 'asset1'"" to match an asset with name 'asset1'.
-Visit https://learn.microsoft.com/en-us/azure/media-services/latest/filter-order-page-entities-how-to for more information.")
-        {
-            Arity = ArgumentArity.ZeroOrOne
-        };
-
         public GlobalOptionsBinder()
         {
         }
@@ -66,9 +49,7 @@ Visit https://learn.microsoft.com/en-us/azure/media-services/latest/filter-order
             return new GlobalOptions(
                 bindingContext.ParseResult.GetValueForOption(_subscription)!,
                 bindingContext.ParseResult.GetValueForOption(_resourceGroup)!,
-                bindingContext.ParseResult.GetValueForOption(_mediaAccount)!,
                 CloudType.Azure, //TODO: add an option.
-                bindingContext.ParseResult.GetValueForOption(_filter),
                 bindingContext.ParseResult.GetValueForOption(_logLevel),
                 bindingContext.ParseResult.GetValueForOption(_logDirectory)!
             );
@@ -81,8 +62,7 @@ Visit https://learn.microsoft.com/en-us/azure/media-services/latest/filter-order
             command.AddGlobalOption(_logDirectory);
             command.AddGlobalOption(_subscription);
             command.AddGlobalOption(_resourceGroup);
-            command.AddGlobalOption(_mediaAccount);
-            command.AddGlobalOption(_filter);
+
             return command;
         }
 

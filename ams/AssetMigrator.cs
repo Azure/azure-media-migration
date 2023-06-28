@@ -40,7 +40,7 @@ namespace AMSMigrate.Ams
         public override async Task MigrateAsync(CancellationToken cancellationToken)
         {
             var watch = Stopwatch.StartNew();
-            var account = await GetMediaAccountAsync(cancellationToken);
+            var account = await GetMediaAccountAsync(_options.AccountName, cancellationToken);
             _logger.LogInformation("Begin migration of assets for account: {name}", account.Data.Name);
             var totalAssets = await QueryMetricAsync(
                 account.Id.ToString(),
@@ -51,11 +51,11 @@ namespace AMSMigrate.Ams
 
             var orderBy = "properties/created";
             var assets = account.GetMediaAssets()
-                .GetAllAsync(_globalOptions.ResourceFilter, orderby: orderBy, cancellationToken: cancellationToken);
+                .GetAllAsync(_options.ResourceFilter, orderby: orderBy, cancellationToken: cancellationToken);
 
             List<MediaAssetResource>? filteredList = null;
 
-            if (_globalOptions.ResourceFilter != null)
+            if (_options.ResourceFilter != null)
             {
                 // When a filter is used, it usually inlcude a small list of assets,
                 // The accurate total count of asset can be extracted in advance without much perf hit.

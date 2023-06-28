@@ -5,9 +5,7 @@ namespace AMSMigrate.Contracts
     public record GlobalOptions(
         string SubscriptionId,
         string ResourceGroup,
-        string AccountName,
-        CloudType CloudType,
-        string? ResourceFilter,
+        CloudType CloudType,       
         LogLevel LogLevel,
         string LogDirectory)
     {

@@ -6,6 +6,23 @@ namespace AMSMigrate
 {
     internal class KeyOptionsBinder : BinderBase<KeyOptions>
     {
+        private readonly Option<string> _sourceAccount = new Option<string>(
+             aliases: new[] { "--source-account-name", "-n" },
+             description: "Azure Media Services Account.")
+        {
+            IsRequired = true,
+            Arity = ArgumentArity.ExactlyOne
+        };
+
+        private readonly Option<string?> _filter = new Option<string?>(
+            aliases: new[] { "--resource-filter", "-f" },
+            description: @"An ODATA condition to filter the resources.
+e.g.: ""name eq 'asset1'"" to match an asset with name 'asset1'.
+Visit https://learn.microsoft.com/en-us/azure/media-services/latest/filter-order-page-entities-how-to for more information.")
+        {
+            Arity = ArgumentArity.ZeroOrOne
+        };
+
         private readonly Option<Uri> _keyVaultUri = new Option<Uri>(
             aliases: new[] { "--vault-url", "-v" },
             description: @"The vault for migrating keys.
@@ -48,6 +65,8 @@ Can use ${KeyId} ${KeyName} in the template.")
         public Command GetCommand()
         {
             var keysCommand = new Command("keys", "Migrate content keys");
+            keysCommand.AddOption(_sourceAccount);
+            keysCommand.AddOption(_filter);
             keysCommand.AddOption(_keyVaultUri);
             keysCommand.AddOption(_keyTemplate);
             keysCommand.AddOption(_batchSize);
@@ -57,6 +76,8 @@ Can use ${KeyId} ${KeyName} in the template.")
         protected override KeyOptions GetBoundValue(BindingContext bindingContext)
         {
             return new KeyOptions(
+                bindingContext.ParseResult.GetValueForOption(_sourceAccount)!,
+                bindingContext.ParseResult.GetValueForOption(_filter),
                 bindingContext.ParseResult.GetValueForOption(_keyVaultUri)!,
                 bindingContext.ParseResult.GetValueForOption(_keyTemplate),
                 bindingContext.ParseResult.GetValueForOption(_batchSize)

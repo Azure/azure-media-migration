@@ -15,12 +15,12 @@ namespace AMSMigrate.Ams
     {
         private readonly ILogger _logger;
         private readonly TransformFactory _transformFactory;
-        private readonly AssetOptions _assetOptions;
+        private readonly StorageOptions _storageOptions;
         private readonly IMigrationTracker<BlobContainerClient, AssetMigrationResult> _tracker;
 
         public StorageMigrator(
             GlobalOptions options,
-            AssetOptions assetOptions,
+            StorageOptions storageOptions,
             IAnsiConsole console,
             IMigrationTracker<BlobContainerClient, AssetMigrationResult> tracker,
             TokenCredential credentials,
@@ -28,7 +28,7 @@ namespace AMSMigrate.Ams
             ILogger<StorageMigrator> logger) :
             base(options, console, credentials)
         {
-            _assetOptions = assetOptions;
+            _storageOptions = storageOptions;
             _tracker = tracker;
             _transformFactory = transformFactory;
             _logger = logger;
@@ -37,7 +37,7 @@ namespace AMSMigrate.Ams
         public override async Task MigrateAsync(CancellationToken cancellationToken)
         {
             var watch = Stopwatch.StartNew();
-            var (storageClient, accountId) = await _resourceProvider.GetStorageAccount(cancellationToken);
+            var (storageClient, accountId) = await _resourceProvider.GetStorageAccount(_storageOptions.AccountName, cancellationToken);
             _logger.LogInformation("Begin migration of containers from account: {name}", storageClient.AccountName);
             double totalContainers = await GetStorageBlobMetricAsync(accountId, cancellationToken);
             _logger.LogInformation("The total count of containers of the storage account is {count}.", totalContainers);
@@ -46,11 +46,11 @@ namespace AMSMigrate.Ams
             var writer = channel.Writer;
 
             var containers = storageClient.GetBlobContainersAsync(
-                               prefix: _globalOptions.ResourceFilter ?? "asset-", cancellationToken: cancellationToken);
+                               prefix: _storageOptions.Prefix ?? "asset-", cancellationToken: cancellationToken);
 
             List<BlobContainerItem>? filteredList = null;
 
-            if (_globalOptions.ResourceFilter != null)
+            if (_storageOptions.Prefix != null)
             {
                 // When a filter is used, it usually inlcude a small list of assets,
                 // The accurate total count of containers can be extracted in advance without much perf hit.
@@ -122,7 +122,7 @@ namespace AMSMigrate.Ams
             var result = await _tracker.GetMigrationStatusAsync(containerClient, cancellationToken);
 
             // Check if already migrated.
-            if (_assetOptions.SkipMigrated)
+            if (_storageOptions.SkipMigrated)
             {
                 if (result.Status == MigrationStatus.Completed)
                 {
@@ -170,11 +170,11 @@ namespace AMSMigrate.Ams
                 result.Status = MigrationStatus.Skipped;
             }
             
-            if (_assetOptions.MarkCompleted)
+            if (_storageOptions.MarkCompleted)
             {
                 await _tracker.UpdateMigrationStatus(containerClient, result, cancellationToken);
             }
-            if (result.Status == MigrationStatus.Completed && _assetOptions.DeleteMigrated)
+            if (result.Status == MigrationStatus.Completed && _storageOptions.DeleteMigrated)
             {
                 _logger.LogWarning("Deleting container {name} after migration", container.Name);
                 await storageClient.DeleteBlobContainerAsync(container.Name, cancellationToken: cancellationToken);
@@ -202,7 +202,7 @@ namespace AMSMigrate.Ams
                     {
                         case MigrationStatus.Completed:
                             ++stats.Successful;
-                            if (_assetOptions.DeleteMigrated)
+                            if (_storageOptions.DeleteMigrated)
                             {
                                 ++stats.Deleted;
                             }
@@ -220,7 +220,7 @@ namespace AMSMigrate.Ams
                 }
                 await writer.WriteAsync(stats, cancellationToken);
             },
-            _assetOptions.BatchSize,
+            _storageOptions.BatchSize,
             cancellationToken);
 
             writer.Complete();
