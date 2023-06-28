@@ -43,7 +43,7 @@ namespace AMSMigrate.Ams
         private async Task<AnalysisResult> AnalyzeAsync(MediaAssetResource asset, BlobServiceClient storage, CancellationToken cancellationToken)
         {
             var result = new AnalysisResult(asset.Data.Name, MigrationStatus.NotMigrated, 0);
-            _logger.LogDebug("Analyzing asset: {asset}", asset.Data.Name);
+            _logger.LogDebug("Analyzing asset: {asset} (container {container})", asset.Data.Name, asset.Data.Container);
             try
             {
                 var container = storage.GetContainer(asset);
