@@ -105,8 +105,8 @@ Doesn't require the Azure media services to be running.");
                 .AddSingleton<TokenCredential>(
                     new DefaultAzureCredential(new DefaultAzureCredentialOptions
                     {
-                        //ExcludeSharedTokenCacheCredential = true,
-                        ExcludeInteractiveBrowserCredential = true
+                        // ExcludeSharedTokenCacheCredential = true,
+                        // ExcludeInteractiveBrowserCredential = true
                     }))
                 .AddSingleton(options)
                 .AddSingleton(console)
