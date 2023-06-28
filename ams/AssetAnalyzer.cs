@@ -123,11 +123,15 @@ namespace AMSMigrate.Ams
             var statistics = new Statistics();
             var assetTypes = new SortedDictionary<string, int>();
 
+            List<MediaAssetResource>? filteredList = null;
+
             if (_globalOptions.ResourceFilter != null)
             {
                 // When a filter is used, it usually inlcude a small list of assets,
                 // The total count of asset can be extracted in advance without much perf hit.
-                totalAssets = assets.ToListAsync().Result.Count;
+                filteredList = await assets.ToListAsync(cancellationToken);
+
+                totalAssets = filteredList.Count;
             }
 
             _logger.LogInformation("The total assets to handle in this run is {count}.", totalAssets);
@@ -135,7 +139,7 @@ namespace AMSMigrate.Ams
             var channel = Channel.CreateBounded<double>(1);
             var progress = ShowProgressAsync("Analyzing Assets", "Assets", totalAssets, channel.Reader, cancellationToken);
             var writer = channel.Writer;
-            await MigrateInBatches(assets, async assets =>
+            await MigrateInBatches(assets, filteredList, async assets =>
             {
                 var tasks = assets.Select(async asset =>
                 {

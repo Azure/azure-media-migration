@@ -53,11 +53,15 @@ namespace AMSMigrate.Ams
             var assets = account.GetMediaAssets()
                 .GetAllAsync(_globalOptions.ResourceFilter, orderby: orderBy, cancellationToken: cancellationToken);
 
+            List<MediaAssetResource>? filteredList = null;
+
             if (_globalOptions.ResourceFilter != null)
             {
                 // When a filter is used, it usually inlcude a small list of assets,
                 // The accurate total count of asset can be extracted in advance without much perf hit.
-                totalAssets = assets.ToListAsync().Result.Count;
+                filteredList = await assets.ToListAsync(cancellationToken);
+
+                totalAssets = filteredList.Count;
             }
 
             _logger.LogInformation("The total assets to handle in this run is {count}.", totalAssets);
@@ -65,18 +69,18 @@ namespace AMSMigrate.Ams
             var status = Channel.CreateBounded<double>(1);
             var progress = ShowProgressAsync("Asset Migration", "Assets", totalAssets, status.Reader, cancellationToken);
 
-            var stats = await MigrateAsync(account, assets, status.Writer, cancellationToken);
+            var stats = await MigrateAsync(account, assets, filteredList, status.Writer, cancellationToken);
             _logger.LogInformation("Finished migration of assets for account: {name}. Time taken: {time}", account.Data.Name, watch.Elapsed);
             await progress;
             WriteSummary(stats);
         }
 
-        private async Task<AssetStats> MigrateAsync(MediaServicesAccountResource account, AsyncPageable<MediaAssetResource> assets, ChannelWriter<double> writer, CancellationToken cancellationToken)
+        private async Task<AssetStats> MigrateAsync(MediaServicesAccountResource account, AsyncPageable<MediaAssetResource> assets, List<MediaAssetResource>? filteredList, ChannelWriter<double> writer, CancellationToken cancellationToken)
         {
             var storage = await _resourceProvider.GetStorageAccountAsync(account, cancellationToken);
             var stats = new AssetStats();
 
-            await MigrateInBatches(assets, async assets =>
+            await MigrateInBatches(assets, filteredList, async assets =>
             {
                 var results = await Task.WhenAll(assets.Select(async asset => await MigrateAsync(account, storage, asset, cancellationToken)));
                 stats.Total += results.Length;

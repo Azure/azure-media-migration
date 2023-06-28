@@ -38,15 +38,28 @@ namespace AMSMigrate.Ams
 
         protected async Task MigrateInBatches<T>(
             AsyncPageable<T> pageable,
+            List<T>? filteredList,
             Func<T[], Task> processBatch,
             int batchSize = 1,
             CancellationToken cancellationToken = default) where T : notnull
         {
-            await foreach (var page in pageable.AsPages())
+            if (filteredList != null)
             {
-                foreach (var batch in page.Values.Chunk(batchSize))
+                // When the filtered List is already generated,
+                // Take it as higher priority, no need to do extra enumeration on the pageable assets.
+                foreach (var batch in filteredList.Chunk(batchSize))
                 {
                     await processBatch(batch);
+                }
+            }
+            else
+            {
+                await foreach (var page in pageable.AsPages())
+                {
+                    foreach (var batch in page.Values.Chunk(batchSize))
+                    {
+                        await processBatch(batch);
+                    }
                 }
             }
         }

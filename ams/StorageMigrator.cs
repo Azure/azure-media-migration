@@ -48,11 +48,15 @@ namespace AMSMigrate.Ams
             var containers = storageClient.GetBlobContainersAsync(
                                prefix: _globalOptions.ResourceFilter ?? "asset-", cancellationToken: cancellationToken);
 
+            List<BlobContainerItem>? filteredList = null;
+
             if (_globalOptions.ResourceFilter != null)
             {
                 // When a filter is used, it usually inlcude a small list of assets,
                 // The accurate total count of containers can be extracted in advance without much perf hit.
-                totalContainers = containers.ToListAsync().Result.Count;
+                filteredList = await containers.ToListAsync();
+
+                totalContainers = filteredList.Count;
             }
 
             _logger.LogInformation("The total input container to handle in this run is {count}.", totalContainers);
@@ -63,7 +67,7 @@ namespace AMSMigrate.Ams
                 totalContainers,
                 channel.Reader);
 
-            var stats = await MigrateAsync(storageClient, containers, writer, cancellationToken);
+            var stats = await MigrateAsync(storageClient, containers, filteredList, writer, cancellationToken);
             _logger.LogInformation("Finished migration of containers from account: {name}. Time : {time}", storageClient.AccountName, watch.Elapsed);
             await progress;
 
@@ -181,12 +185,13 @@ namespace AMSMigrate.Ams
         private async Task<AssetStats> MigrateAsync(
             BlobServiceClient storageClient,
             AsyncPageable<BlobContainerItem> containers,
+            List<BlobContainerItem>? filteredList,
             ChannelWriter<AssetStats> writer,
             CancellationToken cancellationToken)
         {
             var stats = new AssetStats();
 
-            await MigrateInBatches(containers, async containers =>
+            await MigrateInBatches(containers, filteredList, async containers =>
             {
                 var tasks = containers.Select(container => MigrateAsync(storageClient, container, cancellationToken));
                 var results = await Task.WhenAll(tasks);
