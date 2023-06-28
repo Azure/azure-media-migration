@@ -39,7 +39,7 @@ namespace AMSMigrate.Ams
             var channel = Channel.CreateBounded<double>(1);
             var progress = ShowProgressAsync("Migrate content keys", "Locators", 1.0, channel.Reader, cancellationToken);
             double count = 0;
-            await MigrateInBatches(locators, async locators =>
+            await MigrateInBatches(locators, null, async locators =>
             {
                 var tasks = locators.Select(locator => MigrateLocatorAsync(locator, cancellationToken));
                 await Task.WhenAll(tasks);
