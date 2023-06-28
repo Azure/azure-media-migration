@@ -137,7 +137,7 @@ namespace AMSMigrate.Ams
             MediaAssetResource asset,
             CancellationToken cancellationToken)
         {
-            _logger.LogInformation("Migrating asset: {name} ...", asset.Data.Name);
+            _logger.LogInformation("Migrating asset: {name} (container: {container}) ...", asset.Data.Name, asset.Data.Container);
             var container = storage.GetContainer(asset);
 
             // Get the inital migration status from the container level's metadata list.

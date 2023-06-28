@@ -44,7 +44,7 @@ namespace AMSMigrate.Transform
             Manifest? manifest = null;
             if (manifests == null || manifests.Length == 0)
             {
-                logger.LogWarning("No manifest (.ism file) found in container {name}", name);
+                logger.LogWarning("No manifest (.ism file) found in container {name}", container.Name);
             }
             else
             {
