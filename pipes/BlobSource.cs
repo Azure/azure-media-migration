@@ -58,9 +58,7 @@ namespace AMSMigrate.Pipes
 
         public async Task DownloadAsync(string filePath, CancellationToken cancellationToken)
         {
-            BlobDownloadStreamingResult result = await _blobClient.DownloadStreamingAsync(cancellationToken: cancellationToken);
-            using var file = File.OpenWrite(filePath);
-            await WriteAsync(file, cancellationToken);
+            await _blobClient.DownloadToAsync(filePath, cancellationToken);
         }
     }
 }

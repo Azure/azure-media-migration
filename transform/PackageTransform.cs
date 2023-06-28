@@ -38,6 +38,10 @@ namespace AMSMigrate.Transform
             var (assetName, container, manifest, clientManifest) = details;
             if (manifest == null) throw new ArgumentNullException(nameof(manifest));
             
+            // create a linke source which when disposed cancells all tasks.
+            using var source = CancellationTokenSource.CreateLinkedTokenSource(cancellationToken);
+            cancellationToken = source.Token;
+
             // temporary space for either pipes or files.
             var workingDirectory = Path.Combine(_options.WorkingDirectory, assetName);
             Directory.CreateDirectory(workingDirectory);
@@ -123,11 +127,15 @@ namespace AMSMigrate.Transform
                 var task = packager.RunAsync(outputDirectory, inputPaths, outputPaths, manifestPaths, cancellationToken);
                 allTasks.Add(task);
 
-                await task;
+                while (allTasks.Count > 0)
+                {
+                    var currentTask = await Task.WhenAny(allTasks);
+                    // throw if any taks fails.
+                    await currentTask;
+                    allTasks.Remove(currentTask);
+                }
 
-                await Task.WhenAll(allTasks);
                 _logger.LogTrace("Packager task finished successfully!");
-
                 // Upload any files pending to be uploaded.
                 await Task.WhenAll(
                     uploadPaths.Select(file => UploadFile(file, uploadHelper, cancellationToken)));

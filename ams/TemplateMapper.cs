@@ -100,12 +100,12 @@ namespace AMSMigrate.Ams
             var index = path.IndexOf('/');
             if (index == -1)
             {
-                containerName = path;
+                containerName = path.ToLowerInvariant();
                 path = string.Empty;
             }
             else
             {
-                containerName = path.Substring(0, index);
+                containerName = path.Substring(0, index).ToLowerInvariant();
                 path = path.Substring(index + 1);
                 if (!path.EndsWith('/'))
                 {

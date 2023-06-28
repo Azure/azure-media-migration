@@ -97,17 +97,12 @@ Doesn't require the Azure media services to be running.");
             return await parser.InvokeAsync(args);
         }
 
-        static IServiceCollection SetupServices(GlobalOptions options, TraceListener? listener = null)
+        static IServiceCollection SetupServices(GlobalOptions options, TraceListener listener)
         {
             var console = AnsiConsole.Console;
 
             var collection = new ServiceCollection()
-                .AddSingleton<TokenCredential>(
-                    new DefaultAzureCredential(new DefaultAzureCredentialOptions
-                    {
-                        // ExcludeSharedTokenCacheCredential = true,
-                        // ExcludeInteractiveBrowserCredential = true
-                    }))
+                .AddSingleton<TokenCredential>(new DefaultAzureCredential(includeInteractiveCredentials: true))
                 .AddSingleton(options)
                 .AddSingleton(console)
                 .AddSingleton<IMigrationTracker<BlobContainerClient, AssetMigrationResult>, AssetMigrationTracker>()
@@ -117,16 +112,14 @@ Doesn't require the Azure media services to be running.");
                 .AddSingleton<AzureResourceProvider>()
                 .AddLogging(builder =>
                 {
+                    var logSwitch = new SourceSwitch("migration")
+                    {
+                        Level = SourceLevels.All
+                    };
                     builder
                         .SetMinimumLevel(LogLevel.Trace)
-                        .AddSpectreConsole(builder => builder.SetMinimumLevel(LogLevel.Information).UseConsole(console));
-                        //.AddSimpleConsole(options => { options.SingleLine = true; })
-                        if (listener != null)
-                        {
-                            var logSwitch = new SourceSwitch("migration");
-                            logSwitch.Level = SourceLevels.All;
-                            builder.AddTraceSource(logSwitch, listener);
-                        }
+                        .AddSpectreConsole(builder => builder.SetMinimumLevel(options.LogLevel).UseConsole(console))
+                        .AddTraceSource(logSwitch, listener);
                 });
             if (options.CloudType == CloudType.Local)
             {
