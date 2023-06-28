@@ -104,8 +104,8 @@ namespace AMSMigrate.Ams
         public override async Task MigrateAsync(CancellationToken cancellationToken)
         {
             var watch = Stopwatch.StartNew();
-            _logger.LogInformation("Begin analysis of assets for account: {name}", _globalOptions.AccountName);
-            var account = await GetMediaAccountAsync(cancellationToken);
+            _logger.LogInformation("Begin analysis of assets for account: {name}", _analysisOptions.AccountName);
+            var account = await GetMediaAccountAsync(_analysisOptions.AccountName, cancellationToken);
             double totalAssets = await QueryMetricAsync(account.Id.ToString(), "AssetCount", cancellationToken);
             _logger.LogInformation("The total asset count of the media account is {count}.", totalAssets);
 
@@ -119,13 +119,13 @@ namespace AMSMigrate.Ams
                 reportGenerator.WriteHeader();
             }
             var assets = account.GetMediaAssets()
-                .GetAllAsync(_globalOptions.ResourceFilter, cancellationToken: cancellationToken);
+                .GetAllAsync(_analysisOptions.ResourceFilter, cancellationToken: cancellationToken);
             var statistics = new Statistics();
             var assetTypes = new SortedDictionary<string, int>();
 
             List<MediaAssetResource>? filteredList = null;
 
-            if (_globalOptions.ResourceFilter != null)
+            if (_analysisOptions.ResourceFilter != null)
             {
                 // When a filter is used, it usually inlcude a small list of assets,
                 // The total count of asset can be extracted in advance without much perf hit.
@@ -179,7 +179,7 @@ namespace AMSMigrate.Ams
             cancellationToken);
             writer.Complete();
             await progress;
-            _logger.LogDebug("Finished analysis of assets for account: {name}. Time taken {elapsed}", _globalOptions.AccountName, watch.Elapsed);
+            _logger.LogDebug("Finished analysis of assets for account: {name}. Time taken {elapsed}", _analysisOptions.AccountName, watch.Elapsed);
             WriteSummary(statistics, assetTypes);
             if (_analysisOptions.AnalysisType == AnalysisType.Detailed)
             {

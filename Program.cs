@@ -42,7 +42,7 @@ This will analyze the given media account and produce a summary report.");
 
             var description = @"Migrate Assets
 Examples:
-amsmigrate assets -s <subscription id> -g <resource group> -n <account name> -a <storage account> -t path-template
+amsmigrate assets -s <subscription id> -g <resource group> -n <ams account name> -o <output storage account> -t path-template
 This migrates the assets to a different storage account in your subscription.";
             var assetOptionsBinder = new AssetOptionsBinder();
             var assetsCommand = assetOptionsBinder.GetCommand("assets", description);
@@ -55,14 +55,18 @@ This migrates the assets to a different storage account in your subscription.";
                     await MigrateAssetsAsync(globalOptions, assetOptions, context.GetCancellationToken());
                 });
 
-            var storageCommand = assetOptionsBinder.GetCommand("storage", @"Directly migrate the assets from the storage account.
-Doesn't require the Azure media services to be running.");
+            var storageOptionsBinder = new StorageOptionsBinder();
+            var storageCommand = storageOptionsBinder.GetCommand("storage", @"Directly migrate the assets from the storage account.
+Doesn't require the Azure media services to be running.
+Examples:
+amsmigrate storage -s <subscription id> -g <resource group> -n <source storage account> -o <output storage account> -t path-template
+");
             rootCommand.Add(storageCommand);
             storageCommand.SetHandler(async context =>
             {
                 var globalOptions = globalOptionsBinder.GetValue(context.BindingContext);
-                var assetOptions = assetOptionsBinder.GetValue(context.BindingContext);
-                await MigrateAssetsFromStorageAsync(globalOptions, assetOptions, context.GetCancellationToken());
+                var storageOptions = storageOptionsBinder.GetValue(context.BindingContext);
+                await MigrateStorageAsync(globalOptions, storageOptions, context.GetCancellationToken());
             });
 
             var keyOptionsBinder = new KeyOptionsBinder();
@@ -167,14 +171,14 @@ Doesn't require the Azure media services to be running.");
             logger.LogInformation("See file {file} for detailed logs.", globalOptions.LogFile);
         }
 
-        static async Task MigrateAssetsFromStorageAsync(
+        static async Task MigrateStorageAsync(
             GlobalOptions globalOptions,
-            AssetOptions assetOptions,
+            StorageOptions storageOptions,
             CancellationToken cancellationToken)
         {
             using var listener = new TextWriterTraceListener(globalOptions.LogFile);
             var collection = SetupServices(globalOptions, listener)
-                .AddSingleton(assetOptions)
+                .AddSingleton(storageOptions)
                 .AddSingleton<PackagerFactory>()
                 .AddSingleton<StorageMigrator>();
             var provider = collection.BuildServiceProvider();

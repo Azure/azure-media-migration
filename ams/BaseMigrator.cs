@@ -31,9 +31,9 @@ namespace AMSMigrate.Ams
 
         public abstract Task MigrateAsync(CancellationToken cancellationToken);
 
-        protected Task<MediaServicesAccountResource> GetMediaAccountAsync(CancellationToken cancellationToken)
+        protected Task<MediaServicesAccountResource> GetMediaAccountAsync(string mediaAccountName, CancellationToken cancellationToken)
         {
-            return _resourceProvider.GetMediaAccountAsync(cancellationToken); ;
+            return _resourceProvider.GetMediaAccountAsync(mediaAccountName, cancellationToken); ;
         }
 
         protected async Task MigrateInBatches<T>(

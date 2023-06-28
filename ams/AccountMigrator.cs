@@ -11,23 +11,26 @@ namespace AMSMigrate.Ams
     internal class AccountMigrator : BaseMigrator
     {
         private readonly ILogger _logger;
+        private string _accountName;
 
         public AccountMigrator(
             GlobalOptions options,
+            string accountName,
             IAnsiConsole console,
             ILogger<AccountMigrator> logger,
             TokenCredential credential) : 
             base(options, console, credential)
         {
+            _accountName = accountName;
             _logger = logger;
         }
 
         public override async Task MigrateAsync(CancellationToken cancellationToken)
         {
-            _logger.LogInformation("Begin migration for media account: {name}", _globalOptions.AccountName);
-            var account = await _resourceProvider.GetMediaAccountAsync(cancellationToken);
+            _logger.LogInformation("Begin migration for media account: {name}", _accountName);
+            var account = await _resourceProvider.GetMediaAccountAsync(_accountName, cancellationToken);
             //TODO: Migrate everything like assets, keys, transforms etc.
-            _logger.LogInformation("Finished migration for account {name}", _globalOptions.AccountName);
+            _logger.LogInformation("Finished migration for account {name}", _accountName);
         }
     }
 }

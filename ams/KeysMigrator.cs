@@ -18,7 +18,7 @@ namespace AMSMigrate.Ams
             GlobalOptions globalOptions,
             KeyOptions keyOptions,
             IAnsiConsole console,
-            ILogger<AccountMigrator> logger,
+            ILogger<KeysMigrator> logger,
             TemplateMapper templateMapper,
             ICloudProvider cloudProvider,
             TokenCredential credential) : 
@@ -32,10 +32,10 @@ namespace AMSMigrate.Ams
 
         public override async Task MigrateAsync(CancellationToken cancellationToken)
         {
-            _logger.LogInformation("Begin migration of keys for account: {name}", _globalOptions.AccountName);
-            var account = await GetMediaAccountAsync(cancellationToken);
+            _logger.LogInformation("Begin migration of keys for account: {name}", _keyOptions.AccountName);
+            var account = await GetMediaAccountAsync(_keyOptions.AccountName, cancellationToken);
 
-            var locators = account.GetStreamingLocators().GetAllAsync(_globalOptions.ResourceFilter, cancellationToken: cancellationToken);
+            var locators = account.GetStreamingLocators().GetAllAsync(_keyOptions.ResourceFilter, cancellationToken: cancellationToken);
             var channel = Channel.CreateBounded<double>(1);
             var progress = ShowProgressAsync("Migrate content keys", "Locators", 1.0, channel.Reader, cancellationToken);
             double count = 0;
@@ -48,7 +48,7 @@ namespace AMSMigrate.Ams
             },
             _keyOptions.BatchSize,
             cancellationToken);
-            _logger.LogInformation("Finished migration of keys for account: {name}", _globalOptions.AccountName);
+            _logger.LogInformation("Finished migration of keys for account: {name}", _keyOptions.AccountName);
             channel.Writer.Complete();
             await progress;
         }
