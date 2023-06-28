@@ -101,6 +101,9 @@ namespace AMSMigrate.Ams
                         case MigrationStatus.AlreadyMigrated:
                             ++stats.Migrated;
                             break;
+                        case MigrationStatus.NotMigrated:
+                            ++stats.Skipped;
+                            break;
                         default:
                             ++stats.Failed;
                             break;
