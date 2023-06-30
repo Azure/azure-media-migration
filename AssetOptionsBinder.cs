@@ -28,10 +28,15 @@ For Azure specify the storage account name or the URL <https://accountname.blob.
 
         private readonly Option<string?> _pathTemplate = new (
             aliases: new[] { "--path-template", "-t" },
-            () => "${AssetId}/",
+            () => "ams-migration-output/${ContainerName}/",
             description: @"Path template to determine the final path in the storage where files are uploaded.
-Can use ${AssetName} ${AssetId} ${ContainerName} or ${LocatorId}.
-e.g., videos/${AssetName} will upload to a container named 'videos' with path beginning with the asset name.")
+Below are valid keyword that can be put in the path template:
+    ${AssetName}     for input asset's name.
+    ${AssetId}       for the Guid of the assetId.
+    ${ContainerName} for the container name of the input asset.
+    ${AlternateId}   for the alternative id of the input asset, use AssetName if AlternateId is not set.
+    ${LocatorId}     for the first locatorId of the input asset, or an empty GUID if locatorId is not set.
+e.g., ams-migration-output/${AssetName}/ will upload to a container named 'ams-migration-output' with path beginning with the input asset name.")
         {
             Arity = ArgumentArity.ZeroOrOne
         };

@@ -128,7 +128,7 @@ namespace AMSMigrate.Ams
                     case "ContainerName":
                         return asset.Data.Container;
                     case "AlternateId":
-                        return asset.Data.AlternateId;
+                        return asset.Data.AlternateId ?? asset.Data.Name;
                     case "LocatorId":
                         var locatorId = GetLocatorIdAsync(asset).Result;
                         return locatorId;
