@@ -149,9 +149,17 @@ amsmigrate storage -s <subscription id> -g <resource group> -n <source storage a
                 .AddSingleton<AssetAnalyzer>();
             var provider = collection.BuildServiceProvider();
             var logger = provider.GetRequiredService<ILogger<Program>>();
-            logger.LogDebug("Writing logs to {file}", globalOptions.LogFile); 
+            logger.LogDebug("Writing logs to {file}", globalOptions.LogFile);
+            if (analysisOptions.AnalysisType == AnalysisType.Report)
+            {
+                logger.LogDebug("Writing html report to {file}", globalOptions.ReportFile);
+            }
             await provider.GetRequiredService<AssetAnalyzer>().MigrateAsync(cancellationToken);
             logger.LogInformation("See file {file} for detailed logs.", globalOptions.LogFile);
+            if (analysisOptions.AnalysisType == AnalysisType.Report)
+            {
+                logger.LogInformation("See file {file} for detailed html report.", globalOptions.ReportFile);
+            }
         }
 
         static async Task MigrateAssetsAsync(
