@@ -46,7 +46,7 @@ namespace AMSMigrate.Ams
             var writer = channel.Writer;
 
             var containers = storageClient.GetBlobContainersAsync(
-                               prefix: _storageOptions.Prefix ?? "asset-", cancellationToken: cancellationToken);
+                               prefix: _storageOptions.Prefix, cancellationToken: cancellationToken);
 
             List<BlobContainerItem>? filteredList = null;
 
@@ -126,11 +126,18 @@ namespace AMSMigrate.Ams
             {
                 if (result.Status == MigrationStatus.Completed)
                 {
-                    _logger.LogDebug("Asset: {name} has already been migrated.", container.Name);
+                    _logger.LogDebug("Container: {name} has already been migrated.", container.Name);
                     result.Status = MigrationStatus.AlreadyMigrated;
                     return result;
                 }
             }
+
+            if (result.AssetType == AssetMigrationResult.AssetType_DmtGenerated)
+            {
+                _logger.LogDebug("Container: {name} holds the migrated data.", container.Name);
+                result.Status = MigrationStatus.Skipped;
+                return result;
+            }            
 
             var assetDetails = await containerClient.GetDetailsAsync(_logger, cancellationToken);            
 
