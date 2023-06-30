@@ -5,12 +5,16 @@ namespace AMSMigrate.Contracts
     public record GlobalOptions(
         string SubscriptionId,
         string ResourceGroup,
-        CloudType CloudType,       
+        CloudType CloudType,
         LogLevel LogLevel,
         string LogDirectory)
     {
-        private readonly string _logFile = $"MigrationLog_{DateTime.Now:HH_mm_ss}.txt";
+        static private readonly string dateTimeNow = $"{DateTime.Now:HH_mm_ss}";
+        private readonly string _logFile = $"MigrationLog_{dateTimeNow}.txt";
+        private readonly string _reportFile = $"Report_{dateTimeNow}.html";
+
         public string LogFile => Path.Combine(LogDirectory, _logFile);
+        public string ReportFile => Path.Combine(LogDirectory, _reportFile);
     }
 
 }

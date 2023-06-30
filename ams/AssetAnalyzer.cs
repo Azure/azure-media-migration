@@ -43,7 +43,7 @@ namespace AMSMigrate.Ams
         private async Task<AnalysisResult> AnalyzeAsync(MediaAssetResource asset, BlobServiceClient storage, CancellationToken cancellationToken)
         {
             var result = new AnalysisResult(asset.Data.Name, MigrationStatus.NotMigrated, 0);
-            _logger.LogDebug("Analyzing asset: {asset} (container {container})", asset.Data.Name, asset.Data.Container);
+            _logger.LogDebug("Analyzing asset: {asset}, container: {container}", asset.Data.Name, asset.Data.Container);
             try
             {
                 var container = storage.GetContainer(asset);
@@ -98,6 +98,7 @@ namespace AMSMigrate.Ams
                 _logger.LogError(ex, "Failed to analyze asset {name}", asset.Data.Name);
                 result.Status = MigrationStatus.Failed;
             }
+            _logger.LogDebug("Analyzed asset: {asset}, container: {container}, type: {type}, status: {status}", asset.Data.Name, asset.Data.Container, result.AssetType, result.Status);
             return result;
         }
 
@@ -118,7 +119,7 @@ namespace AMSMigrate.Ams
 
             if (_analysisOptions.AnalysisType == AnalysisType.Report)
             {
-                var file = File.OpenWrite(Path.Combine(_globalOptions.LogDirectory, $"Report_{DateTime.Now:hh-mm-ss}.html"));
+                var file = File.OpenWrite(_globalOptions.ReportFile);
                 reportGenerator = new ReportGenerator(file);
                 reportGenerator.WriteHeader();
             }
