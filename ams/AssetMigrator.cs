@@ -49,13 +49,17 @@ namespace AMSMigrate.Ams
 
             _logger.LogInformation("The total asset count of the media account is {count}.", totalAssets);
 
+            var resourceFilter = GetAssetResourceFilter(_options.ResourceFilter,
+                                                        _options.CreationTimeStart,
+                                                        _options.CreationTimeEnd);
+
             var orderBy = "properties/created";
             var assets = account.GetMediaAssets()
-                .GetAllAsync(_options.ResourceFilter, orderby: orderBy, cancellationToken: cancellationToken);
+                .GetAllAsync(resourceFilter, orderby: orderBy, cancellationToken: cancellationToken);
 
             List<MediaAssetResource>? filteredList = null;
 
-            if (_options.ResourceFilter != null)
+            if (resourceFilter != null)
             {
                 // When a filter is used, it usually inlcude a small list of assets,
                 // The accurate total count of asset can be extracted in advance without much perf hit.

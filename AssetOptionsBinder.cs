@@ -36,6 +36,22 @@ e.g., videos/${AssetName} will upload to a container named 'videos' with path be
             Arity = ArgumentArity.ZeroOrOne
         };
 
+        private readonly Option<DateTimeOffset?> _creationTimeStart = new Option<DateTimeOffset?>(
+            aliases: new[] { "--creation-time-start", "-cs" },
+            description: @"The earliest creation time of the selected assets in UTC, 
+format is yyyy-MM-ddThh:mm:ssZ, the hh:mm:ss is optional.")
+        {
+            Arity = ArgumentArity.ZeroOrOne
+        };
+
+        private readonly Option<DateTimeOffset?> _creationTimeEnd = new Option<DateTimeOffset?>(
+            aliases: new[] { "--creation-time-end", "-ce" },
+            description: @"The latest creation time of the selected assets in UTC, 
+format is yyyy-MM-ddThh:mm:ssZ, the hh:mm:ss is optional.")
+        {
+            Arity = ArgumentArity.ZeroOrOne
+        };
+
         private readonly Option<string?> _filter = new Option<string?>(
             aliases: new[] { "--resource-filter", "-f" },
             description: @"An ODATA condition to filter the resources.
@@ -125,6 +141,8 @@ Visit https://learn.microsoft.com/en-us/azure/media-services/latest/filter-order
             command.AddOption(_sourceAccount);
             command.AddOption(_storageAccount);
             command.AddOption(_pathTemplate);
+            command.AddOption(_creationTimeStart);
+            command.AddOption(_creationTimeEnd);
             command.AddOption(_filter);
             command.AddOption(_overwrite);
             command.AddOption(_markComplete);
@@ -146,6 +164,8 @@ Visit https://learn.microsoft.com/en-us/azure/media-services/latest/filter-order
                 bindingContext.ParseResult.GetValueForOption(_storageAccount)!,
                 bindingContext.ParseResult.GetValueForOption(_packagerType),
                 bindingContext.ParseResult.GetValueForOption(_pathTemplate)!,
+                bindingContext.ParseResult.GetValueForOption(_creationTimeStart),
+                bindingContext.ParseResult.GetValueForOption(_creationTimeEnd),
                 bindingContext.ParseResult.GetValueForOption(_filter),
                 workingDirectory,
                 bindingContext.ParseResult.GetValueForOption(_copyNonStreamable),

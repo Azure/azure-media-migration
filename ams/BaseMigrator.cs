@@ -127,5 +127,41 @@ namespace AMSMigrate.Ams
                 }
             });
         }
+
+        protected string? GetAssetResourceFilter(string? filterOption, DateTimeOffset? creationTimeStart, DateTimeOffset? creationTimeEnd)
+        {
+            var resourceFilter = filterOption;
+
+            if (creationTimeStart != null || creationTimeEnd != null)
+            {
+                // When --creation-time-start or --create-time-end option is set, 
+                // Convert it to the filter format and combine with the current filter option's settings.
+
+                var startTime = creationTimeStart?.ToString("yyyy-MM-ddThh:mm:ssZ");
+                var endTime = creationTimeEnd?.ToString("yyyy-MM-ddThh:mm:ssZ");
+
+                if (startTime != null)
+                {
+                    if (resourceFilter != null)
+                    {
+                        resourceFilter += " and ";
+                    }
+
+                    resourceFilter += $"properties/created ge {startTime}";
+                }
+
+                if (endTime != null)
+                {
+                    if (resourceFilter != null)
+                    {
+                        resourceFilter += " and ";
+                    }
+
+                    resourceFilter += $"properties/created le {endTime}";
+                }
+            }
+
+            return resourceFilter;
+        }
     }
 }
