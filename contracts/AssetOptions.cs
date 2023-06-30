@@ -5,6 +5,8 @@
         string StoragePath,        
         Packager Packager,
         string PathTemplate,
+        DateTimeOffset? CreationTimeStart,
+        DateTimeOffset? CreationTimeEnd,
         string? ResourceFilter,
         string WorkingDirectory,
         bool CopyNonStreamable,

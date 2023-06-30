@@ -112,6 +112,10 @@ namespace AMSMigrate.Ams
             var storage = await _resourceProvider.GetStorageAccountAsync(account, cancellationToken);
             ReportGenerator? reportGenerator = null;
 
+            var resourceFilter = GetAssetResourceFilter(_analysisOptions.ResourceFilter,
+                                                        _analysisOptions.CreationTimeStart,
+                                                        _analysisOptions.CreationTimeEnd);
+
             if (_analysisOptions.AnalysisType == AnalysisType.Report)
             {
                 var file = File.OpenWrite(Path.Combine(_globalOptions.LogDirectory, $"Report_{DateTime.Now:hh-mm-ss}.html"));
@@ -119,13 +123,13 @@ namespace AMSMigrate.Ams
                 reportGenerator.WriteHeader();
             }
             var assets = account.GetMediaAssets()
-                .GetAllAsync(_analysisOptions.ResourceFilter, cancellationToken: cancellationToken);
+                .GetAllAsync(resourceFilter, cancellationToken: cancellationToken);
             var statistics = new Statistics();
             var assetTypes = new SortedDictionary<string, int>();
 
             List<MediaAssetResource>? filteredList = null;
 
-            if (_analysisOptions.ResourceFilter != null)
+            if (resourceFilter != null)
             {
                 // When a filter is used, it usually inlcude a small list of assets,
                 // The total count of asset can be extracted in advance without much perf hit.

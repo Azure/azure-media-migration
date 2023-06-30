@@ -14,6 +14,22 @@ namespace AMSMigrate
             Arity = ArgumentArity.ExactlyOne
         };
 
+        private readonly Option<DateTimeOffset?> _creationTimeStart = new Option<DateTimeOffset?>(
+            aliases: new[] { "--creation-time-start", "-cs" },
+            description: @"The earliest creation time of the selected assets in UTC, 
+format is yyyy-MM-ddThh:mm:ssZ, the hh:mm:ss is optional.")
+        {
+            Arity = ArgumentArity.ZeroOrOne
+        };
+
+        private readonly Option<DateTimeOffset?> _creationTimeEnd = new Option<DateTimeOffset?>(
+            aliases: new[] { "--creation-time-end", "-ce" },
+            description: @"The latest creation time of the selected assets in UTC, 
+format is yyyy-MM-ddThh:mm:ssZ, the hh:mm:ss is optional.")
+        {
+            Arity = ArgumentArity.ZeroOrOne
+        };
+
         private readonly Option<string?> _filter = new Option<string?>(
             aliases: new[] { "--resource-filter", "-f" },
             description: @"An ODATA condition to filter the resources only when the source account is for media service.
@@ -46,6 +62,8 @@ Report - A migration report")
         {
             var command = new Command(name, description);
             command.AddOption(_sourceAccount);
+            command.AddOption(_creationTimeStart);
+            command.AddOption(_creationTimeEnd);
             command.AddOption(_filter);
             command.AddOption(_analysisType);
             command.AddOption(_batchSize);
@@ -56,6 +74,8 @@ Report - A migration report")
         {
             return new AnalysisOptions(
                 bindingContext.ParseResult.GetValueForOption(_sourceAccount)!,
+                bindingContext.ParseResult.GetValueForOption(_creationTimeStart),
+                bindingContext.ParseResult.GetValueForOption(_creationTimeEnd),
                 bindingContext.ParseResult.GetValueForOption(_filter),
                 bindingContext.ParseResult.GetValueForOption(_analysisType),
                 bindingContext.ParseResult.GetValueForOption(_batchSize)
