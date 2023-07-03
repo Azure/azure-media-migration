@@ -76,5 +76,6 @@
     <DownloadFile SourceUrl="$(ShakaOSX)" DestinationFolder="$(MSBuildProjectDirectory)">
       <Output TaskParameter="DownloadedFile" ItemName="Content" />
     </DownloadFile>
+    <Exec Command="chmod +x packager-linux-x64" Condition="$([MSBuild]::IsOSPlatform('Linux'))" />
   </Target>
 </Project>
