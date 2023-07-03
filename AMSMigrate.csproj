@@ -8,14 +8,14 @@
     <GeneratePackageOnBuild>False</GeneratePackageOnBuild>
     <Title>Azure Media Services Asset Migration Tool</Title>
     <Authors>Azure Media Services</Authors>
-	  <DockerDefaultTargetOS>Linux</DockerDefaultTargetOS>
-	  <DockerfileContext>.</DockerfileContext>
-	  <PackageLicenseFile>LICENSE</PackageLicenseFile>
-	  <EnforceCodeStyleInBuild>True</EnforceCodeStyleInBuild>
-	  <Description>A command line tool to migrate your media assets from Azure Media Services.</Description>
-	  <PackageProjectUrl>https://github.com/Azure/azure-media-migration</PackageProjectUrl>
-	  <PackageReadmeFile>README.md</PackageReadmeFile>
-	  <RepositoryUrl>https://github.com/Azure/azure-media-migration</RepositoryUrl>
+    <DockerDefaultTargetOS>Linux</DockerDefaultTargetOS>
+    <DockerfileContext>.</DockerfileContext>
+    <PackageLicenseFile>LICENSE</PackageLicenseFile>
+    <EnforceCodeStyleInBuild>True</EnforceCodeStyleInBuild>
+    <Description>A command line tool to migrate your media assets from Azure Media Services.</Description>
+    <PackageProjectUrl>https://github.com/Azure/azure-media-migration</PackageProjectUrl>
+    <PackageReadmeFile>README.md</PackageReadmeFile>
+    <RepositoryUrl>https://github.com/Azure/azure-media-migration</RepositoryUrl>
   </PropertyGroup>
 
   <ItemGroup>
@@ -46,14 +46,14 @@
     <None Update="packager-linux-x64">
       <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
       <PackagePath>tools\$(TargetFramework)\any\%(Filename)%(Extension)</PackagePath>
-	</None>
+    </None>
     <None Update="packager-osx-x64">
       <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
       <PackagePath>tools\$(TargetFramework)\any\%(Filename)%(Extension)</PackagePath>
-	</None>
+    </None>
     <None Update="packager-win-x64.exe">
       <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
-	  <PackagePath>tools\$(TargetFramework)\any\%(Filename)%(Extension)</PackagePath>
+      <PackagePath>tools\$(TargetFramework)\any\%(Filename)%(Extension)</PackagePath>
     </None>
     <None Update="README.md">
       <Pack>True</Pack>
@@ -67,14 +67,14 @@
     <Company>Microsoft Corporation</Company>
   </PropertyGroup>
   <Target Name="DownloadShakaPackager" BeforeTargets="Build">
-	<DownloadFile SourceUrl="$(ShakaWin)" DestinationFolder="$(MSBuildProjectDirectory)">
+    <DownloadFile SourceUrl="$(ShakaWin)" DestinationFolder="$(MSBuildProjectDirectory)">
       <Output TaskParameter="DownloadedFile" ItemName="Content" />
     </DownloadFile>
     <DownloadFile SourceUrl="$(ShakaLinux)" DestinationFolder="$(MSBuildProjectDirectory)">
       <Output TaskParameter="DownloadedFile" ItemName="Content" />
     </DownloadFile>
     <DownloadFile SourceUrl="$(ShakaOSX)" DestinationFolder="$(MSBuildProjectDirectory)">
-	  <Output TaskParameter="DownloadedFile" ItemName="Content" />
+      <Output TaskParameter="DownloadedFile" ItemName="Content" />
     </DownloadFile>
   </Target>
 </Project>
