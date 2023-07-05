@@ -14,9 +14,11 @@
       }
     },
     "WSL": {
-      "commandName": "WSL2",
-      "commandLineArgs": "AMSMigrate.dll assets -v debug -s b2c12710-ecdf-4532-9ba6-7e74a219b5f2 -g provenance -n provenanceuswc --storage-account amsencodermsitest -t $web/linux/${AssetName} -f \"name eq 'uploaded-47efd87d00'\"",
-      "distributionName": ""
+        "commandName": "WSL2",
+        "commandLineArgs": "AMSMigrate.dll storage -s b2c12710-ecdf-4532-9ba6-7e74a219b5f2 -g pohhsuTest -n pohhsumediaservice -o pohhsumediaservice -t generated-output/tx-${AssetName} --prefix tearofsteel-ed541c0dbb-StandardEncoder-H264MultipleBitrate1080p-5e8f356300 --skip-migrated false ",
+
+        "commandLineArgs_Assets": "AMSMigrate.dll assets -s b2c12710-ecdf-4532-9ba6-7e74a219b5f2 -g pohhsuTest -n pohhsumediaservice -o pohhsumediaservice -t generated-output/tx-${AssetName} -f \"name eq 'tearofsteel-ed541c0dbb-StandardEncoder-H264MultipleBitrate1080p-5e8f356300'\" --skip-migrated false ",
+        "distributionName": ""
     }
   }
 }
