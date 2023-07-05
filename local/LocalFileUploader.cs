@@ -7,10 +7,10 @@ namespace AMSMigrate.Local
 {
     internal class LocalFileUploader : IFileUploader
     {
-        private readonly AssetOptions _assetOptions;
+        private readonly MigratorOptions _assetOptions;
         private readonly ILogger _logger;
 
-        public LocalFileUploader(AssetOptions options, ILogger<LocalFileUploader> logger)
+        public LocalFileUploader(MigratorOptions options, ILogger<LocalFileUploader> logger)
         {
             _assetOptions = options;
             _logger = logger;

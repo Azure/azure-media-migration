@@ -11,12 +11,12 @@ namespace AMSMigrate.Azure
 {
     internal class AzureStorageUploader : IFileUploader
     {
-        private readonly AssetOptions _options;
+        private readonly MigratorOptions _options;
         private readonly ILogger _logger;
         private readonly BlobServiceClient _blobServiceClient;
 
         public AzureStorageUploader(
-            AssetOptions options,
+            MigratorOptions options,
             TokenCredential credential, 
             ILogger<AzureStorageUploader> logger)
         {

@@ -4,8 +4,6 @@ using AMSMigrate.Contracts;
 using Azure.Storage.Blobs;
 using Azure.Storage.Blobs.Specialized;
 using Microsoft.Extensions.Logging;
-using System.ComponentModel;
-using System.Reflection.Metadata;
 
 namespace AMSMigrate.Transform
 {
@@ -13,13 +11,13 @@ namespace AMSMigrate.Transform
 
     internal abstract class StorageTransform : ITransform<AssetDetails, AssetMigrationResult>
     {
-        protected readonly AssetOptions _options;
+        protected readonly MigratorOptions _options;
         private readonly TemplateMapper _templateMapper;
         protected readonly ILogger _logger;
         protected readonly IFileUploader _fileUploader;     
 
         public StorageTransform(
-            AssetOptions options,
+            MigratorOptions options,
             TemplateMapper templateMapper,
             IFileUploader fileUploader,
             ILogger logger)

@@ -17,8 +17,8 @@ namespace AMSMigrate.Azure
             _loggerFactory = loggerFactory;
         }
 
-        public IFileUploader GetStorageProvider(AssetOptions assetOptions) 
-            => new AzureStorageUploader(assetOptions, _credentials, _loggerFactory.CreateLogger<AzureStorageUploader>());
+        public IFileUploader GetStorageProvider(MigratorOptions migratorOptions) 
+            => new AzureStorageUploader(migratorOptions, _credentials, _loggerFactory.CreateLogger<AzureStorageUploader>());
 
         public ISecretUploader GetSecretProvider(KeyOptions keyOptions) 
             => new KeyVaultUploader(keyOptions, _credentials, _loggerFactory.CreateLogger<KeyVaultUploader>());

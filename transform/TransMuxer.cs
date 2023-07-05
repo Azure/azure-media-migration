@@ -11,12 +11,12 @@ namespace AMSMigrate.Transform
     {
         static readonly StreamingPolicyStreamingProtocol Protocol = StreamingPolicyStreamingProtocol.Hls;
 
-        private readonly AssetOptions _options;
+        private readonly MigratorOptions _options;
         private readonly ILogger _logger;
         private string? _hostName = null;
 
         public TransMuxer(
-            AssetOptions options,
+            MigratorOptions options,
             ILogger<TransMuxer> logger)
         {
             _logger = logger;

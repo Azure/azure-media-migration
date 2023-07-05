@@ -8,7 +8,7 @@ namespace AMSMigrate.Transform
     internal class UploadTransform : StorageTransform
     {
         public UploadTransform(
-            AssetOptions options,
+            MigratorOptions options,
             IFileUploader uploader,
             ILogger<UploadTransform> logger,
             TemplateMapper templateMapper) :

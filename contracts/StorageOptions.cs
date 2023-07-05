@@ -13,5 +13,18 @@
         bool SkipMigrated,
         bool DeleteMigrated,
         int SegmentDuration,
-        int BatchSize);
+        int BatchSize)
+        : MigratorOptions(
+            AccountName,
+            StoragePath,
+            Packager,
+            PathTemplate,
+            WorkingDirectory,
+            CopyNonStreamable,
+            OverWrite,
+            MarkCompleted,
+            SkipMigrated,
+            DeleteMigrated,
+            SegmentDuration,
+            BatchSize);
 }

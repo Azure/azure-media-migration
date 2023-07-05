@@ -5,15 +5,15 @@ namespace AMSMigrate.Transform
 {
     internal class PackagerFactory
     {
-        private readonly AssetOptions _options;
+        private readonly MigratorOptions _options;
         private readonly ILoggerFactory _loggerFactory;
         private readonly TransMuxer _transMuxer;
 
-        public PackagerFactory(ILoggerFactory factory, AssetOptions options, TransMuxer transMuxer) 
-        {
-            _transMuxer = transMuxer;
-            _options = options;
+        public PackagerFactory(ILoggerFactory factory, MigratorOptions options) 
+        {          
             _loggerFactory = factory;
+            _options = options;
+            _transMuxer = new TransMuxer(options, _loggerFactory.CreateLogger<TransMuxer>());
         }
 
         public BasePackager GetPackager(AssetDetails details, CancellationToken cancellationToken)
