@@ -6,7 +6,7 @@ using System.Diagnostics;
 
 namespace AMSMigrate.Transform
 {
-    internal class TransformFactory
+    internal class TransformFactory<TOption>
     {
         private readonly IList<StorageTransform> _storageTransforms;
         private readonly List<AssetTransform> _assetTransforms 
@@ -14,35 +14,47 @@ namespace AMSMigrate.Transform
 
         public TransformFactory(
             ILoggerFactory loggerFactory,
-            AssetOptions options,
+            TOption options,
             TemplateMapper templateMapper,
-            PackagerFactory packagerFactory,
             ICloudProvider cloudProvider)
         {
             _storageTransforms = new List<StorageTransform>();
-            var uploader = cloudProvider.GetStorageProvider(options);
-            if (options.Packager != Packager.None)
-            {
-                _storageTransforms.Add(
-                    new PackageTransform(
-                        options,
-                        loggerFactory.CreateLogger<PackageTransform>(),
-                        templateMapper,
-                        uploader,
-                        packagerFactory));
-            }
-            if (options.CopyNonStreamable || options.Packager == Packager.None)
-            {
-                _storageTransforms.Add(new UploadTransform(
-                    options, uploader, loggerFactory.CreateLogger<UploadTransform>(), templateMapper));
-            }
 
+            if (options is MigratorOptions migratorOption)
+            {
+                var uploader = cloudProvider.GetStorageProvider(migratorOption);
+                var packagerFactory = new PackagerFactory(loggerFactory, migratorOption);
+
+                if (migratorOption.Packager != Packager.None)
+                {
+                    _storageTransforms.Add(
+                        new PackageTransform<TOption>(
+                            migratorOption,
+                            loggerFactory.CreateLogger<PackageTransform<TOption>>(),
+                            templateMapper,
+                            uploader,
+                            packagerFactory));
+                }
+                if (migratorOption.CopyNonStreamable || migratorOption.Packager == Packager.None)
+                {
+                    _storageTransforms.Add(new UploadTransform(
+                        migratorOption, uploader, loggerFactory.CreateLogger<UploadTransform>(), templateMapper));
+                }
+            }
+            else
+            {
+                throw new ArgumentException("Paramter 'options' must be for MigratorOptions.");
+            }
 
             // There should be at least one transform.
             Debug.Assert(_storageTransforms.Count > 0, "No transform selected based on the options provided");
-            _assetTransforms.AddRange(_storageTransforms.Select(
-                t => new AssetTransform(options, templateMapper, t, loggerFactory.CreateLogger<AssetTransform>()))
-                );
+
+            if (options is AssetOptions assetOptions)
+            {
+                _assetTransforms.AddRange(_storageTransforms.Select(
+                    t => new AssetTransform(assetOptions, templateMapper, t, loggerFactory.CreateLogger<AssetTransform>()))
+                    );
+            }
         }
 
         public IEnumerable<StorageTransform> StorageTransforms => _storageTransforms;

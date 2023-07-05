@@ -17,7 +17,7 @@ namespace AMSMigrate.Local
             throw new NotImplementedException();
         }
 
-        public IFileUploader GetStorageProvider(AssetOptions assetOptions)
+        public IFileUploader GetStorageProvider(MigratorOptions assetOptions)
         {
             return new LocalFileUploader(assetOptions, _loggerFactory.CreateLogger<LocalFileUploader>());
         }

@@ -3,7 +3,7 @@ namespace AMSMigrate.Contracts
 {
     interface ICloudProvider
     {
-        IFileUploader GetStorageProvider(AssetOptions assetOptions);
+        IFileUploader GetStorageProvider(MigratorOptions migratorOptions);
 
         ISecretUploader GetSecretProvider(KeyOptions keyOptions);
     }

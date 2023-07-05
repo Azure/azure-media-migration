@@ -111,8 +111,6 @@ amsmigrate storage -s <subscription id> -g <resource group> -n <source storage a
                 .AddSingleton(console)
                 .AddSingleton<IMigrationTracker<BlobContainerClient, AssetMigrationResult>, AssetMigrationTracker>()
                 .AddSingleton<TemplateMapper>()
-                .AddSingleton<TransMuxer>()
-                .AddSingleton<TransformFactory>()
                 .AddSingleton<AzureResourceProvider>()
                 .AddLogging(builder =>
                 {
@@ -170,7 +168,7 @@ amsmigrate storage -s <subscription id> -g <resource group> -n <source storage a
             using var listener = new TextWriterTraceListener(globalOptions.LogFile);
             var collection = SetupServices(globalOptions, listener)
                 .AddSingleton(assetOptions)
-                .AddSingleton<PackagerFactory>()
+                .AddSingleton<TransformFactory<AssetOptions>>()
                 .AddSingleton<AssetMigrator>();
             var provider = collection.BuildServiceProvider();
             var logger = provider.GetRequiredService<ILogger<Program>>();
@@ -187,7 +185,7 @@ amsmigrate storage -s <subscription id> -g <resource group> -n <source storage a
             using var listener = new TextWriterTraceListener(globalOptions.LogFile);
             var collection = SetupServices(globalOptions, listener)
                 .AddSingleton(storageOptions)
-                .AddSingleton<PackagerFactory>()
+                .AddSingleton<TransformFactory<StorageOptions>>()
                 .AddSingleton<StorageMigrator>();
             var provider = collection.BuildServiceProvider();
             var logger = provider.GetRequiredService<ILogger<Program>>();

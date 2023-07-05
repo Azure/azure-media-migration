@@ -5,13 +5,13 @@ using Microsoft.Extensions.Logging;
 
 namespace AMSMigrate.Transform
 {
-    internal class PackageTransform : StorageTransform
+    internal class PackageTransform<TOptions> : StorageTransform
     {
         private readonly PackagerFactory _packagerFactory;
 
         public PackageTransform(
-            AssetOptions options,
-            ILogger<PackageTransform> logger,
+            MigratorOptions options,
+            ILogger<PackageTransform<TOptions>> logger,
             TemplateMapper templateMapper,
             IFileUploader uploader,
             PackagerFactory factory)
