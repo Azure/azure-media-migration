@@ -8,7 +8,7 @@ namespace AMSMigrate
     {
         private readonly Option<string> _sourceAccount = new Option<string>(
              aliases: new[] { "--source-account-name", "-n" },
-             description: "Azure Media Services Account or Storage account name.")
+             description: "Azure Media Services Account.")
         {
             IsRequired = true,
             Arity = ArgumentArity.ExactlyOne
