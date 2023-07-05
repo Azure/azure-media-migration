@@ -89,7 +89,7 @@ namespace AMSMigrate.Ams
                 cancellationToken: cancellationToken);
             var metric = queryResult.Metrics[0];
             var series = metric.TimeSeries[metric.TimeSeries.Count - 1];
-            var totalAssets = series.Values.Last(v => v.Average != null).Average ?? 0.0;
+            var totalAssets = series.Values.LastOrDefault(v => v.Average != null)?.Average ?? 0.0;
             return totalAssets;
         }
 
