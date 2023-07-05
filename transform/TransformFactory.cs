@@ -12,6 +12,9 @@ namespace AMSMigrate.Transform
         private readonly List<AssetTransform> _assetTransforms 
             = new List<AssetTransform>();
 
+        private readonly IFileUploader _uploader;
+        private readonly TemplateMapper _templateMapper;
+
         public TransformFactory(
             ILoggerFactory loggerFactory,
             TOption options,
@@ -19,26 +22,28 @@ namespace AMSMigrate.Transform
             ICloudProvider cloudProvider)
         {
             _storageTransforms = new List<StorageTransform>();
-
+            
             if (options is MigratorOptions migratorOption)
             {
-                var uploader = cloudProvider.GetStorageProvider(migratorOption);
+                _uploader = cloudProvider.GetStorageProvider(migratorOption);
+                _templateMapper = templateMapper;
+                
                 var packagerFactory = new PackagerFactory(loggerFactory, migratorOption);
 
                 if (migratorOption.Packager != Packager.None)
                 {
                     _storageTransforms.Add(
-                        new PackageTransform<TOption>(
+                        new PackageTransform(
                             migratorOption,
-                            loggerFactory.CreateLogger<PackageTransform<TOption>>(),
+                            loggerFactory.CreateLogger<PackageTransform>(),
                             templateMapper,
-                            uploader,
+                            _uploader,
                             packagerFactory));
                 }
                 if (migratorOption.CopyNonStreamable || migratorOption.Packager == Packager.None)
                 {
                     _storageTransforms.Add(new UploadTransform(
-                        migratorOption, uploader, loggerFactory.CreateLogger<UploadTransform>(), templateMapper));
+                        migratorOption, _uploader, loggerFactory.CreateLogger<UploadTransform>(), templateMapper));
                 }
             }
             else
@@ -60,6 +65,10 @@ namespace AMSMigrate.Transform
         public IEnumerable<StorageTransform> StorageTransforms => _storageTransforms;
 
         public IEnumerable<AssetTransform> AssetTransforms => _assetTransforms;
+
+        public IFileUploader Uploader => _uploader;
+
+        public TemplateMapper TemplateMapper => _templateMapper;
 
         public ITransform<MediaTransformResource> TransformTransform => throw new NotImplementedException();
     }

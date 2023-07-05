@@ -48,6 +48,22 @@ namespace AMSMigrate.Local
             // Make it no op for local file provider.
             return;
         }
+
+        public async Task<bool> CanUploadAsync(
+            string containerName,
+            string outputPath,
+            CancellationToken cancellationToken)
+        {
+            return true;
+        }
+
+        public async Task UploadCleanupAsync(
+            string containerName,
+            string outputPath,
+            CancellationToken cancellationToken)
+        {
+            // Nothing to cleanup, make it no-op for local file provider.
+        }
 #pragma warning restore CS1998
     }
 }
