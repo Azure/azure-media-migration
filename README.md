@@ -69,8 +69,7 @@ Smooth Streaming assets or assets from live events don't need to be downloaded l
 ## Migrate to an Azure Storage Account.
 
 Ensure that the Identity you are using to migrate has the following permissions
-* 'Storage Blob Data Contributor' role on the storage account to which you are migrating.
-
+* The identity that runs this migration tool should be added to the ['Storage Blob Data Contributor'](https://learn.microsoft.com/en-us/azure/role-based-access-control/built-in-roles#storage-blob-data-contributor) role for the source and destination storage accounts.
 
 # Optional FFmpeg dependency
 The tool optionally uses ffmpeg for media format conversion. It primarily uses shaka-packager but can be changed to use ffmpeg.
