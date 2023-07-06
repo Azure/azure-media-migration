@@ -35,7 +35,6 @@ Below are valid keyword that can be put in the path template:
     ${AssetId}       for the Guid of the assetId.
     ${ContainerName} for the container name of the input asset.
     ${AlternateId}   for the alternative id of the input asset, use AssetName if AlternateId is not set.
-    ${LocatorId}     for the first locatorId of the input asset, or an empty GUID if locatorId is not set.
 e.g., ams-migration-output/${AssetName}/ will upload to a container named 'ams-migration-output' with path beginning with the input asset name.")
         {
             Arity = ArgumentArity.ZeroOrOne
