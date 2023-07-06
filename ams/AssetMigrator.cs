@@ -154,7 +154,7 @@ namespace AMSMigrate.Ams
                     _logger.LogDebug("Asset: {name} has already been migrated.", asset.Data.Name);
 
                     result.Status = MigrationStatus.AlreadyMigrated;
-
+                    _logger.LogDebug("Migrated asset: {asset}, container: {container}, type: {type}, status: {status}", asset.Data.Name, asset.Data.Container, result.AssetType, result.Status);
                     return result;
                 }
             }
@@ -220,12 +220,15 @@ namespace AMSMigrate.Ams
                     _logger.LogWarning("Deleting asset {name} after migration", asset.Data.Name);
                     await asset.DeleteAsync(WaitUntil.Completed, cancellationToken);
                 }
+                _logger.LogDebug("Migrated asset: {asset}, container: {container}, type: {type}, status: {status}", asset.Data.Name, asset.Data.Container, result.AssetType, result.Status);
                 return result;
             }
             catch (Exception ex)
             {
                 _logger.LogError(ex, "Failed to migrate asset {name}.", asset.Data.Name);
-                return MigrationStatus.Failed;
+                result.Status = MigrationStatus.Failed;
+                _logger.LogDebug("Migrated asset: {asset}, container: {container}, type: {type}, status: {status}", asset.Data.Name, asset.Data.Container, result.AssetType, result.Status);
+                return result;
             }
         }
     }
