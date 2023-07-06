@@ -173,10 +173,10 @@ namespace AMSMigrate.Transform
                 await Task.WhenAll(FileToTrackMap.Select(async item =>
                 {
                     var (file, tracks) = item;
-                    await DownloadAsync(file, tracks, cancellationToken);
+                    var filePath = Path.Combine(workingDirectory, file);
+                    await DownloadAsync(filePath, tracks, cancellationToken);
                 }));
             }
-
         }
 
 

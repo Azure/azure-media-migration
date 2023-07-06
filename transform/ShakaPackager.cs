@@ -47,11 +47,11 @@ namespace AMSMigrate.Transform
             }
             else if (!TransmuxedDownload)
             {
-                UsePipeForInput = true;
+                UsePipeForInput = false;
             }
 
             //TODO: Shaka packager write to Windows named pipe fails due to path issue.
-            UsePipeForOutput = !RuntimeInformation.IsOSPlatform(OSPlatform.Windows);
+            UsePipeForOutput = false;
         }
 
         private string GetArguments(IList<string> inputs, IList<string> outputs, IList<string> manifests)

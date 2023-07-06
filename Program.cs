@@ -126,7 +126,11 @@ amsmigrate storage -s <subscription id> -g <resource group> -n <source storage a
                     };
                     builder
                         .SetMinimumLevel(LogLevel.Trace)
-                        .AddSpectreConsole(builder => builder.SetMinimumLevel(options.LogLevel).UseConsole(console))
+                        .AddSpectreConsole(builder =>
+                            builder
+                                .SetMinimumLevel(options.LogLevel)
+                                .UseConsole(console)
+                                .WriteInBackground())
                         .AddTraceSource(logSwitch, listener);
                 });
             if (options.CloudType == CloudType.Local)
