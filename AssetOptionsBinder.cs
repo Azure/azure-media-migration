@@ -83,11 +83,6 @@ Visit https://learn.microsoft.com/en-us/azure/media-services/latest/filter-order
             IsRequired = false
         };
 
-        private readonly Option<bool> _markComplete = new(
-            aliases: new[] { "-m", "--mark-complete" },
-            () => true,
-            description: @"Mark completed assets by writing metadata on the container");
-
         private readonly Option<bool> _skipMigrated = new(
             aliases: new[] { "--skip-migrated" },
             () => true,
@@ -102,11 +97,6 @@ Visit https://learn.microsoft.com/en-us/azure/media-services/latest/filter-order
             aliases: new[] { "-y", "--overwrite" },
             () => true,
             description: @"Overwrite the files in the destination.");
-
-        private readonly Option<bool> _deleteMigrated = new(
-            aliases: new[] { "--delete-migrated" },
-            () => false,
-            description: @"Delete the asset after migration.");
 
         const int DefaultBatchSize = 1;
         private readonly Option<int> _batchSize = new(
@@ -150,9 +140,7 @@ Visit https://learn.microsoft.com/en-us/azure/media-services/latest/filter-order
             command.AddOption(_creationTimeEnd);
             command.AddOption(_filter);
             command.AddOption(_overwrite);
-            command.AddOption(_markComplete);
             command.AddOption(_skipMigrated);
-            command.AddOption(_deleteMigrated);
             command.AddOption(_packagerType);
             command.AddOption(_workingDirectory);
             command.AddOption(_copyNonStreamable);
@@ -175,9 +163,7 @@ Visit https://learn.microsoft.com/en-us/azure/media-services/latest/filter-order
                 workingDirectory,
                 bindingContext.ParseResult.GetValueForOption(_copyNonStreamable),
                 bindingContext.ParseResult.GetValueForOption(_overwrite),
-                bindingContext.ParseResult.GetValueForOption(_markComplete),
                 bindingContext.ParseResult.GetValueForOption(_skipMigrated),
-                bindingContext.ParseResult.GetValueForOption(_deleteMigrated),
                 SegmentDurationInSeconds,
                 bindingContext.ParseResult.GetValueForOption(_batchSize)
             );

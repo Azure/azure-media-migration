@@ -106,8 +106,7 @@ namespace AMSMigrate.Ams
                 new BarChartItem("AlreadyMigrated", value.Migrated, Color.Green),
                 new BarChartItem("Skipped", value.Skipped, Color.Grey),
                 new BarChartItem("Successful", value.Successful, Color.Green),
-                new BarChartItem("Failed", value.Failed, Color.Red),
-                new BarChartItem("Deleted", value.Deleted, Color.Orange3)
+                new BarChartItem("Failed", value.Failed, Color.Red)
             };
         }
 
@@ -209,15 +208,8 @@ namespace AMSMigrate.Ams
                 _logger.LogWarning("Skipping container {name} because it is not in a supported format!!!", container.Name);
             }
             
-            if (_storageOptions.MarkCompleted)
-            {
-                await _tracker.UpdateMigrationStatus(containerClient, result, cancellationToken);
-            }
-            if (result.Status == MigrationStatus.Completed && _storageOptions.DeleteMigrated)
-            {
-                _logger.LogWarning("Deleting container {name} after migration", container.Name);
-                await storageClient.DeleteBlobContainerAsync(container.Name, cancellationToken: cancellationToken);
-            }
+            await _tracker.UpdateMigrationStatus(containerClient, result, cancellationToken);
+
             return result;
         }
         
@@ -241,10 +233,6 @@ namespace AMSMigrate.Ams
                     {
                         case MigrationStatus.Completed:
                             ++stats.Successful;
-                            if (_storageOptions.DeleteMigrated)
-                            {
-                                ++stats.Deleted;
-                            }
                             break;
                         case MigrationStatus.Skipped:
                             ++stats.Skipped;
@@ -276,8 +264,8 @@ namespace AMSMigrate.Ams
                 .AddRow("[green]Already Migrated[/]", $"[green]{stats.Migrated}[/]")
                 .AddRow("[gray]Skipped[/]", $"[gray]{stats.Skipped}[/]")
                 .AddRow("[green]Successful[/]", $"[green]{stats.Successful}[/]")
-                .AddRow("[red]Failed[/]", $"[red]{stats.Failed}[/]")
-                .AddRow("[orange3]Deleted[/]", $"[orange3]{stats.Deleted}[/]");
+                .AddRow("[red]Failed[/]", $"[red]{stats.Failed}[/]");
+
             _console.Write(table);
         }
     }

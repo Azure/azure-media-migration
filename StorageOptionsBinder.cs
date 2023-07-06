@@ -60,11 +60,6 @@ e.g., ams-migration-output/${ContainerName} will upload to a container named 'am
             IsRequired = false
         };
 
-        private readonly Option<bool> _markComplete = new(
-            aliases: new[] { "-m", "--mark-complete" },
-            () => true,
-            description: @"Mark completed assets by writing metadata on the container");
-
         private readonly Option<bool> _skipMigrated = new(
             aliases: new[] { "--skip-migrated" },
             () => true,
@@ -79,11 +74,6 @@ e.g., ams-migration-output/${ContainerName} will upload to a container named 'am
             aliases: new[] { "-y", "--overwrite" },
             () => true,
             description: @"Overwrite the files in the destination.");
-
-        private readonly Option<bool> _deleteMigrated = new(
-            aliases: new[] { "--delete-migrated" },
-            () => false,
-            description: @"Delete the container after migration.");
 
         const int DefaultBatchSize = 1;
         private readonly Option<int> _batchSize = new(
@@ -125,9 +115,7 @@ e.g., ams-migration-output/${ContainerName} will upload to a container named 'am
             command.AddOption(_pathTemplate);
             command.AddOption(_prefix);
             command.AddOption(_overwrite);
-            command.AddOption(_markComplete);
             command.AddOption(_skipMigrated);
-            command.AddOption(_deleteMigrated);
             command.AddOption(_packagerType);
             command.AddOption(_workingDirectory);
             command.AddOption(_copyNonStreamable);
@@ -148,9 +136,7 @@ e.g., ams-migration-output/${ContainerName} will upload to a container named 'am
                 workingDirectory,
                 bindingContext.ParseResult.GetValueForOption(_copyNonStreamable),
                 bindingContext.ParseResult.GetValueForOption(_overwrite),
-                bindingContext.ParseResult.GetValueForOption(_markComplete),
                 bindingContext.ParseResult.GetValueForOption(_skipMigrated),
-                bindingContext.ParseResult.GetValueForOption(_deleteMigrated),
                 SegmentDurationInSeconds,
                 bindingContext.ParseResult.GetValueForOption(_batchSize)
             );
