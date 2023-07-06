@@ -41,7 +41,7 @@ Visit https://learn.microsoft.com/en-us/azure/media-services/latest/filter-order
 
         private readonly Option<AnalysisType> _analysisType = new(
             aliases: new[] { "-t", "--analysis-type" },
-            () => AnalysisType.Summary,
+            () => AnalysisType.Report,
             description: @"The kind of analysis to do.
 Summary - Summary of migration
 Detailed - A detailed classification of assets,
