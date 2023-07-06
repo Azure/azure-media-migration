@@ -9,9 +9,7 @@
         string WorkingDirectory,
         bool CopyNonStreamable,
         bool OverWrite,
-        bool MarkCompleted,
         bool SkipMigrated,
-        bool DeleteMigrated,
         int SegmentDuration,
         int BatchSize)
         : MigratorOptions(
@@ -22,9 +20,7 @@
             WorkingDirectory,
             CopyNonStreamable,
             OverWrite,
-            MarkCompleted,
             SkipMigrated,
-            DeleteMigrated,
             SegmentDuration,
             BatchSize);
 }

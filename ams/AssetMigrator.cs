@@ -12,7 +12,7 @@ using System.Threading.Channels;
 
 namespace AMSMigrate.Ams
 {
-    record struct AssetStats(int Total, int Migrated, int Skipped, int Successful, int Failed, int Deleted);
+    record struct AssetStats(int Total, int Migrated, int Skipped, int Successful, int Failed);
 
     internal class AssetMigrator : BaseMigrator
     {
@@ -94,10 +94,6 @@ namespace AMSMigrate.Ams
                     {
                         case MigrationStatus.Completed:
                             ++stats.Successful;
-                            if (_options.DeleteMigrated)
-                            {
-                                ++stats.Deleted;
-                            }
                             break;
                         case MigrationStatus.Skipped:
                             ++stats.Skipped;
@@ -130,8 +126,8 @@ namespace AMSMigrate.Ams
                 .AddRow("[green]Already Migrated[/]", $"[green]{stats.Migrated}[/]")
                 .AddRow("[gray]Skipped[/]", $"[gray]{stats.Skipped}[/]")
                 .AddRow("[green]Successful[/]", $"[green]{stats.Successful}[/]")
-                .AddRow("[red]Failed[/]", $"[red]{stats.Failed}[/]")
-                .AddRow("[orange3]Deleted[/]", $"[orange3]{stats.Deleted}[/]");
+                .AddRow("[red]Failed[/]", $"[red]{stats.Failed}[/]");
+
             _console.Write(table);
         }
 
@@ -239,15 +235,8 @@ namespace AMSMigrate.Ams
                     }
                 }
 
-                if (_options.MarkCompleted) 
-                {
-                    await _tracker.UpdateMigrationStatus(container, result, cancellationToken);
-                }
-                if (_options.DeleteMigrated && result.Status == MigrationStatus.Completed)
-                {
-                    _logger.LogWarning("Deleting asset {name} after migration", asset.Data.Name);
-                    await asset.DeleteAsync(WaitUntil.Completed, cancellationToken);
-                }
+                await _tracker.UpdateMigrationStatus(container, result, cancellationToken);
+
                 _logger.LogDebug("Migrated asset: {asset}, container: {container}, type: {type}, status: {status}", asset.Data.Name, asset.Data.Container, result.AssetType, result.Status);
                 return result;
             }
