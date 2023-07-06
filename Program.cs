@@ -55,6 +55,8 @@ This migrates the assets to a different storage account in your subscription.";
                     await MigrateAssetsAsync(globalOptions, assetOptions, context.GetCancellationToken());
                 });
 
+// disable storage migrate option until ready
+/*
             var storageOptionsBinder = new StorageOptionsBinder();
             var storageCommand = storageOptionsBinder.GetCommand("storage", @"Directly migrate the assets from the storage account.
 Doesn't require the Azure media services to be running.
@@ -68,7 +70,10 @@ amsmigrate storage -s <subscription id> -g <resource group> -n <source storage a
                 var storageOptions = storageOptionsBinder.GetValue(context.BindingContext);
                 await MigrateStorageAsync(globalOptions, storageOptions, context.GetCancellationToken());
             });
+*/
 
+// disable key migrate option until ready
+/*
             var keyOptionsBinder = new KeyOptionsBinder();
             var keysCommand = keyOptionsBinder.GetCommand();
             rootCommand.Add(keysCommand);
@@ -79,6 +84,7 @@ amsmigrate storage -s <subscription id> -g <resource group> -n <source storage a
                     var keyOptions = keyOptionsBinder.GetValue(context.BindingContext);
                     await MigrateKeysAsync(globalOptions, keyOptions, context.GetCancellationToken());
                 });
+*/
 
             var parser = new CommandLineBuilder(rootCommand)
                 .UseDefaults()

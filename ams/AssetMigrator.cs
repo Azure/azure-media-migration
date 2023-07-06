@@ -154,7 +154,7 @@ namespace AMSMigrate.Ams
                     _logger.LogDebug("Asset: {name} has already been migrated.", asset.Data.Name);
 
                     result.Status = MigrationStatus.AlreadyMigrated;
-
+                    _logger.LogDebug("Migrated asset: {asset}, container: {container}, type: {type}, status: {status}", asset.Data.Name, asset.Data.Container, result.AssetType, result.Status);
                     return result;
                 }
             }
@@ -185,17 +185,48 @@ namespace AMSMigrate.Ams
 
                     if (result.IsSupportedAsset)
                     {
-                        foreach (var transform in _transformFactory.AssetTransforms)
+                        var uploader = _transformFactory.Uploader;
+                        var (Container, Path) = _transformFactory.TemplateMapper.ExpandAssetTemplate(
+                                                            record.Asset, 
+                                                            _options.PathTemplate);
+
+                        var canUpload = await uploader.CanUploadAsync(
+                                                            Container, 
+                                                            Path, 
+                                                            cancellationToken);
+
+                        if (canUpload)
                         {
-                            var transformResult = (AssetMigrationResult)await transform.RunAsync(record, cancellationToken);
-
-                            result.Status = transformResult.Status;
-                            result.OutputPath = transformResult.OutputPath;
-
-                            if (result.Status == MigrationStatus.Failed)
+                            try
                             {
-                                break;
+                                foreach (var transform in _transformFactory.AssetTransforms)
+                                {
+                                    var transformResult = (AssetMigrationResult)await transform.RunAsync(record, cancellationToken);
+
+                                    result.Status = transformResult.Status;
+                                    result.OutputPath = transformResult.OutputPath;
+
+                                    if (result.Status == MigrationStatus.Failed)
+                                    {
+                                        break;
+                                    }
+                                }
                             }
+                            finally
+                            {
+                                await uploader.UploadCleanupAsync(Container, Path, cancellationToken);
+                            }
+                        }
+                        else
+                        {
+                            //
+                            // Another instance of the tool is working on the output container,
+                            //
+                            result.Status = MigrationStatus.Skipped;
+
+                            _logger.LogWarning("Another tool is working on the container {container} and output path: {output}",
+                                               Container,
+                                               Path);
                         }
                     }
                     else
@@ -203,12 +234,9 @@ namespace AMSMigrate.Ams
                         // The asset type is not supported in this milestone,
                         // Mark the status as Skipped for caller to do the statistics.
                         result.Status = MigrationStatus.Skipped;
-                    }
-                }
 
-                if (result.Status == MigrationStatus.Skipped)
-                {
-                    _logger.LogWarning("Skipping asset {name} because it is not in a supported format!!!", asset.Data.Name);
+                        _logger.LogWarning("Skipping asset {name} because it is not in a supported format!!!", asset.Data.Name);
+                    }
                 }
 
                 if (_options.MarkCompleted) 
@@ -220,12 +248,15 @@ namespace AMSMigrate.Ams
                     _logger.LogWarning("Deleting asset {name} after migration", asset.Data.Name);
                     await asset.DeleteAsync(WaitUntil.Completed, cancellationToken);
                 }
+                _logger.LogDebug("Migrated asset: {asset}, container: {container}, type: {type}, status: {status}", asset.Data.Name, asset.Data.Container, result.AssetType, result.Status);
                 return result;
             }
             catch (Exception ex)
             {
                 _logger.LogError(ex, "Failed to migrate asset {name}.", asset.Data.Name);
-                return MigrationStatus.Failed;
+                result.Status = MigrationStatus.Failed;
+                _logger.LogDebug("Migrated asset: {asset}, container: {container}, type: {type}, status: {status}", asset.Data.Name, asset.Data.Container, result.AssetType, result.Status);
+                return result;
             }
         }
     }

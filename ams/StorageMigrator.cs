@@ -155,19 +155,49 @@ namespace AMSMigrate.Ams
 
             if (result.IsSupportedAsset)
             {
-                var transforms = _transformFactory.StorageTransforms;
+                var uploader = _transformFactory.Uploader;
+                var (Container, Path) = _transformFactory.TemplateMapper.ExpandPathTemplate(
+                                                    assetDetails.Container,
+                                                    _storageOptions.PathTemplate);
 
-                foreach (var transform in transforms)
+                var canUpload = await uploader.CanUploadAsync(
+                                                    Container,
+                                                    Path,
+                                                    cancellationToken);
+                if (canUpload)
                 {
-                    var transformResult = await transform.RunAsync(assetDetails, cancellationToken);
-
-                    result.Status = transformResult.Status;
-                    result.OutputPath = transformResult.OutputPath;
-
-                    if (result.Status == MigrationStatus.Failed)
+                    try
                     {
-                        break;
+                        var transforms = _transformFactory.StorageTransforms;
+
+                        foreach (var transform in transforms)
+                        {
+                            var transformResult = await transform.RunAsync(assetDetails, cancellationToken);
+
+                            result.Status = transformResult.Status;
+                            result.OutputPath = transformResult.OutputPath;
+
+                            if (result.Status == MigrationStatus.Failed)
+                            {
+                                break;
+                            }
+                        }
                     }
+                    finally
+                    {
+                        await uploader.UploadCleanupAsync(Container, Path, cancellationToken);
+                    }
+                }
+                else
+                {
+                    //
+                    // Another instance of the tool is working on the output container,
+                    //
+                    result.Status = MigrationStatus.Skipped;
+
+                    _logger.LogWarning("Another tool is working on the container {container} and output path: {output}",
+                                       Container,
+                                       Path);
                 }
             }
             else
@@ -175,6 +205,8 @@ namespace AMSMigrate.Ams
                 // The asset type is not supported in this milestone,
                 // Mark the status as Skipped for caller to do the statistics.
                 result.Status = MigrationStatus.Skipped;
+
+                _logger.LogWarning("Skipping container {name} because it is not in a supported format!!!", container.Name);
             }
             
             if (_storageOptions.MarkCompleted)
