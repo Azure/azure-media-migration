@@ -30,7 +30,7 @@ namespace AMSMigrate.Ams
                     "AssetName",
                     "AlternateId",
                     "ContainerName",
-                    "LocatorId",
+                    // "LocatorId",
                 }
             },
             {
@@ -129,9 +129,9 @@ namespace AMSMigrate.Ams
                         return asset.Data.Container;
                     case "AlternateId":
                         return asset.Data.AlternateId ?? asset.Data.Name;
-                    case "LocatorId":
-                        var locatorId = GetLocatorIdAsync(asset).Result;
-                        return locatorId;
+                    // case "LocatorId":
+                    //    var locatorId = GetLocatorIdAsync(asset).Result;
+                    //    return locatorId;
                 }
                 return null;
             });
