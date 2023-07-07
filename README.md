@@ -16,77 +16,96 @@ contact [opencode@microsoft.com](mailto:opencode@microsoft.com) with any additio
 
 ## Trademarks
 
-This project may contain trademarks or logos for projects, products, or services. Authorized use of Microsoft 
-trademarks or logos is subject to and must follow 
+This project may contain trademarks or logos for projects, products, or services. Authorized use of Microsoft
+trademarks or logos is subject to and must follow
 [Microsoft's Trademark & Brand Guidelines](https://www.microsoft.com/en-us/legal/intellectualproperty/trademarks/usage/general).
 Use of Microsoft trademarks or logos in modified versions of this project must not cause confusion or imply Microsoft sponsorship.
 Any use of third-party trademarks or logos are subject to those third-party's policies.
 
 ## Overview
 A command line tool to migrate your data from Azure Media Services.
-This tool helps you to migrate your media data from Azure Media Services (AMS). 
+This tool helps you to migrate your media data from Azure Media Services (AMS).
 It can be packaged to be streamed directly from Azure storage without any service.
 
-The tool supports both [ffmpeg](https://ffmpeg.org/) and [shaka-packager](https://github.com/shaka-project/shaka-packager) to convert the videos to directly streamable format.
+The tool uses [shaka-packager](https://github.com/shaka-project/shaka-packager) to convert the videos to directly streamable format.
 The content is converted to CMAF format with both a DASH and HLS manifest to support a wide range of devices.
-The default is shaka packager because it can use pipes to reduce the temporary storage required but can changed via the command line.
 
 ## Features
-* Cross-Platform. Works on all platforms where .NET core is available.
+* Cross-Platform. Works on all platforms where .NET core is available.  Tested platforms are Windows and Linux.
 * Simple command line interface. Intuitive and easy to use.
-* Support for packaging both VOD and live archive assets.
-* Marks migrated assets and provides summary.
+* Support for packaging VOD assets.
+* Support for copying non-streamable assets.
+* Marks migrated assets and provides HTML summary on analyze
 
 ## Open Issues
-* Live assets with discontinuities are not supported.
-* Captions in TTML are not migrated.
+* Live assets are not supported.
+* Storage encrypted VOD contents are not supported.
 * Direct migration from an Azure Storage account without using the AMS API.
-
-# Credentials used
-The tools uses Azure Identity library for authentication.
-See [here](https://learn.microsoft.com/en-us/dotnet/api/overview/azure/identity-readme?view=azure-dotnet) for various ways to authenticate and the settings needed.
-The identity used to migrate must have 'Contributor' role on the Azure Media Services account being migrated.
 
 # Types of Migration
 The tool supports various types of migration depending on the asset format and the command line options.
-* It can simply upload the files to the new storage account.
-* For assets created by live events, it can convert to MP4 files and then upload.
-* For direct streaming, it can convert the assets to CMAF files with a DASH and HLS manifest.
+* For non-streamable assets, It can simply upload the files to the new storage account.
+* For VOD assets, it can convert the assets to CMAF files with a DASH and HLS manifest and upload the files to the new storage account.
 
-# Temporary storage needed.
-The tool uses temporary storage space for format conversion and uses pipes where possible to minimize storage usage.
-Smooth Streaming assets or assets from live events don't need to be downloaded locally.
+# Temporary storage needed
+The tool uses temporary storage space for format conversion.
+- The assets are downloaded from source container to local disk.
+- Shaka packager is invoked to generate the statically packaged files and write it to local disk.
 
-## Linux
-* The only storage needed is for manifests when using shaka packager.
-* When using ffmpeg, if the asset files are MP4, it downloads the files locally before converting so storage is proportional to asset size.
+# Identity and Permissions
+The tools uses Azure Identity library for authentication.
+See [here](https://learn.microsoft.com/en-us/dotnet/api/overview/azure/identity-readme?view=azure-dotnet) for various ways to authenticate and the settings needed.
 
-## Windows
-* Shaka packager writes the packaged files to local disk first before uploading due to a windows specific bug.
-* Using ffmpeg needs double the local disk space when packaging MP4 files.
-* Smooth Streaming assets or assets from live events don't need to be downloaded locally.
+You'll need to have the following permissions:
 
-## Migrate to an Azure Storage Account.
+- The identity used to migrate must have 'Contributor' role on the Azure Media Services account being migrated.
+- The identity that runs this migration tool should be added to the ['Storage Blob Data Contributor'](https://learn.microsoft.com/en-us/azure/role-based-access-control/built-in-roles#storage-blob-data-contributor) role for the source and destination storage accounts.
 
-Ensure that the Identity you are using to migrate has the following permissions
-* The identity that runs this migration tool should be added to the ['Storage Blob Data Contributor'](https://learn.microsoft.com/en-us/azure/role-based-access-control/built-in-roles#storage-blob-data-contributor) role for the source and destination storage accounts.
+# Quick Start
 
-# Optional FFmpeg dependency
-The tool optionally uses ffmpeg for media format conversion. It primarily uses shaka-packager but can be changed to use ffmpeg.
-It doesn't ship a copy of FFmpeg itself but uses the one in the PATH.
-* On Windows you can use winget or chocolatey to install ffmpeg.
-```
-winget install ffmpeg
-```
-* On Ubuntu/Debian Linux use apt to install ffmpeg
-```
-sudo apt install -y ffmpeg
-```
-* On RedHat Linux use dnf to install ffmpeg.
-```
-sudo dnf install ffmpeg
-```
-* On MacOs use brew to install ffmpeg
-```
-brew install ffmpeg
-```
+## Build project
+
+To build the project, you can run the following command
+
+    dotnet build
+    dotnet publish
+
+the output binary will be in your publish folder (e.g. bin\Debug\net6.0\publish\AMSMigrate.exe for windows)
+
+There are two main commands: analyze and assets.  You can view the help by running the following three commands
+
+    AMSMigrate.exe -h
+    AMSMigrate.exe analyze -h
+    AMSMigrate.exe assets -h
+
+## Migrate
+
+Migration will do the following:
+- Copy non-streamable assets from AMS account to an output storage account.
+- Package streamable assets (currently only a subset of streamable assets, see [Open Issues](#Open-Issues)) as CMAF + HLS, DASH manifests and copy to output storage account.
+
+After migration, the input asset containers will be marked with migration status, output url, etc.
+
+To migrate, you will use the assets command, an example is
+
+    AMSMigrate.exe assets -s <subscription> -g <resource group of media service> -n <media service account name> -o <output storage account uri>
+
+You can look at the help for assets command to further customization.
+
+## Analyze
+
+Analyze will do the following:
+- Go through all the assets and try to classify it by type (e.g. streamable, etc)
+- Go through all the assets and read the migration status to generate an html report
+
+Typically, you can run analyze before and after you run the migrate command.
+- Running before to get an idea of what type of assets are in your media service account.
+- Running after to get a report of migration status.
+
+To analyze, you will use the analyze command, an example is
+
+    AMSMigrate.exe analyze -s <subscription> -g <resource group of media service> -n <media service account name>
+
+The html file and the log file location will be reported at the end of execution.
+
+You can look at the help for analyze command to further customization.
