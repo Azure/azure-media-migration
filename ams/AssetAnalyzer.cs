@@ -132,7 +132,7 @@ namespace AMSMigrate.Ams
 
             if (resourceFilter != null)
             {
-                // When a filter is used, it usually inlcude a small list of assets,
+                // When a filter is used, it usually include a small list of assets,
                 // The total count of asset can be extracted in advance without much perf hit.
                 filteredList = await assets.ToListAsync(cancellationToken);
 
