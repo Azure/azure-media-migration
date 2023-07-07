@@ -46,9 +46,11 @@ namespace AMSMigrate.Ams
     <table>
       <thead>
       <tr>
-        <th style=""width:30%"">Asset Name</t>
-        <th style=""width:10%"">Migration Status</th>
-        <th style=""width:60%"">Migration URL</th>
+        <th style=""width:20%"">Asset Name</t>
+        <th style=""width:6%"">AssetType</th>
+        <th style=""width:8%"">MigrateStatus</th>
+        <th style=""width:56%"">OutputPath</th>
+        <th style=""width:10%"">ManifestName</th>
       </tr>
       </thead>
       <tbody>");
@@ -67,10 +69,13 @@ namespace AMSMigrate.Ams
         {
             foreach (var result in results)
             {
-                _writer.Write($"<tr><td>{result.AssetName}</td><td>{result.Status}</td><td>");
+                _writer.Write($"<tr><td>{result.AssetName}</td><td>{result.AssetType}</td><td>{result.Status}</td><td>");
                 if (result.OutputPath != null)
                     _writer.Write($"<a href=\"{result.OutputPath}\">{result.OutputPath}</a>");
-                _writer.WriteLine($"</td></tr>");
+
+                _writer.Write($"</td><td>{result.ManifestName}</td>");
+
+                _writer.WriteLine($"</tr>");
             }
         }
     }
