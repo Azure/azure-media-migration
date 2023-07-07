@@ -36,6 +36,14 @@ e.g., ams-migration-output/${ContainerName} will upload to a container named 'am
             Arity = ArgumentArity.ZeroOrOne
         };
 
+        private readonly Option<string?> _outputManifest = new Option<string?>(
+            aliases: new[] { "--output-manifest-name", "-m" },
+            description: @"The output manifest name without extension,
+if it is not set, use input asset's manifest name.")
+        {
+            Arity = ArgumentArity.ZeroOrOne
+        };
+
         private readonly Option<string?> _prefix = new Option<string?>(
             aliases: new[] { "--prefix", "-p" },
             description: @"")
@@ -113,6 +121,7 @@ e.g., ams-migration-output/${ContainerName} will upload to a container named 'am
             command.AddOption(_sourceAccount);
             command.AddOption(_storageAccount);
             command.AddOption(_pathTemplate);
+            command.AddOption(_outputManifest);
             command.AddOption(_prefix);
             command.AddOption(_overwrite);
             command.AddOption(_skipMigrated);
@@ -132,6 +141,7 @@ e.g., ams-migration-output/${ContainerName} will upload to a container named 'am
                 bindingContext.ParseResult.GetValueForOption(_storageAccount)!,
                 bindingContext.ParseResult.GetValueForOption(_packagerType),
                 bindingContext.ParseResult.GetValueForOption(_pathTemplate)!,
+                bindingContext.ParseResult.GetValueForOption(_outputManifest)!,                
                 bindingContext.ParseResult.GetValueForOption(_prefix),
                 workingDirectory,
                 bindingContext.ParseResult.GetValueForOption(_copyNonStreamable),

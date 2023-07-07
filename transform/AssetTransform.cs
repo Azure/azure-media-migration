@@ -6,11 +6,11 @@ using Microsoft.Extensions.Logging;
 
 namespace AMSMigrate.Transform
 {
-    public record AssetRecord(MediaServicesAccountResource Account, MediaAssetResource Asset, string AssetName, BlobContainerClient Container, Manifest? Manifest, ClientManifest? ClientManifest) 
-        : AssetDetails(AssetName, Container, Manifest, ClientManifest)
+    public record AssetRecord(MediaServicesAccountResource Account, MediaAssetResource Asset, string AssetName, BlobContainerClient Container, Manifest? Manifest, ClientManifest? ClientManifest, string? OutputManifest) 
+        : AssetDetails(AssetName, Container, Manifest, ClientManifest, OutputManifest)
     {
         public AssetRecord(MediaServicesAccountResource account, MediaAssetResource asset, AssetDetails details):
-            this(account, asset, details.AssetName, details.Container, details.Manifest, details.ClientManifest)
+            this(account, asset, details.AssetName, details.Container, details.Manifest, details.ClientManifest, details.OutputManifest)
         {
         }
     }

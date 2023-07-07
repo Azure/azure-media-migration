@@ -69,7 +69,7 @@ namespace AMSMigrate.Ams
                     }
                     else
                     {
-                        var assetDetails = await container.GetDetailsAsync(_logger, cancellationToken, asset.Data.Name, false);
+                        var assetDetails = await container.GetDetailsAsync(_logger, cancellationToken, null, asset.Data.Name, false);
 
                         if (assetDetails.Manifest == null)
                         {

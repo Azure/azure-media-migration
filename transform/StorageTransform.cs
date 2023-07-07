@@ -7,7 +7,7 @@ using Microsoft.Extensions.Logging;
 
 namespace AMSMigrate.Transform
 {
-    public record AssetDetails(string AssetName, BlobContainerClient Container, Manifest? Manifest, ClientManifest? ClientManifest);
+    public record AssetDetails(string AssetName, BlobContainerClient Container, Manifest? Manifest, ClientManifest? ClientManifest, string? OutputManifest);
 
     internal abstract class StorageTransform : ITransform<AssetDetails, AssetMigrationResult>
     {

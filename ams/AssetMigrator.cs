@@ -174,7 +174,7 @@ namespace AMSMigrate.Ams
                 }
                 else
                 {
-                    var details = await asset.GetDetailsAsync(_logger, cancellationToken);
+                    var details = await asset.GetDetailsAsync(_logger, cancellationToken, _options.OutputManifest);
                     var record = new AssetRecord(account, asset, details);
 
                     // AssetType and ManifestName are not supposed to change for a specific input asset,
@@ -182,7 +182,7 @@ namespace AMSMigrate.Ams
                     if (details.Manifest != null)
                     {
                         result.AssetType = details.Manifest.Format;
-                        result.ManifestName = details.Manifest.FileName?.Replace(".ism", "");
+                        result.ManifestName = _options.OutputManifest ?? details.Manifest.FileName?.Replace(".ism", "");
                     }
                     else
                     {

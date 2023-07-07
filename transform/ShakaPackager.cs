@@ -29,8 +29,10 @@ namespace AMSMigrate.Transform
             var manifests = SelectedTracks
                 .Select((t, i) => $"{baseName}_{i}{HLS_MANIFEST}")
                 .ToList();
-            manifests.Add($"{baseName}{HLS_MANIFEST}");
-            manifests.Add($"{baseName}{DASH_MANIFEST}");
+
+            var outputManifest = assetDetails.OutputManifest ?? baseName;
+            manifests.Add($"{outputManifest}{HLS_MANIFEST}");
+            manifests.Add($"{outputManifest}{DASH_MANIFEST}");
             Manifests = manifests;
 
             // Shaka packager cannot handle smooth input.

@@ -35,7 +35,7 @@ namespace AMSMigrate.Transform
             (string Container, string Prefix) outputPath,
             CancellationToken cancellationToken = default)
         {
-            var (assetName, container, manifest, clientManifest) = details;
+            var (assetName, container, manifest, clientManifest, outputManifest) = details;
             if (manifest == null) throw new ArgumentNullException(nameof(manifest));
             
             // create a linked source which when disposed cancels all tasks.

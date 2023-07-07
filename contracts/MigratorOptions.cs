@@ -8,6 +8,7 @@
         string StoragePath,        
         Packager Packager,
         string PathTemplate,
+        string OutputManifest,
         string WorkingDirectory,
         bool CopyNonStreamable,
         bool OverWrite,
