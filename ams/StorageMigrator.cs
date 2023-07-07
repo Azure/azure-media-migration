@@ -138,14 +138,14 @@ namespace AMSMigrate.Ams
                 return result;
             }            
 
-            var assetDetails = await containerClient.GetDetailsAsync(_logger, cancellationToken);            
+            var assetDetails = await containerClient.GetDetailsAsync(_logger, cancellationToken, _storageOptions.OutputManifest);            
 
             // AssetType and ManifestName are not supposed to change for a specific input asset,
             // Set AssetType and manifest from the input container before doing the actual transforming.
             if (assetDetails.Manifest != null)
             {
                 result.AssetType = assetDetails.Manifest.Format;
-                result.ManifestName = assetDetails.Manifest.FileName?.Replace(".ism", "");
+                result.ManifestName = _storageOptions.OutputManifest ?? assetDetails.Manifest.FileName?.Replace(".ism", "");
             }
             else
             {

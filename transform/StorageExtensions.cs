@@ -138,16 +138,18 @@ namespace AMSMigrate.Transform
             this MediaAssetResource asset,
             ILogger logger,
             CancellationToken cancellationToken,
+            string? outputManifestname,
             bool includeClientManifest = true)
         {
             var container = await asset.GetContainerAsync(cancellationToken);
-            return await container.GetDetailsAsync(logger, cancellationToken, asset.Data.Name, includeClientManifest);
+            return await container.GetDetailsAsync(logger, cancellationToken, outputManifestname, asset.Data.Name, includeClientManifest);
         }
 
         public static async Task<AssetDetails> GetDetailsAsync(
             this BlobContainerClient container,
             ILogger logger,
             CancellationToken cancellationToken,
+            string? outputManifestname,
             string? name = null,
             bool includeClientManifest = true)
         {
@@ -158,7 +160,7 @@ namespace AMSMigrate.Transform
             {
                 clientManifest = await container.GetClientManifestAsync(manifest, logger, cancellationToken);
             }
-            return new AssetDetails(name, container, manifest, clientManifest);
+            return new AssetDetails(name, container, manifest, clientManifest, outputManifestname);
         }
     }
 }

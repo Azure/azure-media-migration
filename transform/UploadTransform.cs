@@ -25,7 +25,7 @@ namespace AMSMigrate.Transform
             (string Container, string Prefix) outputPath,
             CancellationToken cancellationToken = default)
         {
-            var (assetName, inputContainer, manifest, _) = details;
+            var (assetName, inputContainer, manifest, _, _) = details;
             var inputBlobs = await inputContainer.GetListOfBlobsAsync(cancellationToken, manifest);
             var uploads = inputBlobs.Select(blob => UploadBlobAsync(blob, outputPath, cancellationToken));
             await Task.WhenAll(uploads);

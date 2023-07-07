@@ -39,6 +39,14 @@ e.g., ams-migration-output/${AssetName}/ will upload to a container named 'ams-m
         {
             Arity = ArgumentArity.ZeroOrOne
         };
+                
+        private readonly Option<string?> _outputManifest = new Option<string?>(
+            aliases: new[] { "--output-manifest-name", "-m" },
+            description: @"The output manifest name without extension,
+if it is not set, use input asset's manifest name.")
+                    {
+                        Arity = ArgumentArity.ZeroOrOne
+                    };
 
         private readonly Option<DateTimeOffset?> _creationTimeStart = new Option<DateTimeOffset?>(
             aliases: new[] { "--creation-time-start", "-cs" },
@@ -135,6 +143,7 @@ Visit https://learn.microsoft.com/en-us/azure/media-services/latest/filter-order
             command.AddOption(_sourceAccount);
             command.AddOption(_storageAccount);
             command.AddOption(_pathTemplate);
+            command.AddOption(_outputManifest);
             command.AddOption(_creationTimeStart);
             command.AddOption(_creationTimeEnd);
             command.AddOption(_filter);
@@ -156,6 +165,7 @@ Visit https://learn.microsoft.com/en-us/azure/media-services/latest/filter-order
                 bindingContext.ParseResult.GetValueForOption(_storageAccount)!,
                 bindingContext.ParseResult.GetValueForOption(_packagerType),
                 bindingContext.ParseResult.GetValueForOption(_pathTemplate)!,
+                bindingContext.ParseResult.GetValueForOption(_outputManifest)!,
                 bindingContext.ParseResult.GetValueForOption(_creationTimeStart),
                 bindingContext.ParseResult.GetValueForOption(_creationTimeEnd),
                 bindingContext.ParseResult.GetValueForOption(_filter),
