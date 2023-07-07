@@ -137,26 +137,36 @@ namespace AMSMigrate.Ams
             MediaAssetResource asset,
             CancellationToken cancellationToken)
         {
+            AssetMigrationResult result = new AssetMigrationResult(MigrationStatus.NotMigrated);
             _logger.LogInformation("Migrating asset: {name} (container {container}) ...", asset.Data.Name, asset.Data.Container);
-            var container = storage.GetContainer(asset);
-
-            // Get the inital migration status from the container level's metadata list.
-            var result = await _tracker.GetMigrationStatusAsync(container, cancellationToken);
-
-            if (_options.SkipMigrated)
-            {
-                if (result.Status == MigrationStatus.Completed)
-                {
-                    _logger.LogDebug("Asset: {name} has already been migrated.", asset.Data.Name);
-
-                    result.Status = MigrationStatus.AlreadyMigrated;
-                    _logger.LogDebug("Migrated asset: {asset}, container: {container}, type: {type}, status: {status}", asset.Data.Name, asset.Data.Container, result.AssetType, result.Status);
-                    return result;
-                }
-            }
 
             try
             {
+                var container = storage.GetContainer(asset);
+
+                if (!await container.ExistsAsync(cancellationToken))
+                {
+                    _logger.LogWarning("Container {name} missing for asset {asset}", container.Name, asset.Data.Name);
+                    result.Status = MigrationStatus.Failed;
+                    _logger.LogDebug("Migrated asset: {asset}, container: {container}, type: {type}, status: {status}", asset.Data.Name, asset.Data.Container, result.AssetType, result.Status);
+                    return result;
+                }
+
+                // Get the initial migration status from the container level's metadata list.
+                result = await _tracker.GetMigrationStatusAsync(container, cancellationToken);
+
+                if (_options.SkipMigrated)
+                {
+                    if (result.Status == MigrationStatus.Completed)
+                    {
+                        _logger.LogDebug("Asset: {name} has already been migrated.", asset.Data.Name);
+
+                        result.Status = MigrationStatus.AlreadyMigrated;
+                        _logger.LogDebug("Migrated asset: {asset}, container: {container}, type: {type}, status: {status}", asset.Data.Name, asset.Data.Container, result.AssetType, result.Status);
+                        return result;
+                    }
+                }
+
                 if (asset.Data.StorageEncryptionFormat != MediaAssetStorageEncryptionFormat.None)
                 {
                     _logger.LogWarning("Asset {name} is encrypted  using {format}", asset.Data.Name, asset.Data.StorageEncryptionFormat);
