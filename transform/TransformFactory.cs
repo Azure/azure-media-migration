@@ -48,7 +48,7 @@ namespace AMSMigrate.Transform
             }
             else
             {
-                throw new ArgumentException("Paramter 'options' must be for MigratorOptions.");
+                throw new ArgumentException("Parameter 'options' must be for MigratorOptions.");
             }
 
             // There should be at least one transform.

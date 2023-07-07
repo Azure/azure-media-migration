@@ -38,7 +38,7 @@ namespace AMSMigrate.Transform
             var (assetName, container, manifest, clientManifest) = details;
             if (manifest == null) throw new ArgumentNullException(nameof(manifest));
             
-            // create a linke source which when disposed cancells all tasks.
+            // create a linked source which when disposed cancels all tasks.
             using var source = CancellationTokenSource.CreateLinkedTokenSource(cancellationToken);
             cancellationToken = source.Token;
 
@@ -130,7 +130,7 @@ namespace AMSMigrate.Transform
                 while (allTasks.Count > 0)
                 {
                     var currentTask = await Task.WhenAny(allTasks);
-                    // throw if any taks fails.
+                    // throw if any tasks fails.
                     await currentTask;
                     allTasks.Remove(currentTask);
                 }

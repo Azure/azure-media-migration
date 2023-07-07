@@ -40,7 +40,7 @@ namespace AMSMigrate.Ams
 
         /// <summary>
         /// Determine if the asset can be migrated.
-        /// The current supprted scenarios:
+        /// The current supported scenarios:
         /// 
         ///   If it has .ism file, only mp4 format is supported.
         ///   If there is no .ism file,  it can be copied over directly.

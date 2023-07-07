@@ -61,7 +61,7 @@ namespace AMSMigrate.Ams
 
             if (resourceFilter != null)
             {
-                // When a filter is used, it usually inlcude a small list of assets,
+                // When a filter is used, it usually include a small list of assets,
                 // The accurate total count of asset can be extracted in advance without much perf hit.
                 filteredList = await assets.ToListAsync(cancellationToken);
 
@@ -169,7 +169,7 @@ namespace AMSMigrate.Ams
 
                 if (asset.Data.StorageEncryptionFormat != MediaAssetStorageEncryptionFormat.None)
                 {
-                    _logger.LogWarning("Asset {name} is encrypted  using {format}", asset.Data.Name, asset.Data.StorageEncryptionFormat);
+                    _logger.LogWarning("Asset {name} is encrypted using {format}", asset.Data.Name, asset.Data.StorageEncryptionFormat);
                     result.AssetType = AssetMigrationResult.AssetType_Encrypted;
                 }
                 else

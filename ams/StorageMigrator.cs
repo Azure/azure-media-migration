@@ -52,7 +52,7 @@ namespace AMSMigrate.Ams
 
             if (_storageOptions.Prefix != null)
             {
-                // When a filter is used, it usually inlcude a small list of assets,
+                // When a filter is used, it usually include a small list of assets,
                 // The accurate total count of containers can be extracted in advance without much perf hit.
                 filteredList = await containers.ToListAsync();
 
@@ -117,7 +117,7 @@ namespace AMSMigrate.Ams
         {
             var containerClient = storageClient.GetBlobContainerClient(container.Name);
 
-            // Get the inital migration status from the container level's metadata list.
+            // Get the initial migration status from the container level's metadata list.
             var result = await _tracker.GetMigrationStatusAsync(containerClient, cancellationToken);
 
             // Check if already migrated.
