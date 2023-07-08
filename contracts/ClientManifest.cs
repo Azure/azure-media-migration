@@ -237,12 +237,12 @@ namespace AMSMigrate.Contracts
             var serializer = new XmlSerializer(typeof(ClientManifest));
             serializer.UnknownElement += (s, args) =>
             {
-                logger.LogWarning("Unknown element when parsing client manifest {element}", args.Element);
+                logger.LogWarning("Unknown element when parsing client manifest {element}", args.Element.Name);
             };
 
             serializer.UnknownAttribute += (s, args) =>
             {
-                logger.LogWarning("Unknown attribute when parsing client manifest {attr}", args.Attr);
+                logger.LogWarning("Unknown attribute when parsing client manifest {attr}", args.Attr.Name);
             };
             var manifest = serializer.Deserialize(new StreamReader(content, Encoding.UTF8)) as ClientManifest;
             if (manifest == null) throw new ArgumentException("Invalid data", nameof(content));
