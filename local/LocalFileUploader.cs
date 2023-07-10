@@ -1,6 +1,4 @@
-﻿using AMSMigrate.Ams;
-using AMSMigrate.Contracts;
-using Azure.Storage.Blobs;
+﻿using AMSMigrate.Contracts;
 using Microsoft.Extensions.Logging;
 
 namespace AMSMigrate.Local

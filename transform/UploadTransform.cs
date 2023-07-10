@@ -1,7 +1,6 @@
 ﻿using AMSMigrate.Ams;
 using AMSMigrate.Contracts;
 using Microsoft.Extensions.Logging;
-using System.ComponentModel;
 
 namespace AMSMigrate.Transform
 {
