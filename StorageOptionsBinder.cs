@@ -1,6 +1,5 @@
 ﻿using AMSMigrate.Ams;
 using AMSMigrate.Contracts;
-using FFMpegCore.Enums;
 using System.CommandLine;
 using System.CommandLine.Binding;
 

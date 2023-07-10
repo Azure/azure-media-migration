@@ -1,7 +1,5 @@
 ﻿using AMSMigrate.Ams;
 using AMSMigrate.Contracts;
-using Azure.Storage.Blobs;
-using Microsoft.Extensions.Logging;
 
 namespace AMSMigrate.Transform
 {

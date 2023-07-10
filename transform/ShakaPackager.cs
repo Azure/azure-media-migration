@@ -1,7 +1,6 @@
 ﻿using Microsoft.Extensions.Logging;
 using System.ComponentModel;
 using System.Reflection;
-using System.Runtime.InteropServices;
 using System.Text.RegularExpressions;
 
 namespace AMSMigrate.Transform

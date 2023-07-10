@@ -1,5 +1,4 @@
-﻿using AMSMigrate.Azure;
-using AMSMigrate.Contracts;
+﻿using AMSMigrate.Contracts;
 using AMSMigrate.Transform;
 using Azure.Core;
 using Azure.ResourceManager.Media;

@@ -6,11 +6,7 @@ using Azure.Storage.Blobs;
 using Azure.Storage.Blobs.Models;
 using Azure.Storage.Blobs.Specialized;
 using Microsoft.Extensions.Logging;
-using System.ComponentModel;
-using System.Reflection.Metadata;
 using System.Text;
-using System.Threading;
-using static System.Reflection.Metadata.BlobBuilder;
 
 namespace AMSMigrate.Azure
 {
