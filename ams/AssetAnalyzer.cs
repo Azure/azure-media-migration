@@ -189,7 +189,12 @@ namespace AMSMigrate.Ams
             {
                 WriteDetails(assetTypes);
             }
-            reportGenerator?.Dispose();
+
+            if (_analysisOptions.AnalysisType == AnalysisType.Report)
+            {
+                reportGenerator?.WriteTrailer();
+                reportGenerator?.Dispose();
+            }
         }
 
         private void WriteSummary(Statistics statistics, IDictionary<string, int> assetTypes)
