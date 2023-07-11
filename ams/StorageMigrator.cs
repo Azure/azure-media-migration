@@ -14,7 +14,7 @@ namespace AMSMigrate.Ams
     internal class StorageMigrator : BaseMigrator
     {
         private readonly ILogger _logger;
-        private readonly TransformFactory<StorageOptions> _transformFactory;
+        private readonly TransformFactory _transformFactory;
         private readonly StorageOptions _storageOptions;
         private readonly IMigrationTracker<BlobContainerClient, AssetMigrationResult> _tracker;
 
@@ -24,7 +24,7 @@ namespace AMSMigrate.Ams
             IAnsiConsole console,
             IMigrationTracker<BlobContainerClient, AssetMigrationResult> tracker,
             TokenCredential credentials,
-            TransformFactory<StorageOptions> transformFactory,
+            TransformFactory transformFactory,
             ILogger<StorageMigrator> logger) :
             base(options, console, credentials)
         {
@@ -154,7 +154,7 @@ namespace AMSMigrate.Ams
 
             if (result.IsSupportedAsset)
             {
-                var uploader = _transformFactory.Uploader;
+                var uploader = _transformFactory.GetUploader(_storageOptions);
                 var (Container, Path) = _transformFactory.TemplateMapper.ExpandPathTemplate(
                                                     assetDetails.Container,
                                                     _storageOptions.PathTemplate);
@@ -167,7 +167,7 @@ namespace AMSMigrate.Ams
                 {
                     try
                     {
-                        var transforms = _transformFactory.StorageTransforms;
+                        var transforms = _transformFactory.GetTransforms(_storageOptions);
 
                         foreach (var transform in transforms)
                         {
@@ -194,7 +194,7 @@ namespace AMSMigrate.Ams
                     //
                     result.Status = MigrationStatus.Skipped;
 
-                    _logger.LogWarning("Another tool is working on the container {container} and output path: {output}",
+                    _logger.LogWarning("Another instance of tool is working on the container {container} and output path: {output}",
                                        Container,
                                        Path);
                 }

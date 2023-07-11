@@ -12,6 +12,7 @@ using Spectre.Console;
 using System.CommandLine;
 using System.CommandLine.Builder;
 using System.CommandLine.Help;
+using System.CommandLine.Invocation;
 using System.CommandLine.Parsing;
 using System.Diagnostics;
 using System.Text;
@@ -35,9 +36,8 @@ amsmigrate analyze -s <subscriptionid> -g <resourcegroup> -n <account>
 This will analyze the given media account and produce a summary report.");
             rootCommand.Add(analyzeCommand);
             analyzeCommand.SetHandler(async context => {
-                var globalOptions = globalOptionsBinder.GetValue(context.BindingContext);
                 var analysisOptions = analysisOptionsBinder.GetValue(context.BindingContext);
-                await AnalyzeAssetsAsync(globalOptions, analysisOptions, context.GetCancellationToken());
+                await AnalyzeAssetsAsync(context, analysisOptions, context.GetCancellationToken());
             });
 
             var description = @"Migrate Assets
@@ -50,9 +50,8 @@ This migrates the assets to a different storage account in your subscription.";
             assetsCommand.SetHandler(
                 async context =>
                 {
-                    var globalOptions = globalOptionsBinder.GetValue(context.BindingContext);
                     var assetOptions = assetOptionsBinder.GetValue(context.BindingContext);
-                    await MigrateAssetsAsync(globalOptions, assetOptions, context.GetCancellationToken());
+                    await MigrateAssetsAsync(context, assetOptions, context.GetCancellationToken());
                 });
 
 // disable storage migrate option until ready
@@ -88,6 +87,7 @@ amsmigrate storage -s <subscription id> -g <resource group> -n <source storage a
 
             var parser = new CommandLineBuilder(rootCommand)
                 .UseDefaults()
+                .AddMiddleware(SetupDependencies)
                 .UseHelp(ctx =>
                 {
                     ctx.HelpBuilder.CustomizeLayout(_ =>
@@ -107,17 +107,33 @@ amsmigrate storage -s <subscription id> -g <resource group> -n <source storage a
             return await parser.InvokeAsync(args);
         }
 
-        static IServiceCollection SetupServices(GlobalOptions options, TraceListener listener)
+        static async Task SetupDependencies(InvocationContext context, Func<InvocationContext, Task> next)
+        {
+            var globalOptions = GlobalOptionsBinder.GetValue(context.BindingContext);
+            using var listener = new TextWriterTraceListener(globalOptions.LogFile);
+            var collection = new ServiceCollection();
+            SetupServices(collection, globalOptions, listener);
+            var provider = collection.BuildServiceProvider();
+            context.BindingContext.AddService<IServiceProvider>(_ => provider);
+            var logger = provider.GetRequiredService<ILogger<Program>>();
+
+            logger.LogDebug("Writing logs to {file}", globalOptions.LogFile);
+            await next(context);
+            logger.LogInformation("See file {file} for detailed logs.", globalOptions.LogFile);
+        }
+
+        static void SetupServices(IServiceCollection collection, GlobalOptions options, TraceListener listener)
         {
             var console = AnsiConsole.Console;
 
-            var collection = new ServiceCollection()
+            collection
                 .AddSingleton<TokenCredential>(new DefaultAzureCredential(includeInteractiveCredentials: true))
                 .AddSingleton(options)
                 .AddSingleton(console)
                 .AddSingleton<IMigrationTracker<BlobContainerClient, AssetMigrationResult>, AssetMigrationTracker>()
                 .AddSingleton<TemplateMapper>()
                 .AddSingleton<AzureResourceProvider>()
+                .AddSingleton<TransformFactory>()
                 .AddLogging(builder =>
                 {
                     var logSwitch = new SourceSwitch("migration")
@@ -142,80 +158,46 @@ amsmigrate storage -s <subscription id> -g <resource group> -n <source storage a
                 collection
                     .AddSingleton<ICloudProvider, AzureProvider>();
             }
-
-            return collection;
         }
 
         static async Task AnalyzeAssetsAsync(
-            GlobalOptions globalOptions,
+            InvocationContext context,
             AnalysisOptions analysisOptions,
             CancellationToken cancellationToken)
         {
-            using var listener = new TextWriterTraceListener(globalOptions.LogFile);
-            var collection = SetupServices(globalOptions, listener)
-                .AddSingleton(analysisOptions)
-                .AddSingleton<AssetAnalyzer>();
-            var provider = collection.BuildServiceProvider();
-            var logger = provider.GetRequiredService<ILogger<Program>>();
-            logger.LogDebug("Writing logs to {file}", globalOptions.LogFile);
-            if (analysisOptions.AnalysisType == AnalysisType.Report)
-            {
-                logger.LogDebug("Writing html report to {file}", globalOptions.ReportFile);
-            }
-            await provider.GetRequiredService<AssetAnalyzer>().MigrateAsync(cancellationToken);
-            logger.LogInformation("See file {file} for detailed logs.", globalOptions.LogFile);
-            if (analysisOptions.AnalysisType == AnalysisType.Report)
-            {
-                logger.LogInformation("See file {file} for detailed html report.", globalOptions.ReportFile);
-            }
+            var provider = context.BindingContext.GetRequiredService<IServiceProvider>();
+            await ActivatorUtilities.CreateInstance<AssetAnalyzer>(provider, analysisOptions)
+                .MigrateAsync(cancellationToken);
         }
 
         static async Task MigrateAssetsAsync(
-            GlobalOptions globalOptions,
+            InvocationContext context,
             AssetOptions assetOptions,
             CancellationToken cancellationToken)
         {
-            using var listener = new TextWriterTraceListener(globalOptions.LogFile);
-            var collection = SetupServices(globalOptions, listener)
-                .AddSingleton(assetOptions)
-                .AddSingleton<TransformFactory<AssetOptions>>()
-                .AddSingleton<AssetMigrator>();
-            var provider = collection.BuildServiceProvider();
-            var logger = provider.GetRequiredService<ILogger<Program>>();
-            logger.LogDebug("Writing logs to {file}", globalOptions.LogFile);
-            await provider.GetRequiredService<AssetMigrator>().MigrateAsync(cancellationToken);
-            logger.LogInformation("See file {file} for detailed logs.", globalOptions.LogFile);
+            var provider = context.BindingContext.GetRequiredService<IServiceProvider>();
+            await ActivatorUtilities.CreateInstance<AssetMigrator>(provider, assetOptions)
+                .MigrateAsync(cancellationToken);
         }
 
         static async Task MigrateStorageAsync(
-            GlobalOptions globalOptions,
+            InvocationContext context,
             StorageOptions storageOptions,
             CancellationToken cancellationToken)
         {
-            using var listener = new TextWriterTraceListener(globalOptions.LogFile);
-            var collection = SetupServices(globalOptions, listener)
-                .AddSingleton(storageOptions)
-                .AddSingleton<TransformFactory<StorageOptions>>()
-                .AddSingleton<StorageMigrator>();
-            var provider = collection.BuildServiceProvider();
-            var logger = provider.GetRequiredService<ILogger<Program>>();
-            logger.LogDebug("Writing logs to {file}", globalOptions.LogFile);
-            await provider.GetRequiredService<StorageMigrator>().MigrateAsync(cancellationToken);
-            logger.LogInformation("See file {file} for detailed logs.", globalOptions.LogFile);
+            var provider = context.BindingContext.GetRequiredService<IServiceProvider>();
+            await ActivatorUtilities.CreateInstance<StorageMigrator>(provider, storageOptions)
+                .MigrateAsync(cancellationToken);
         }
 
         static async Task MigrateKeysAsync(
-            GlobalOptions globalOptions,
+            InvocationContext context,
             KeyOptions keyOptions,
             CancellationToken cancellationToken)
         {
-            using var listener = new TextWriterTraceListener(globalOptions.LogFile);
-            var collection = SetupServices(globalOptions, listener)
-                .AddSingleton<KeysMigrator>()
-                .AddSingleton(keyOptions);
-            var provider = collection.BuildServiceProvider();
-            var migrator = provider.GetRequiredService<KeysMigrator>();
-            await migrator.MigrateAsync(cancellationToken);
+            var provider = context.BindingContext.GetRequiredService<IServiceProvider>();
+            await ActivatorUtilities.CreateInstance<KeysMigrator>(provider, keyOptions)
+                .MigrateAsync(cancellationToken);
         }
     }
 }

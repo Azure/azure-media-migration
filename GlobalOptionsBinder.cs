@@ -8,7 +8,7 @@ namespace AMSMigrate
     internal class GlobalOptionsBinder : BinderBase<GlobalOptions>
     {
 
-        private readonly Option<LogLevel> _logLevel = new Option<LogLevel>(
+        private static readonly Option<LogLevel> _logLevel = new Option<LogLevel>(
             aliases: new[] { "--verbosity", "-v" },
 #if DEBUG
             getDefaultValue: () => LogLevel.Debug,
@@ -18,13 +18,13 @@ namespace AMSMigrate
             description: "The log level for logging"
         );
 
-        private readonly Option<string?> _logDirectory = new Option<string?>(
+        private static readonly Option<string?> _logDirectory = new Option<string?>(
             aliases: new[] { "-l", "--log-directory" },
             getDefaultValue: () => Environment.CurrentDirectory,
             description: @"The directory where the logs are written. Defaults to the working directory"
             );
 
-        private readonly Option<string> _subscription = new Option<string>(
+        private static readonly Option<string> _subscription = new Option<string>(
             aliases: new[] { "--subscription", "-s" },
             description: "The azure subscription to use")
         {
@@ -32,7 +32,7 @@ namespace AMSMigrate
             Arity = ArgumentArity.ExactlyOne
         };
 
-        private readonly Option<string> _resourceGroup = new Option<string>(
+        private static readonly Option<string> _resourceGroup = new Option<string>(
             aliases: new[] { "--resource-group", "-g" },
             description: "The resource group containing the AMS account")
         {
@@ -44,16 +44,7 @@ namespace AMSMigrate
         {
         }
 
-        protected override GlobalOptions GetBoundValue(BindingContext bindingContext)
-        {
-            return new GlobalOptions(
-                bindingContext.ParseResult.GetValueForOption(_subscription)!,
-                bindingContext.ParseResult.GetValueForOption(_resourceGroup)!,
-                CloudType.Azure, //TODO: add an option.
-                bindingContext.ParseResult.GetValueForOption(_logLevel),
-                bindingContext.ParseResult.GetValueForOption(_logDirectory)!
-            );
-        }
+        protected override GlobalOptions GetBoundValue(BindingContext bindingContext) => GetValue(bindingContext);
 
         public Command GetCommand()
         {
@@ -66,7 +57,16 @@ namespace AMSMigrate
             return command;
         }
 
-        public GlobalOptions GetValue(BindingContext context) => GetBoundValue(context);
+        public static GlobalOptions GetValue(BindingContext bindingContext)
+        {
+            return new GlobalOptions(
+                bindingContext.ParseResult.GetValueForOption(_subscription)!,
+                bindingContext.ParseResult.GetValueForOption(_resourceGroup)!,
+                CloudType.Azure, //TODO: add an option.
+                bindingContext.ParseResult.GetValueForOption(_logLevel),
+                bindingContext.ParseResult.GetValueForOption(_logDirectory)!
+            );
+        }
     }
 }
 

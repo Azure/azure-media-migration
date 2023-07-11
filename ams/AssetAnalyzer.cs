@@ -118,6 +118,7 @@ namespace AMSMigrate.Ams
 
             if (_analysisOptions.AnalysisType == AnalysisType.Report)
             {
+                _logger.LogDebug("Writing html report to {file}", _globalOptions.ReportFile);
                 var file = File.OpenWrite(_globalOptions.ReportFile);
                 reportGenerator = new ReportGenerator(file);
                 reportGenerator.WriteHeader();
@@ -194,6 +195,7 @@ namespace AMSMigrate.Ams
             {
                 reportGenerator?.WriteTrailer();
                 reportGenerator?.Dispose();
+                _logger.LogInformation("See file {file} for detailed html report.", _globalOptions.ReportFile);
             }
         }
 

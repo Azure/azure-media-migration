@@ -17,7 +17,7 @@ namespace AMSMigrate.Ams
     internal class AssetMigrator : BaseMigrator
     {
         private readonly ILogger _logger;
-        private readonly TransformFactory<AssetOptions> _transformFactory;
+        private readonly TransformFactory _transformFactory;
         private readonly AssetOptions _options;
         private readonly IMigrationTracker<BlobContainerClient, AssetMigrationResult> _tracker;
 
@@ -28,7 +28,7 @@ namespace AMSMigrate.Ams
             TokenCredential credential,
             IMigrationTracker<BlobContainerClient, AssetMigrationResult> tracker,
             ILogger<AssetMigrator> logger,
-            TransformFactory<AssetOptions> transformFactory):
+            TransformFactory transformFactory):
             base(globalOptions, console, credential)
         {
             _options = assetOptions;
@@ -191,7 +191,7 @@ namespace AMSMigrate.Ams
 
                     if (result.IsSupportedAsset)
                     {
-                        var uploader = _transformFactory.Uploader;
+                        var uploader = _transformFactory.GetUploader(_options);
                         var (Container, Path) = _transformFactory.TemplateMapper.ExpandAssetTemplate(
                                                             record.Asset, 
                                                             _options.PathTemplate);
@@ -205,7 +205,7 @@ namespace AMSMigrate.Ams
                         {
                             try
                             {
-                                foreach (var transform in _transformFactory.AssetTransforms)
+                                foreach (var transform in _transformFactory.GetTransforms(_options))
                                 {
                                     var transformResult = (AssetMigrationResult)await transform.RunAsync(record, cancellationToken);
 
