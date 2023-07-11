@@ -137,8 +137,8 @@ namespace AMSMigrate.Ams
                 // When --creation-time-start or --create-time-end option is set, 
                 // Convert it to the filter format and combine with the current filter option's settings.
 
-                var startTime = creationTimeStart?.ToString("yyyy-MM-ddThh:mm:ssZ");
-                var endTime = creationTimeEnd?.ToString("yyyy-MM-ddThh:mm:ssZ");
+                var startTime = creationTimeStart?.ToString("yyyy-MM-ddTHH:mm:ssZ");
+                var endTime = creationTimeEnd?.ToString("yyyy-MM-ddTHH:mm:ssZ");
 
                 if (startTime != null)
                 {
