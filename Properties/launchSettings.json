@@ -1,8 +1,0 @@
-{
-  "profiles": {
-    "AMSMigrate": {
-      "commandName": "Project",
-      "commandLineArgs": "{Put your command line args here}"
-    }
-  }
-}
