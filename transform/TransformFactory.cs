@@ -1,75 +1,61 @@
 ﻿using AMSMigrate.Ams;
 using AMSMigrate.Contracts;
-using Azure.ResourceManager.Media;
 using Microsoft.Extensions.Logging;
 using System.Diagnostics;
 
 namespace AMSMigrate.Transform
 {
-    internal class TransformFactory<TOption>
+    internal class TransformFactory
     {
-        private readonly IList<StorageTransform> _storageTransforms;
-        private readonly List<AssetTransform> _assetTransforms 
-            = new List<AssetTransform>();
-
-        private readonly IFileUploader _uploader;
+        private readonly ICloudProvider _cloudProvider;
         private readonly TemplateMapper _templateMapper;
+        private readonly ILoggerFactory _loggerFactory;
 
         public TransformFactory(
             ILoggerFactory loggerFactory,
-            TOption options,
             TemplateMapper templateMapper,
             ICloudProvider cloudProvider)
         {
-            _storageTransforms = new List<StorageTransform>();
-            
-            if (options is MigratorOptions migratorOption)
-            {
-                _uploader = cloudProvider.GetStorageProvider(migratorOption);
-                _templateMapper = templateMapper;
-                
-                var packagerFactory = new PackagerFactory(loggerFactory, migratorOption);
+            _loggerFactory = loggerFactory;
+            _templateMapper = templateMapper;
+            _cloudProvider = cloudProvider;            
+        }
 
-                if (migratorOption.Packager != Packager.None)
-                {
-                    _storageTransforms.Add(
-                        new PackageTransform(
-                            migratorOption,
-                            loggerFactory.CreateLogger<PackageTransform>(),
-                            templateMapper,
-                            _uploader,
-                            packagerFactory));
-                }
-                if (migratorOption.CopyNonStreamable || migratorOption.Packager == Packager.None)
-                {
-                    _storageTransforms.Add(new UploadTransform(
-                        migratorOption, _uploader, loggerFactory.CreateLogger<UploadTransform>(), templateMapper));
-                }
-            }
-            else
+        public IEnumerable<StorageTransform> GetTransforms(MigratorOptions options)
+        {
+            var packagerFactory = new PackagerFactory(_loggerFactory, options);
+            var uploader = GetUploader(options);
+            var transformCount  = 0;
+            if (options.Packager != Packager.None)
             {
-                throw new ArgumentException("Parameter 'options' must be for MigratorOptions.");
+                ++transformCount;
+                yield return new PackageTransform(
+                        options,
+                        _loggerFactory.CreateLogger<PackageTransform>(),
+                        _templateMapper,
+                        uploader,
+                        packagerFactory);
+            }
+            
+            if (options.CopyNonStreamable || options.Packager == Packager.None)
+            {
+                ++transformCount;
+                yield return new UploadTransform(
+                    options, uploader, _loggerFactory.CreateLogger<UploadTransform>(), _templateMapper);
             }
 
             // There should be at least one transform.
-            Debug.Assert(_storageTransforms.Count > 0, "No transform selected based on the options provided");
-
-            if (options is AssetOptions assetOptions)
-            {
-                _assetTransforms.AddRange(_storageTransforms.Select(
-                    t => new AssetTransform(assetOptions, templateMapper, t, loggerFactory.CreateLogger<AssetTransform>()))
-                    );
-            }
+            Debug.Assert(transformCount > 0, "No transform selected based on the options provided");
         }
 
-        public IEnumerable<StorageTransform> StorageTransforms => _storageTransforms;
+        public IEnumerable<AssetTransform> GetTransforms(AssetOptions assetOptions)
+        {
+            return GetTransforms(assetOptions as MigratorOptions)
+                .Select(t => new AssetTransform(assetOptions, _templateMapper, t, _loggerFactory.CreateLogger<AssetTransform>()));
+        }
 
-        public IEnumerable<AssetTransform> AssetTransforms => _assetTransforms;
-
-        public IFileUploader Uploader => _uploader;
+        public IFileUploader GetUploader(MigratorOptions options) => _cloudProvider.GetStorageProvider(options);
 
         public TemplateMapper TemplateMapper => _templateMapper;
-
-        public ITransform<MediaTransformResource> TransformTransform => throw new NotImplementedException();
     }
 }
