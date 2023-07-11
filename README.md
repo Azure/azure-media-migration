@@ -22,6 +22,10 @@ trademarks or logos is subject to and must follow
 Use of Microsoft trademarks or logos in modified versions of this project must not cause confusion or imply Microsoft sponsorship.
 Any use of third-party trademarks or logos are subject to those third-party's policies.
 
+## Reporting Issues
+
+If you encounter any issues or bugs that you'd like to report, please feel free to open an issue.  For bugs, it would be extremely helpful if you attach the output log file from the tool.
+
 ## Overview
 A command line tool to migrate your data from Azure Media Services.
 This tool helps you to migrate your media data from Azure Media Services (AMS).
