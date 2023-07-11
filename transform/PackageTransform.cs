@@ -150,7 +150,10 @@ namespace AMSMigrate.Transform
                 Directory.Delete(workingDirectory, true);
             }
 
-            return $"{outputPath.Prefix}{Path.GetFileNameWithoutExtension(manifest.FileName)}";
+            // Mark the output container appropriately so that it won't be used as an input asset in new run.
+            await UpdateOutputStatus(outputPath.Container, cancellationToken);
+
+            return outputPath.Prefix;
         }
 
         private UploadPipe CreateUpload(string filePath, UploadHelper helper)

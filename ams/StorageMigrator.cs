@@ -176,7 +176,7 @@ namespace AMSMigrate.Ams
                             result.Status = transformResult.Status;
                             result.OutputPath = transformResult.OutputPath;
 
-                            if (result.Status == MigrationStatus.Failed)
+                            if (result.Status != MigrationStatus.Skipped)
                             {
                                 break;
                             }

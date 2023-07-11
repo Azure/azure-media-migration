@@ -42,12 +42,6 @@ namespace AMSMigrate.Transform
             var result = new AssetMigrationResult();
 
             _logger.LogTrace("Asset {asset} is in format: {format}.", details.AssetName, details.Manifest?.Format);
-            if (details.Manifest != null && details.Manifest.IsLive)
-            {
-                _logger.LogWarning("Skipping asset {asset} which is from a running live event. Rerun the migration after the live event is stopped.", details.AssetName);
-                result.Status = MigrationStatus.Skipped;
-                return result;
-            }
 
             if (IsSupported(details))
             {
@@ -61,6 +55,16 @@ namespace AMSMigrate.Transform
                 {
                     result.Status = MigrationStatus.Failed;
                 }
+            }
+            else
+            {
+                var format = details.Manifest != null ? details.Manifest.Format : "non_ism";
+                _logger.LogInformation("The asset {asset} with format {format} is not supported by transform {transform} in current version, try next transform...", 
+                    details.AssetName,
+                    format,
+                    this.GetType().Name);
+
+                result.Status = MigrationStatus.Skipped;
             }
 
             return result;
