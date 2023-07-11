@@ -24,7 +24,7 @@ namespace AMSMigrate.Ams
   <head>
     <style>
   table {
-    font-family: ""Courier New"", monspaced;
+    font-family: ""Courier New"", monospace;
   }
   table, tr, td, th {
     border: solid black 2px;
@@ -56,7 +56,7 @@ namespace AMSMigrate.Ams
       <tbody>");
         }
 
-        private void WriteTrailer()
+        public void WriteTrailer()
         {
             _writer.WriteLine(@"
       </tbody>
