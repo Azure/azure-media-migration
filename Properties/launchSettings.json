@@ -2,23 +2,7 @@
   "profiles": {
     "AMSMigrate": {
       "commandName": "Project",
-      "commandLineArgs": "assets -s b2c12710-ecdf-4532-9ba6-7e74a219b5f2 -g provenance -n provenanceuswc -a amsencodermsitest -t $web/live/${AssetName}-stream-dash  -f \"name eq 'live-discontinuity'\" "
-    },
-    "Docker": {
-      "commandName": "Docker",
-      "commandLineArgs": "assets -s b2c12710-ecdf-4532-9ba6-7e74a219b5f2 -g provenance -n provenanceuswc --storage-account amsencodermsitest -t \"$web/live/${ContainerName}\"",
-      "environmentVariables": {
-        "AZURE_CLIENT_ID": "af32de92-7edf-4ab8-86de-9288dc9236dc",
-        "AZURE_CLIENT_SECRET": "**your secret goes here***",
-        "AZURE_TENANT_ID": "microsoft.com"
-      }
-    },
-    "WSL": {
-        "commandName": "WSL2",
-        "commandLineArgs": "AMSMigrate.dll storage -s b2c12710-ecdf-4532-9ba6-7e74a219b5f2 -g pohhsuTest -n pohhsumediaservice -o pohhsumediaservice -t generated-output/tx-${AssetName} --prefix tearofsteel-ed541c0dbb-StandardEncoder-H264MultipleBitrate1080p-5e8f356300 --skip-migrated false ",
-
-        "commandLineArgs_Assets": "AMSMigrate.dll assets -s b2c12710-ecdf-4532-9ba6-7e74a219b5f2 -g pohhsuTest -n pohhsumediaservice -o pohhsumediaservice -t generated-output/tx-${AssetName} -f \"name eq 'tearofsteel-ed541c0dbb-StandardEncoder-H264MultipleBitrate1080p-5e8f356300'\" --skip-migrated false ",
-        "distributionName": ""
+      "commandLineArgs": "{Put your command line args here}"
     }
   }
 }
