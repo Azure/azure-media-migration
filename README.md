@@ -83,7 +83,7 @@ There are two main commands: analyze and assets.  You can view the help by runni
     AMSMigrate.exe analyze -h
     AMSMigrate.exe assets -h
 
-(Remove '.exe' extension when running in Linux)
+(Run ./AMSMigrate or full path in Linux, don't add .exe extension.)
 
 ## Migrate
 
