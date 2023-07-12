@@ -74,13 +74,16 @@ To build the project, you can run the following command
     dotnet build
     dotnet publish
 
-the output binary will be in your publish folder (e.g. bin\Debug\net6.0\publish\AMSMigrate.exe for windows)
+the output binary will be in your publish folder (e.g. bin\Debug\net6.0\publish\AMSMigrate.exe for windows, 
+                                                       bin\Debug\net6.0\publish\AMSMigrate for Linux)
 
 There are two main commands: analyze and assets.  You can view the help by running the following three commands
 
     AMSMigrate.exe -h
     AMSMigrate.exe analyze -h
     AMSMigrate.exe assets -h
+
+(Remove '.exe' extension when running in Linux)
 
 ## Migrate
 

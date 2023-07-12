@@ -34,6 +34,7 @@ Below are valid keyword that can be put in the path template:
     ${AssetId}       for the Guid of the assetId.
     ${ContainerName} for the container name of the input asset.
     ${AlternateId}   for the alternative id of the input asset, use AssetName if AlternateId is not set.
+    Prepend '\' to '$' when running in Linux, such as \${AssetId} etc.
 e.g., ams-migration-output/${AssetName}/ will upload to a container named 'ams-migration-output' with path beginning with the input asset name.
 Warning: For custom path template, please ensure that the container name portion (the part of the template that is before the first '/') conforms to legal azure blob container name (see https://learn.microsoft.com/en-us/rest/api/storageservices/naming-and-referencing-containers--blobs--and-metadata).  In particular, please refrain from using ${AssetName} in the container name portion unless you are sure that the resulting name conforms to legal azure blob container name.")
         {
