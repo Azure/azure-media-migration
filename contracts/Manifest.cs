@@ -107,12 +107,12 @@ namespace AMSMigrate.Contracts
             var serializer = new XmlSerializer(typeof(Manifest));
             serializer.UnknownElement += (s, args) =>
             {
-                logger.LogTrace("Unknown element in manifest {args}", args.Element);
+                logger.LogTrace("Unknown element in manifest {args}", args.Element.Name);
             };
 
             serializer.UnknownAttribute += (s, args) =>
             {
-                logger.LogTrace("Unknown attribute in manifest {args}", args.Attr);
+                logger.LogTrace("Unknown attribute in manifest {args}", args.Attr.Name);
             };
             var manifest = serializer.Deserialize(new StreamReader(stream, Encoding.UTF8)) as Manifest;
             if (manifest == null) throw new ArgumentException("Invalid data", nameof(stream));
