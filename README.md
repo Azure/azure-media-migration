@@ -42,9 +42,9 @@ The content is converted to CMAF format with both a DASH and HLS manifest to sup
 * Marks migrated assets and provides HTML summary on analyze
 
 ## Open Issues
-* Live assets are not supported.
-* Storage encrypted VOD contents are not supported.
-* Direct migration from an Azure Storage account without using the AMS API.
+* Live assets are not supported but will be in a future version of this tool.
+* Storage encrypted VOD contents are not supported but will be in a future version of this tool.
+* Direct migration from an Azure Storage account without using the AMS API is not supported but will be in a future version of this tool.
 
 # Types of Migration
 The tool supports various types of migration depending on the asset format and the command line options.
@@ -52,7 +52,7 @@ The tool supports various types of migration depending on the asset format and t
 * For VOD assets, it can convert the assets to CMAF files with a DASH and HLS manifest and upload the files to the new storage account.
 
 # Temporary storage needed
-The tool uses temporary storage space for format conversion.
+The tool uses temporary storage space for format conversion. Aside from testing purposes, for performance reasons we recommend running the tool in the same Azure region as your AMS account, for example in an Azure VM.
 - The assets are downloaded from source container to local disk.
 - Shaka packager is invoked to generate the statically packaged files and write it to local disk.
 
@@ -91,7 +91,7 @@ Migration will do the following:
 - Copy non-streamable assets from AMS account to an output storage account.
 - Package streamable assets (currently only a subset of streamable assets, see [Open Issues](#Open-Issues)) as CMAF + HLS, DASH manifests and copy to output storage account.
 
-After migration, the input asset containers will be marked with migration status, output url, etc.
+After migration, the container metadata for the source containers will be marked with migration status, output url, etc.
 
 To migrate, you will use the assets command, an example is
 
