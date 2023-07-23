@@ -124,11 +124,11 @@ namespace AMSMigrate.Ams
                     case "AssetId":
                         return (asset.Data.AssetId ?? Guid.Empty).ToString();
                     case "AssetName":
-                        return asset.Data.Name;
+                        return asset.Data.Name.Substring(0, Math.Min(asset.Data.Name.Length, 63));
                     case "ContainerName":
                         return asset.Data.Container;
                     case "AlternateId":
-                        return asset.Data.AlternateId ?? asset.Data.Name;
+                        return asset.Data.AlternateId ?? asset.Data.Name.Substring(0, Math.Min(asset.Data.Name.Length, 63)); ;
                     // case "LocatorId":
                     //    var locatorId = GetLocatorIdAsync(asset).Result;
                     //    return locatorId;
