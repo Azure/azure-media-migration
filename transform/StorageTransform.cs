@@ -1,13 +1,15 @@
 ﻿using AMSMigrate.Ams;
 using AMSMigrate.Azure;
 using AMSMigrate.Contracts;
+using AMSMigrate.Decryption;
+using Azure.ResourceManager.Media.Models;
 using Azure.Storage.Blobs;
 using Azure.Storage.Blobs.Specialized;
 using Microsoft.Extensions.Logging;
 
 namespace AMSMigrate.Transform
 {
-    public record AssetDetails(string AssetName, BlobContainerClient Container, Manifest? Manifest, ClientManifest? ClientManifest, string? OutputManifest);
+    public record AssetDetails(string AssetName, BlobContainerClient Container, Manifest? Manifest, ClientManifest? ClientManifest, string? OutputManifest, StorageEncryptedAssetDecryptionInfo? DecryptInfo);
 
     internal abstract class StorageTransform : ITransform<AssetDetails, AssetMigrationResult>
     {
@@ -79,6 +81,7 @@ namespace AMSMigrate.Transform
 
         protected async Task UploadBlobAsync(
             BlockBlobClient blob,
+            AesCtrTransform? aesTransform,
             (string Container, string Prefix) outputPath,
             CancellationToken cancellationToken)
         {
@@ -87,7 +90,7 @@ namespace AMSMigrate.Transform
             // hack optimization for direct blob copy.
             if (_fileUploader is AzureStorageUploader uploader)
             {
-                await uploader.UploadBlobAsync(container, blobName, blob, cancellationToken);
+                await uploader.UploadBlobAsync(container, blobName, blob, aesTransform, cancellationToken);
             }
             else
             {

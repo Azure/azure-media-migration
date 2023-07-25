@@ -160,12 +160,12 @@ namespace AMSMigrate.Transform
                 if (tracks.Count == 1 && tracks[0].IsMultiFile)
                 {
                     var track = tracks[0];
-                    var multiFileStream = new MultiFileStream(_assetDetails.Container, track, _assetDetails.ClientManifest!, _logger);
+                    var multiFileStream = new MultiFileStream(_assetDetails.Container, track, _assetDetails.ClientManifest!, _assetDetails.DecryptInfo, _logger);
                     return new MultiFilePipe(file, multiFileStream);
                 }
                 else
                 {
-                    return new BlobPipe(Path.Combine(workingDirectory, file), _assetDetails.Container, _logger) as Pipe;
+                    return new BlobPipe(Path.Combine(workingDirectory, file), _assetDetails.Container, _assetDetails.DecryptInfo, _logger) as Pipe;
                 }
             }).ToArray();
         }
@@ -209,13 +209,13 @@ namespace AMSMigrate.Transform
             if (tracks.Count == 1 && tracks[0].IsMultiFile)
             {
                 var track = tracks[0];
-                var multiFileStream = new MultiFileStream(_assetDetails.Container, track, _assetDetails.ClientManifest!, _logger);
+                var multiFileStream = new MultiFileStream(_assetDetails.Container, track, _assetDetails.ClientManifest!, _assetDetails.DecryptInfo, _logger);
                 source = new MultiFilePipe(filePath, multiFileStream);
             }
             else
             {
                 var blob = _assetDetails.Container.GetBlockBlobClient(Path.GetFileName(filePath));
-                source = new BlobSource(blob, _logger);
+                source = new BlobSource(blob, _assetDetails.DecryptInfo, _logger);
             }
 
             if (TransmuxedDownload)

@@ -1,4 +1,6 @@
 ﻿using AMSMigrate.Contracts;
+using AMSMigrate.Decryption;
+using Azure.ResourceManager.Media.Models;
 using Azure.Storage.Blobs;
 using Azure.Storage.Blobs.Specialized;
 using Microsoft.Extensions.Logging;
@@ -13,17 +15,20 @@ namespace AMSMigrate.Pipes
         private readonly ILogger _logger;
         private readonly MediaStream _track;
         private readonly string _trackPrefix;
+        private readonly StorageEncryptedAssetDecryptionInfo? _decryptInfo;
 
         public MultiFileStream(
             BlobContainerClient container,
             Track track,
             ClientManifest manifest,
+            StorageEncryptedAssetDecryptionInfo? decryptInfo,
             ILogger logger)
         {
             _container = container;
             _logger = logger;
             (_track, _) = manifest.GetStream(track);
             _trackPrefix = track.Source;
+            _decryptInfo = decryptInfo;
         }
 
         public async Task DownloadAsync(Stream stream, CancellationToken cancellationToken)
@@ -34,7 +39,7 @@ namespace AMSMigrate.Pipes
                 _logger.LogDebug("Begin downloading track: {name}", _trackPrefix);
                 chunkName = $"{_trackPrefix}/header";
                 var blob = _container.GetBlockBlobClient(chunkName);
-                await blob.DownloadToAsync(stream, cancellationToken);
+                await DownloadClearBlobContent(blob, stream, cancellationToken);
 
                 // Report progress every 10%.
                 var i = 0;
@@ -52,7 +57,7 @@ namespace AMSMigrate.Pipes
                     if (await blob.ExistsAsync(cancellationToken))
                     {
                         _logger.LogTrace("Downloading Chunk for stream: {name} time={time}", _trackPrefix, chunk);
-                        await blob.DownloadToAsync(stream, cancellationToken);
+                        await DownloadClearBlobContent(blob, stream, cancellationToken);
                     }
                     else
                     {
@@ -65,6 +70,20 @@ namespace AMSMigrate.Pipes
             {
                 _logger.LogError("Failed to download chunk {chunkName} for live stream: {name}. Error: {ex}", chunkName, _trackPrefix , ex);
                 throw;
+            }
+        }
+
+        private async Task DownloadClearBlobContent(BlockBlobClient sourceBlob, Stream outputStream, CancellationToken cancellationToken)
+        {
+            using var aesTransform = AssetDecryptor.GetAesCtrTransform(_decryptInfo, _trackPrefix, true);
+
+            if (aesTransform == null)
+            {
+                await sourceBlob.DownloadToAsync(outputStream, cancellationToken);
+            }
+            else
+            {
+                await AssetDecryptor.DecryptTo(aesTransform, sourceBlob, outputStream, cancellationToken);
             }
         }
     }
