@@ -1,5 +1,6 @@
 ﻿using AMSMigrate.Ams;
 using AMSMigrate.Contracts;
+using AMSMigrate.Decryption;
 using AMSMigrate.Pipes;
 using Microsoft.Extensions.Logging;
 
@@ -35,7 +36,7 @@ namespace AMSMigrate.Transform
             (string Container, string Prefix) outputPath,
             CancellationToken cancellationToken = default)
         {
-            var (assetName, container, manifest, clientManifest, outputManifest) = details;
+            var (assetName, container, manifest, clientManifest, outputManifest, decryptor) = details;
             if (manifest == null) throw new ArgumentNullException(nameof(manifest));
             
             // create a linked source which when disposed cancels all tasks.
@@ -61,7 +62,10 @@ namespace AMSMigrate.Transform
                 var blobs = await container.GetListOfBlobsRemainingAsync(manifest, cancellationToken);
                 allTasks.Add(Task.WhenAll(blobs.Select(async blob =>
                 {
-                    await UploadBlobAsync(blob, outputPath, cancellationToken);
+                    using (AesCtrTransform? aesTransform = AssetDecryptor.GetAesCtrTransform(details.DecryptInfo, blob.Name, false)) 
+                    {
+                        await UploadBlobAsync(blob, aesTransform, outputPath, cancellationToken);
+                    }
                 })));
 
                 if (packager.UsePipeForInput)

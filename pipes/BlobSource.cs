@@ -1,4 +1,6 @@
-﻿using Azure.Storage.Blobs.Models;
+﻿using AMSMigrate.Decryption;
+using Azure.ResourceManager.Media.Models;
+using Azure.Storage.Blobs.Models;
 using Azure.Storage.Blobs.Specialized;
 using FFMpegCore.Pipes;
 using Microsoft.Extensions.Logging;
@@ -14,11 +16,13 @@ namespace AMSMigrate.Pipes
         };
 
         private readonly BlockBlobClient _blobClient;
+        private readonly StorageEncryptedAssetDecryptionInfo? _decryptInfo;
         private readonly ILogger _logger;
 
-        public BlobSource(BlockBlobClient blobClient, ILogger logger)
+        public BlobSource(BlockBlobClient blobClient, StorageEncryptedAssetDecryptionInfo? decryptInfo, ILogger logger)
         {
             _blobClient = blobClient;
+            _decryptInfo = decryptInfo;
             _logger = logger;
         }
 
@@ -58,7 +62,16 @@ namespace AMSMigrate.Pipes
 
         public async Task DownloadAsync(string filePath, CancellationToken cancellationToken)
         {
-            await _blobClient.DownloadToAsync(filePath, cancellationToken);
+            using var aesTransform = AssetDecryptor.GetAesCtrTransform(_decryptInfo, _blobClient.Name, false);
+
+            if (aesTransform != null)
+            {
+                await AssetDecryptor.DecryptTo(aesTransform, _blobClient, filePath, cancellationToken);
+            }
+            else
+            {
+                await _blobClient.DownloadToAsync(filePath, cancellationToken);
+            }
         }
     }
 }
