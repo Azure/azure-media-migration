@@ -12,8 +12,6 @@ using System.Threading.Channels;
 
 namespace AMSMigrate.Ams
 {
-    record struct AssetStats(int Total, int Migrated, int Skipped, int Successful, int Failed);
-
     internal class AssetMigrator : BaseMigrator
     {
         private readonly ILogger _logger;
@@ -83,36 +81,15 @@ namespace AMSMigrate.Ams
         {
             var storage = await _resourceProvider.GetStorageAccountAsync(account, cancellationToken);
             var stats = new AssetStats();
-
-            await MigrateInBatches(assets, filteredList, async assets =>
+            await MigrateInParallel(assets, filteredList, async (asset, cancellationToken) =>
             {
-                var results = await Task.WhenAll(assets.Select(async asset => await MigrateAsync(account, storage, asset, cancellationToken)));
-                stats.Total += results.Length;
-                foreach (var result in results)
-                {
-                    switch (result.Status)
-                    {
-                        case MigrationStatus.Completed:
-                            ++stats.Successful;
-                            break;
-                        case MigrationStatus.Skipped:
-                            ++stats.Skipped;
-                            break;
-                        case MigrationStatus.AlreadyMigrated:
-                            ++stats.Migrated;
-                            break;
-                        case MigrationStatus.NotMigrated:
-                            ++stats.Skipped;
-                            break;
-                        default:
-                            ++stats.Failed;
-                            break;
-                    }
-                }
+                var result = await MigrateAsync(account, storage, asset, cancellationToken);
+                stats.Update(result);
                 await writer.WriteAsync(stats.Total, cancellationToken);
             },
             _options.BatchSize,
             cancellationToken);
+
             writer.Complete();
             return stats;
         }

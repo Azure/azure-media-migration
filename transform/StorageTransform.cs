@@ -93,9 +93,9 @@ namespace AMSMigrate.Transform
             {
                 var progress = new Progress<long>(progress =>
                  _logger.LogTrace("Upload progress for {name}: {progress}", blobName, progress));
-
                 var result = await blob.DownloadStreamingAsync(cancellationToken: cancellationToken);
-                await _fileUploader.UploadAsync(container, blobName, result.Value.Content, progress, cancellationToken);
+                var headers = new Headers(result.Value.Details.ContentType);
+                await _fileUploader.UploadAsync(container, blobName, result.Value.Content, headers, progress, cancellationToken);
             }
         }
 
@@ -107,6 +107,20 @@ namespace AMSMigrate.Transform
             {
                 await uploader.UpdateOutputStatus(containerName, cancellationToken);
             }
+        }
+
+        public Headers GetHeaders(string filename)
+        {
+            var contentType = Path.GetExtension(filename) switch
+            {
+                ".m3u8" => "application/vnd.apple.mpegurl",
+                ".mpd" => "application/dash+xml",
+                ".vtt" => "text/vtt",
+                ".json" => "application/json",
+                ".mp4" => "video/mp4",
+                _ => null
+            };
+            return new Headers(contentType);
         }
     }
 }
