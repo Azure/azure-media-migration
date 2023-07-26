@@ -221,30 +221,10 @@ namespace AMSMigrate.Ams
             CancellationToken cancellationToken)
         {
             var stats = new AssetStats();
-
-            await MigrateInBatches(containers, filteredList, async containers =>
+            await MigrateInParallel(containers, filteredList, async (container, cancellationToken) =>
             {
-                var tasks = containers.Select(container => MigrateAsync(storageClient, container, cancellationToken));
-                var results = await Task.WhenAll(tasks);
-                stats.Total += results.Length;
-                foreach (var result in results)
-                {
-                    switch (result.Status)
-                    {
-                        case MigrationStatus.Completed:
-                            ++stats.Successful;
-                            break;
-                        case MigrationStatus.Skipped:
-                            ++stats.Skipped;
-                            break;
-                        case MigrationStatus.AlreadyMigrated:
-                            ++stats.Migrated;
-                            break;
-                        default:
-                            ++stats.Failed;
-                            break;
-                    }
-                }
+                var result = await MigrateAsync(storageClient, container, cancellationToken);
+                stats.Update(result);
                 await writer.WriteAsync(stats, cancellationToken);
             },
             _storageOptions.BatchSize,

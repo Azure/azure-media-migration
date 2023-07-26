@@ -6,19 +6,12 @@ using Azure.ResourceManager.Media.Models;
 using Azure.Storage.Blobs;
 using Microsoft.Extensions.Logging;
 using Spectre.Console;
+using System.Collections.Concurrent;
 using System.Diagnostics;
 using System.Threading.Channels;
 
 namespace AMSMigrate.Ams
 {
-    record struct Statistics(
-        int TotalAssets,
-        int StreamableAssets,
-        int Migrated,
-        int Failed,
-        int Skipped,
-        int NoLocators);
-
     internal class AssetAnalyzer : BaseMigrator
     {
         private readonly ILogger _logger;
@@ -125,8 +118,8 @@ namespace AMSMigrate.Ams
             }
             var assets = account.GetMediaAssets()
                 .GetAllAsync(resourceFilter, cancellationToken: cancellationToken);
-            var statistics = new Statistics();
-            var assetTypes = new SortedDictionary<string, int>();
+            var statistics = new AssetStats();
+            var assetTypes = new ConcurrentDictionary<string, int>();
 
             List<MediaAssetResource>? filteredList = null;
 
@@ -144,44 +137,18 @@ namespace AMSMigrate.Ams
             var channel = Channel.CreateBounded<double>(1);
             var progress = ShowProgressAsync("Analyzing Assets", "Assets", totalAssets, channel.Reader, cancellationToken);
             var writer = channel.Writer;
-            await MigrateInBatches(assets, filteredList, async assets =>
+            await MigrateInParallel(assets, filteredList, async (asset, cancellationToken) =>
             {
-                var tasks = assets.Select(async asset =>
-                {
-                    return await AnalyzeAsync(asset, storage, cancellationToken);
-                });
-                var results = await Task.WhenAll(tasks);
-                reportGenerator?.WriteRows(results);
-                statistics.TotalAssets += assets.Length;
-                statistics.Migrated += results.Count(r => r.Status == MigrationStatus.Completed);
-                statistics.Failed += results.Count(r => r.Status == MigrationStatus.Failed);
-                statistics.Skipped += results.Count(r => r.Status == MigrationStatus.Skipped);
-                await writer.WriteAsync(statistics.TotalAssets, cancellationToken);
-                foreach (var result in results)
-                {
-                    if (result == null) continue;
-                    if (result.IsStreamable)
-                    {
-                        statistics.StreamableAssets++;
-                    }
-
-                    var assetType = result.AssetType ?? "unknown";
-                    if (assetTypes.ContainsKey(assetType))
-                    {
-                        assetTypes[assetType] += 1;
-                    }
-                    else
-                    {
-                        assetTypes.Add(assetType, 1);
-                    }
-                    if (result.Locators == 0)
-                    {
-                        statistics.NoLocators++;
-                    }
-                }
+                var result = await AnalyzeAsync(asset, storage, cancellationToken);
+                var assetType = result.AssetType ?? "unknown";
+                assetTypes.AddOrUpdate(assetType, 1, (key, value) => Interlocked.Increment(ref value));
+                reportGenerator?.WriteRow(result);
+                statistics.Update(result);
+                await writer.WriteAsync(statistics.Total, cancellationToken);
             },
             _analysisOptions.BatchSize,
             cancellationToken);
+
             writer.Complete();
             await progress;
             _logger.LogDebug("Finished analysis of assets for account: {name}. Time taken {elapsed}", _analysisOptions.AccountName, watch.Elapsed);
@@ -199,15 +166,15 @@ namespace AMSMigrate.Ams
             }
         }
 
-        private void WriteSummary(Statistics statistics, IDictionary<string, int> assetTypes)
+        private void WriteSummary(AssetStats statistics, IDictionary<string, int> assetTypes)
         {
             var table = new Table()
                 .Title("[yellow]Asset Summary[/]")
                 .HideHeaders()
                 .AddColumn(string.Empty)
                 .AddColumn(string.Empty)
-                .AddRow("[yellow]Total[/]", $"{statistics.TotalAssets}")
-                .AddRow("[darkgreen]Streamable[/]", $"{statistics.StreamableAssets}")
+                .AddRow("[yellow]Total[/]", $"{statistics.Total}")
+                .AddRow("[darkgreen]Streamable[/]", $"{statistics.Streamable}")
                 .AddRow("[green]Migrated[/]", $"{statistics.Migrated}")
                 .AddRow("[red]Failed[/]", $"{statistics.Failed}")
                 .AddRow("[darkorange]Skipped[/]", $"{statistics.Skipped}")

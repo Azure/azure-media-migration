@@ -45,6 +45,7 @@ namespace AMSMigrate.Azure
             string containerName,
             string fileName,
             Stream content,
+            Headers headers,
             IProgress<long> progress,
             CancellationToken cancellationToken = default)
         {
@@ -57,6 +58,10 @@ namespace AMSMigrate.Azure
             var options = new BlobUploadOptions
             {
                 ProgressHandler = progress,
+                HttpHeaders = new BlobHttpHeaders
+                {
+                    ContentType = headers.ContentType
+                },
                 Conditions = new BlobRequestConditions
                 {
                     IfNoneMatch = _options.OverWrite ? null : ETag.All

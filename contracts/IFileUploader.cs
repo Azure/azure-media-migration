@@ -1,6 +1,8 @@
 ﻿
 namespace AMSMigrate.Contracts
 {
+    public record Headers(string? ContentType);
+
     public interface IFileUploader
     {
         Uri GetDestinationUri(string container, string fileName);
@@ -9,6 +11,7 @@ namespace AMSMigrate.Contracts
             string container,
             string fileName,
             Stream content,
+            Headers headers,
             IProgress<long> progress,
             CancellationToken cancellationToken);
 

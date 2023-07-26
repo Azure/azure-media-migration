@@ -29,12 +29,14 @@ namespace AMSMigrate.Pipes
         private readonly string _container;
         private readonly string _filename;
         private readonly ILogger _logger;
+        private Headers _headers;
 
-        public UploadSink(IFileUploader uploader, string container, string filename, ILogger logger)
+        public UploadSink(IFileUploader uploader, string container, string filename, Headers headers, ILogger logger)
         {
             _uploader = uploader;
             _container = container;
             _filename = filename;
+            _headers = headers;
             _logger = logger;
         }
 
@@ -46,7 +48,7 @@ namespace AMSMigrate.Pipes
             try
             {
                 var progress = new Progress<long>();
-                await _uploader.UploadAsync(_container, _filename, inputStream, progress, cancellationToken);
+                await _uploader.UploadAsync(_container, _filename, inputStream, _headers, progress, cancellationToken);
             }
             catch (Exception ex)
             {
@@ -58,7 +60,7 @@ namespace AMSMigrate.Pipes
         public async Task UploadAsync(string filename, IProgress<long> progress, CancellationToken cancellationToken)
         {
             using var file = File.OpenRead(filename);
-            await _uploader.UploadAsync(_container, _filename, file, progress, cancellationToken);
+            await _uploader.UploadAsync(_container, _filename, file, _headers, progress, cancellationToken);
         }
     }
 

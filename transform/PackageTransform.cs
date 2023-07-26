@@ -160,7 +160,7 @@ namespace AMSMigrate.Transform
         {
             var file = Path.GetFileName(filePath);
             var progress = new Progress<long>(bytes => _logger.LogTrace("Uploaded {bytes} bytes to {name}", bytes, file));
-            return new UploadPipe(filePath, helper, _logger, progress);
+            return new UploadPipe(filePath, helper, _logger, GetHeaders(file), progress);
         }
 
         private async Task UploadFile(string filePath, UploadHelper uploadHelper, CancellationToken cancellationToken)
@@ -169,7 +169,7 @@ namespace AMSMigrate.Transform
             var progress = new Progress<long>(p =>
                 _logger.LogTrace("Uploaded {bytes} bytes to {file}", p, file));
             using var content = File.OpenRead(filePath);
-            await uploadHelper.UploadAsync(Path.GetFileName(file), content, progress, cancellationToken);
+            await uploadHelper.UploadAsync(Path.GetFileName(file), content, GetHeaders(file), progress, cancellationToken);
         }
     }
 }
