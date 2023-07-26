@@ -72,6 +72,12 @@ if it is not set, use input asset's manifest name.")
             () => true,
             description: @"Skip assets that have been migrated already.");
 
+        private readonly Option<bool> _cleanInputAssets = new(
+            aliases: new[] { "--clean" },
+            () => true,
+            description: @"Clean input assets.");
+
+
         private readonly Option<bool> _copyNonStreamable = new(
             aliases: new[] { "--copy-nonstreamable" },
             () => true,
@@ -146,6 +152,7 @@ if it is not set, use input asset's manifest name.")
                 bindingContext.ParseResult.GetValueForOption(_copyNonStreamable),
                 bindingContext.ParseResult.GetValueForOption(_overwrite),
                 bindingContext.ParseResult.GetValueForOption(_skipMigrated),
+                 bindingContext.ParseResult.GetValueForOption(_cleanInputAssets),
                 SegmentDurationInSeconds,
                 bindingContext.ParseResult.GetValueForOption(_batchSize)
             );

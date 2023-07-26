@@ -20,6 +20,7 @@ namespace AMSMigrate.Ams
         private readonly TransformFactory _transformFactory;
         private readonly AssetOptions _options;
         private readonly IMigrationTracker<BlobContainerClient, AssetMigrationResult> _tracker;
+        private const string DefaultStreamingEndpointName = "default";
 
         public AssetMigrator(
             GlobalOptions globalOptions,
@@ -77,6 +78,28 @@ namespace AMSMigrate.Ams
             _logger.LogInformation("Finished migration of assets for account: {name}. Time taken: {time}", account.Data.Name, watch.Elapsed);
             await progress;
             WriteSummary(stats);
+        }
+
+        /// <summary>
+        /// Delete the resources that were created.
+        /// </summary>
+        /// <param name="inputAssets">The input Asset List.</param>
+        /// <param name="streamingLocator">The streaming locator. </param>
+        /// <returns>A task.</returns>
+        private async Task CleanUpAsync(
+            MediaAssetResource? inputAsset,
+            StreamingLocatorResource? streamingLocator)
+        {
+            if (streamingLocator != null)
+            {
+              await streamingLocator.DeleteAsync(WaitUntil.Completed); 
+            }
+
+            if (inputAsset != null)
+            {
+                await inputAsset.DeleteAsync(WaitUntil.Completed);
+            }
+
         }
 
         private async Task<AssetStats> MigrateAsync(MediaServicesAccountResource account, AsyncPageable<MediaAssetResource> assets, List<MediaAssetResource>? filteredList, ChannelWriter<double> writer, CancellationToken cancellationToken)
@@ -163,6 +186,14 @@ namespace AMSMigrate.Ams
 
                         result.Status = MigrationStatus.AlreadyMigrated;
                         _logger.LogDebug("Migrated asset: {asset}, container: {container}, type: {type}, status: {status}", asset.Data.Name, asset.Data.Container, result.AssetType, result.Status);
+
+                        if (_options.CleanUp)
+                        {
+                            var locator = account.GetStreamingLocatorAsync(asset, cancellationToken).Result;
+                            await CleanUpAsync(asset, locator);
+                            _logger.LogDebug("Migrated asset: {asset} is deleted", asset.Data.Name);
+                        }
+
                         return result;
                     }
                 }
@@ -214,6 +245,12 @@ namespace AMSMigrate.Ams
 
                                     if (result.Status != MigrationStatus.Skipped)
                                     {
+                                        if (_options.CleanUp && (result.Status == MigrationStatus.Completed || result.Status == MigrationStatus.AlreadyMigrated))
+                                        {
+                                            var locator = account.GetStreamingLocatorAsync(asset, cancellationToken).Result;
+                                            await CleanUpAsync(asset, locator);
+                                        }
+                                        
                                         break;
                                     }
                                 }

@@ -13,6 +13,7 @@
         bool CopyNonStreamable,
         bool OverWrite,
         bool SkipMigrated,
+        bool CleanUp,
         int SegmentDuration,
         int BatchSize);
 }
