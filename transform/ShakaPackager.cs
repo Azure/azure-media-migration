@@ -55,21 +55,35 @@ namespace AMSMigrate.Transform
             UsePipeForOutput = false;
         }
 
-        private string GetArguments(IList<string> inputs, IList<string> outputs, IList<string> manifests)
+        private IEnumerable<string> GetArguments(IList<string> inputs, IList<string> outputs, IList<string> manifests)
         {
-            var tracks = SelectedTracks.Select((t, i) =>
+            List<string> arguments = new(SelectedTracks.Select((t, i) =>
             {
                 var ext = t.IsMultiFile ? MEDIA_FILE : string.Empty;
                 var index = Inputs.Count == 1 ? 0 : Inputs.IndexOf($"{t.Source}{ext}");
                 var stream = Inputs.Count == 1? i.ToString(): t.Type.ToString().ToLowerInvariant();
-                var language = string.IsNullOrEmpty(t.SystemLanguage) || t.SystemLanguage == "und" ? string.Empty : $"language={t.SystemLanguage}";
-                return $"stream={stream},in={inputs[index]},out={outputs[i]},{language},playlist_name={manifests[i]}";
-            });
+                var language = string.IsNullOrEmpty(t.SystemLanguage) || t.SystemLanguage == "und" ? string.Empty : $"language={t.SystemLanguage},";
+                return $"stream={stream},in={inputs[index]},out={outputs[i]},{language}playlist_name={manifests[i]}";
+            }));
             var dash = manifests[manifests.Count - 1];
             var hls = manifests[manifests.Count - 2];
-            var logging = true;
-            var extraArgs = $"{(UsePipeForInput? "--io_block_size 65536" : string.Empty)} {(logging? "--vmodule=*=1" : false)}";
-            return $"{extraArgs} {string.Join(" ", tracks)} --segment_duration 2 --mpd_output {dash} --hls_master_playlist_output {hls}";
+            var logging = false;
+            if (logging)
+            {
+                arguments.Add("--vmodule=*=1");
+            }
+            if (UsePipeForInput)
+            {
+                arguments.Add("--io_block_size");
+                arguments.Add("65536");
+            }
+            arguments.Add("--segment_duration");
+            arguments.Add("2");
+            arguments.Add("--mpd_output");
+            arguments.Add(dash);
+            arguments.Add("--hls_master_playlist_output");
+            arguments.Add(hls);
+            return arguments;
         }
 
         public override Task<bool> RunAsync(

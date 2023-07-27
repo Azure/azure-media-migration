@@ -91,8 +91,17 @@ namespace AMSMigrate.Transform
             }
             else
             {
-                var progress = new Progress<long>(progress =>
-                 _logger.LogTrace("Upload progress for {name}: {progress}", blobName, progress));
+                // Report update for every 1MB.
+                long update = 0;
+                var progress = new Progress<long>(p =>
+                {
+                    if (p >= update)
+                    {
+                        _logger.LogTrace("Uploaded {byte} bytes to {file}", p, blobName);
+                        update += 1024 * 1024;
+                    }
+                });
+
                 var result = await blob.DownloadStreamingAsync(cancellationToken: cancellationToken);
                 var headers = new Headers(result.Value.Details.ContentType);
                 await _fileUploader.UploadAsync(container, blobName, result.Value.Content, headers, progress, cancellationToken);
