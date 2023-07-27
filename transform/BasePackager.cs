@@ -101,11 +101,21 @@ namespace AMSMigrate.Transform
             string[] manifests,
             CancellationToken cancellationToken);
 
-        public Process StartProcess(string command, string arguments, Action<Process> onExit, Action<string?> stdOut, Action<string?> stdError)
+        private static string Escape(string argument)
+        {
+            if (argument.Contains(' '))
+            {
+                return $"\"{argument}\"";
+            }
+            return argument;
+        }
+
+        public Process StartProcess(string command, IEnumerable<string> arguments, Action<Process> onExit, Action<string?> stdOut, Action<string?> stdError)
         {
             _logger.LogDebug("Starting packager {command}...", command);
-            _logger.LogTrace("Packager arguments: {args}", arguments);
-            var processStartInfo = new ProcessStartInfo(command, arguments)
+            var argumentString = string.Join(" ", arguments.Select(Escape));
+            _logger.LogTrace("Packager arguments: {args}", argumentString);
+            var processStartInfo = new ProcessStartInfo(command, argumentString)
             {
                 CreateNoWindow = true,
                 UseShellExecute = false,
