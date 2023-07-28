@@ -158,25 +158,25 @@ namespace AMSMigrate.Ams
                     result.AssetType = AssetMigrationResult.AssetType_NonIsm;
                 }
 
-                if (result.IsSupportedAsset)
-                {
-                    var uploader = _transformFactory.GetUploader(_options);
-                    var (Container, Path) = _transformFactory.TemplateMapper.ExpandAssetTemplate(
-                                                        record.Asset, 
-                                                        _options.PathTemplate);
+                    if (result.IsSupportedAsset(_globalOptions.EnableLiveAsset))
+                    {
+                        var uploader = _transformFactory.GetUploader(_options);
+                        var (Container, Path) = _transformFactory.TemplateMapper.ExpandAssetTemplate(
+                                                            record.Asset, 
+                                                            _options.PathTemplate);
 
                     var canUpload = await uploader.CanUploadAsync(
                                                         Container, 
                                                         Path, 
                                                         cancellationToken);
 
-                    if (canUpload)
-                    {
-                        try
+                        if (canUpload)
                         {
-                            foreach (var transform in _transformFactory.GetTransforms(_options))
+                            try
                             {
-                                var transformResult = (AssetMigrationResult)await transform.RunAsync(record, cancellationToken);
+                                foreach (var transform in _transformFactory.GetTransforms(_globalOptions, _options))
+                                {
+                                    var transformResult = (AssetMigrationResult)await transform.RunAsync(record, cancellationToken);
 
                                 result.Status = transformResult.Status;
                                 result.OutputPath = transformResult.OutputPath;

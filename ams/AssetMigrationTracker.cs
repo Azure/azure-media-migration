@@ -45,7 +45,10 @@ namespace AMSMigrate.Ams
         ///   If there is no .ism file,  it can be copied over directly.
         ///   
         /// </summary>
-        public bool IsSupportedAsset => (AssetType != null && (AssetType == AssetType_NonIsm || AssetType.StartsWith("mp4")));
+        public bool IsSupportedAsset(bool enableLiveAsset)
+        {
+            return (AssetType != null && (AssetType == AssetType_NonIsm || AssetType.StartsWith("mp4") || (enableLiveAsset && AssetType == "vod-fmp4")));
+        }
 
         public AssetMigrationResult(MigrationStatus status = MigrationStatus.NotMigrated, Uri? outputPath = null, string? assetType = null, string? manifestName = null) : base(status)
         {
