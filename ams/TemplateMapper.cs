@@ -112,6 +112,8 @@ namespace AMSMigrate.Ams
                     path += '/';
                 }
             }
+
+            containerName = containerName.Substring(0, Math.Min(containerName.Length, 63));
             return (containerName, path);
         }
 
@@ -124,11 +126,11 @@ namespace AMSMigrate.Ams
                     case "AssetId":
                         return (asset.Data.AssetId ?? Guid.Empty).ToString();
                     case "AssetName":
-                        return asset.Data.Name.Substring(0, Math.Min(asset.Data.Name.Length, 63));
+                        return asset.Data.Name;
                     case "ContainerName":
                         return asset.Data.Container;
                     case "AlternateId":
-                        return asset.Data.AlternateId ?? asset.Data.Name.Substring(0, Math.Min(asset.Data.Name.Length, 63)); ;
+                        return asset.Data.AlternateId ?? asset.Data.Name;
                     // case "LocatorId":
                     //    var locatorId = GetLocatorIdAsync(asset).Result;
                     //    return locatorId;
