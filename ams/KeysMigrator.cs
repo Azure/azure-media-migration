@@ -38,16 +38,16 @@ namespace AMSMigrate.Ams
             var locators = account.GetStreamingLocators().GetAllAsync(_keyOptions.ResourceFilter, cancellationToken: cancellationToken);
             var channel = Channel.CreateBounded<double>(1);
             var progress = ShowProgressAsync("Migrate content keys", "Locators", 1.0, channel.Reader, cancellationToken);
-            double count = 0;
-            await MigrateInBatches(locators, null, async locators =>
+            int count = 0;
+            await MigrateInParallel(locators, null, async (locator, cancellationToken) =>
             {
-                var tasks = locators.Select(locator => MigrateLocatorAsync(locator, cancellationToken));
-                await Task.WhenAll(tasks);
-                count += locators.Length;
-                await channel.Writer.WriteAsync(count);
+                await MigrateLocatorAsync(locator, cancellationToken);
+                Interlocked.Increment(ref count);
+                await channel.Writer.WriteAsync(count, cancellationToken);
             },
             _keyOptions.BatchSize,
             cancellationToken);
+
             _logger.LogInformation("Finished migration of keys for account: {name}", _keyOptions.AccountName);
             channel.Writer.Complete();
             await progress;

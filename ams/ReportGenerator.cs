@@ -65,9 +65,9 @@ namespace AMSMigrate.Ams
 </html>");
         }
 
-        public void WriteRows(AnalysisResult[] results)
+        public void WriteRow(AnalysisResult result)
         {
-            foreach (var result in results)
+            lock(this)
             {
                 _writer.Write($"<tr><td>{result.AssetName}</td><td>{result.AssetType}</td><td>{result.Status}</td><td>");
                 if (result.OutputPath != null)

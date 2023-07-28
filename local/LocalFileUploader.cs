@@ -20,7 +20,7 @@ namespace AMSMigrate.Local
             return new Uri(Path.Combine(_assetOptions.StoragePath, container, fileName));
         }
 
-        public async Task UploadAsync(string container, string fileName, Stream content, IProgress<long> progress, CancellationToken cancellationToken)
+        public async Task UploadAsync(string container, string fileName, Stream content, Headers headers, IProgress<long> progress, CancellationToken cancellationToken)
         {
             var subDir = Path.GetDirectoryName(fileName) ?? string.Empty;
             if (subDir[0] == '/' || subDir[0] == '\\')

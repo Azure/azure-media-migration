@@ -1,17 +1,20 @@
 ﻿using AMSMigrate.Ams;
 using AMSMigrate.Contracts;
+using AMSMigrate.Decryption;
 using Microsoft.Extensions.Logging;
+using System.Reflection.Metadata;
 
 namespace AMSMigrate.Transform
 {
     internal class UploadTransform : StorageTransform
     {
         public UploadTransform(
+            GlobalOptions globalOptions,
             MigratorOptions options,
             IFileUploader uploader,
             ILogger<UploadTransform> logger,
             TemplateMapper templateMapper) :
-            base(options, templateMapper, uploader, logger)
+            base(globalOptions, options, templateMapper, uploader, logger)
         {
         }
 
@@ -24,9 +27,17 @@ namespace AMSMigrate.Transform
             (string Container, string Prefix) outputPath,
             CancellationToken cancellationToken = default)
         {
-            var (assetName, inputContainer, manifest, _, _) = details;
-            var inputBlobs = await inputContainer.GetListOfBlobsAsync(cancellationToken, manifest);
-            var uploads = inputBlobs.Select(blob => UploadBlobAsync(blob, outputPath, cancellationToken));
+            var (assetName, inputContainer, manifest, _, _, _) = details;
+            var inputBlobs = await inputContainer.GetListOfBlobsAsync(cancellationToken, manifest);            
+
+            var uploads = inputBlobs.Select(async blob =>
+                                    {
+                                        using (AesCtrTransform? aesTransform = AssetDecryptor.GetAesCtrTransform(details.DecryptInfo, blob.Name, false))
+                                        {
+                                            await UploadBlobAsync(blob, aesTransform, outputPath, cancellationToken);
+                                        }
+                                    });
+
             await Task.WhenAll(uploads);
 
             // Mark the output container appropriately so that it won't be used as an input asset in new run.

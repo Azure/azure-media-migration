@@ -1,5 +1,6 @@
 ﻿using AMSMigrate.Ams;
 using AMSMigrate.Contracts;
+using AMSMigrate.Decryption;
 using AMSMigrate.Pipes;
 using Microsoft.Extensions.Logging;
 
@@ -10,12 +11,13 @@ namespace AMSMigrate.Transform
         private readonly PackagerFactory _packagerFactory;
 
         public PackageTransform(
+            GlobalOptions globalOptions,
             MigratorOptions options,
             ILogger<PackageTransform> logger,
             TemplateMapper templateMapper,
             IFileUploader uploader,
             PackagerFactory factory)
-            : base(options, templateMapper, uploader, logger)
+            : base(globalOptions, options, templateMapper, uploader, logger)
         {
             _packagerFactory = factory;
         }
@@ -27,7 +29,7 @@ namespace AMSMigrate.Transform
             {
                 return false;
             }
-            return details.Manifest.Format.StartsWith("mp4");
+            return details.Manifest.Format.StartsWith("mp4") || (_globalOptions.EnableLiveAsset && details.Manifest.Format == "vod-fmp4");
         }
 
         protected override async Task<string> TransformAsync(
@@ -35,7 +37,7 @@ namespace AMSMigrate.Transform
             (string Container, string Prefix) outputPath,
             CancellationToken cancellationToken = default)
         {
-            var (assetName, container, manifest, clientManifest, outputManifest) = details;
+            var (assetName, container, manifest, clientManifest, outputManifest, decryptor) = details;
             if (manifest == null) throw new ArgumentNullException(nameof(manifest));
             
             // create a linked source which when disposed cancels all tasks.
@@ -61,7 +63,10 @@ namespace AMSMigrate.Transform
                 var blobs = await container.GetListOfBlobsRemainingAsync(manifest, cancellationToken);
                 allTasks.Add(Task.WhenAll(blobs.Select(async blob =>
                 {
-                    await UploadBlobAsync(blob, outputPath, cancellationToken);
+                    using (AesCtrTransform? aesTransform = AssetDecryptor.GetAesCtrTransform(details.DecryptInfo, blob.Name, false)) 
+                    {
+                        await UploadBlobAsync(blob, aesTransform, outputPath, cancellationToken);
+                    }
                 })));
 
                 if (packager.UsePipeForInput)
@@ -160,7 +165,7 @@ namespace AMSMigrate.Transform
         {
             var file = Path.GetFileName(filePath);
             var progress = new Progress<long>(bytes => _logger.LogTrace("Uploaded {bytes} bytes to {name}", bytes, file));
-            return new UploadPipe(filePath, helper, _logger, progress);
+            return new UploadPipe(filePath, helper, _logger, GetHeaders(file), progress);
         }
 
         private async Task UploadFile(string filePath, UploadHelper uploadHelper, CancellationToken cancellationToken)
@@ -169,7 +174,7 @@ namespace AMSMigrate.Transform
             var progress = new Progress<long>(p =>
                 _logger.LogTrace("Uploaded {bytes} bytes to {file}", p, file));
             using var content = File.OpenRead(filePath);
-            await uploadHelper.UploadAsync(Path.GetFileName(file), content, progress, cancellationToken);
+            await uploadHelper.UploadAsync(Path.GetFileName(file), content, GetHeaders(file), progress, cancellationToken);
         }
     }
 }

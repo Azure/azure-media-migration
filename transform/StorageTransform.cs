@@ -1,27 +1,32 @@
 ﻿using AMSMigrate.Ams;
 using AMSMigrate.Azure;
 using AMSMigrate.Contracts;
+using AMSMigrate.Decryption;
+using Azure.ResourceManager.Media.Models;
 using Azure.Storage.Blobs;
 using Azure.Storage.Blobs.Specialized;
 using Microsoft.Extensions.Logging;
 
 namespace AMSMigrate.Transform
 {
-    public record AssetDetails(string AssetName, BlobContainerClient Container, Manifest? Manifest, ClientManifest? ClientManifest, string? OutputManifest);
+    public record AssetDetails(string AssetName, BlobContainerClient Container, Manifest? Manifest, ClientManifest? ClientManifest, string? OutputManifest, StorageEncryptedAssetDecryptionInfo? DecryptInfo);
 
     internal abstract class StorageTransform : ITransform<AssetDetails, AssetMigrationResult>
     {
+        protected readonly GlobalOptions _globalOptions;
         protected readonly MigratorOptions _options;
         private readonly TemplateMapper _templateMapper;
         protected readonly ILogger _logger;
         protected readonly IFileUploader _fileUploader;     
 
         public StorageTransform(
+            GlobalOptions globalOptions,
             MigratorOptions options,
             TemplateMapper templateMapper,
             IFileUploader fileUploader,
             ILogger logger)
         {
+            _globalOptions = globalOptions;
             _options = options;
             _templateMapper = templateMapper;
             _fileUploader = fileUploader;
@@ -79,6 +84,7 @@ namespace AMSMigrate.Transform
 
         protected async Task UploadBlobAsync(
             BlockBlobClient blob,
+            AesCtrTransform? aesTransform,
             (string Container, string Prefix) outputPath,
             CancellationToken cancellationToken)
         {
@@ -87,15 +93,24 @@ namespace AMSMigrate.Transform
             // hack optimization for direct blob copy.
             if (_fileUploader is AzureStorageUploader uploader)
             {
-                await uploader.UploadBlobAsync(container, blobName, blob, cancellationToken);
+                await uploader.UploadBlobAsync(container, blobName, blob, aesTransform, cancellationToken);
             }
             else
             {
-                var progress = new Progress<long>(progress =>
-                 _logger.LogTrace("Upload progress for {name}: {progress}", blobName, progress));
+                // Report update for every 1MB.
+                long update = 0;
+                var progress = new Progress<long>(p =>
+                {
+                    if (p >= update)
+                    {
+                        _logger.LogTrace("Uploaded {byte} bytes to {file}", p, blobName);
+                        update += 1024 * 1024;
+                    }
+                });
 
                 var result = await blob.DownloadStreamingAsync(cancellationToken: cancellationToken);
-                await _fileUploader.UploadAsync(container, blobName, result.Value.Content, progress, cancellationToken);
+                var headers = new Headers(result.Value.Details.ContentType);
+                await _fileUploader.UploadAsync(container, blobName, result.Value.Content, headers, progress, cancellationToken);
             }
         }
 
@@ -107,6 +122,20 @@ namespace AMSMigrate.Transform
             {
                 await uploader.UpdateOutputStatus(containerName, cancellationToken);
             }
+        }
+
+        public Headers GetHeaders(string filename)
+        {
+            var contentType = Path.GetExtension(filename) switch
+            {
+                ".m3u8" => "application/vnd.apple.mpegurl",
+                ".mpd" => "application/dash+xml",
+                ".vtt" => "text/vtt",
+                ".json" => "application/json",
+                ".mp4" => "video/mp4",
+                _ => null
+            };
+            return new Headers(contentType);
         }
     }
 }
