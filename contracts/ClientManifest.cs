@@ -67,6 +67,9 @@ namespace AMSMigrate.Contracts
         [XmlAttribute("t")]
         public long Time { get; set; }
 
+        [XmlIgnoreAttribute()]
+        public bool TimeSpecified { get; set; }
+
         [XmlAttribute("d")]
         public long Duration { get; set; }
 
@@ -173,7 +176,7 @@ namespace AMSMigrate.Contracts
             long time = 0;
             foreach (var chunk in Chunks)
             {
-                if (chunk.Time != time && time != 0)
+                if ((chunk.TimeSpecified && chunk.Time != time) && time != 0)
                 {
                     return true;
                 }
@@ -225,10 +228,16 @@ namespace AMSMigrate.Contracts
             throw new ArgumentException("No matching stream found for track {0}", track.Source);
         }
 
-        public bool HasDiscontinuities()
+        public bool HasDiscontinuities(ILogger logger)
         {
-            return Streams.Any(
+            bool disContinuityDetected = Streams.Any(
                 stream => (stream.Type == StreamType.Video || stream.Type == StreamType.Audio) && stream.HasDiscontinuities());
+            if (disContinuityDetected)
+            {
+                logger.LogWarning($"Discontinuity detected in client manifest {FileName}");
+                return true;
+            }
+            return false;
         }
 
         internal static ClientManifest Parse(Stream content, string filename, ILogger logger)

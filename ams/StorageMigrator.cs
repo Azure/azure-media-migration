@@ -152,7 +152,7 @@ namespace AMSMigrate.Ams
                 result.AssetType = AssetMigrationResult.AssetType_NonIsm;
             }
 
-            if (result.IsSupportedAsset)
+            if (result.IsSupportedAsset(_globalOptions.EnableLiveAsset))
             {
                 var uploader = _transformFactory.GetUploader(_storageOptions);
                 var (Container, Path) = _transformFactory.TemplateMapper.ExpandPathTemplate(
@@ -167,7 +167,7 @@ namespace AMSMigrate.Ams
                 {
                     try
                     {
-                        var transforms = _transformFactory.GetTransforms(_storageOptions);
+                        var transforms = _transformFactory.GetTransforms(_globalOptions, _storageOptions);
 
                         foreach (var transform in transforms)
                         {

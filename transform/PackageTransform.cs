@@ -11,12 +11,13 @@ namespace AMSMigrate.Transform
         private readonly PackagerFactory _packagerFactory;
 
         public PackageTransform(
+            GlobalOptions globalOptions,
             MigratorOptions options,
             ILogger<PackageTransform> logger,
             TemplateMapper templateMapper,
             IFileUploader uploader,
             PackagerFactory factory)
-            : base(options, templateMapper, uploader, logger)
+            : base(globalOptions, options, templateMapper, uploader, logger)
         {
             _packagerFactory = factory;
         }
@@ -28,7 +29,7 @@ namespace AMSMigrate.Transform
             {
                 return false;
             }
-            return details.Manifest.Format.StartsWith("mp4");
+            return details.Manifest.Format.StartsWith("mp4") || (_globalOptions.EnableLiveAsset && details.Manifest.Format == "vod-fmp4");
         }
 
         protected override async Task<string> TransformAsync(

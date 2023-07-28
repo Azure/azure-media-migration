@@ -25,7 +25,7 @@ namespace AMSMigrate.Ams
             TokenCredential credential,
             IMigrationTracker<BlobContainerClient, AssetMigrationResult> tracker,
             ILogger<AssetMigrator> logger,
-            TransformFactory transformFactory):
+            TransformFactory transformFactory) :
             base(globalOptions, console, credential)
         {
             _options = assetOptions;
@@ -158,23 +158,23 @@ namespace AMSMigrate.Ams
                     result.AssetType = AssetMigrationResult.AssetType_NonIsm;
                 }
 
-                if (result.IsSupportedAsset)
+                if (result.IsSupportedAsset(_globalOptions.EnableLiveAsset))
                 {
                     var uploader = _transformFactory.GetUploader(_options);
                     var (Container, Path) = _transformFactory.TemplateMapper.ExpandAssetTemplate(
-                                                        record.Asset, 
+                                                        record.Asset,
                                                         _options.PathTemplate);
 
                     var canUpload = await uploader.CanUploadAsync(
-                                                        Container, 
-                                                        Path, 
+                                                        Container,
+                                                        Path,
                                                         cancellationToken);
 
                     if (canUpload)
                     {
                         try
                         {
-                            foreach (var transform in _transformFactory.GetTransforms(_options))
+                            foreach (var transform in _transformFactory.GetTransforms(_globalOptions, _options))
                             {
                                 var transformResult = (AssetMigrationResult)await transform.RunAsync(record, cancellationToken);
 
@@ -211,7 +211,7 @@ namespace AMSMigrate.Ams
                     result.Status = MigrationStatus.Skipped;
 
                     _logger.LogWarning("Skipping asset {name} because it is not in a supported format!!!", asset.Data.Name);
-                }                
+                }
 
                 await _tracker.UpdateMigrationStatus(container, result, cancellationToken);
 

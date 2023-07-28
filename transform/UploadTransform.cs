@@ -9,11 +9,12 @@ namespace AMSMigrate.Transform
     internal class UploadTransform : StorageTransform
     {
         public UploadTransform(
+            GlobalOptions globalOptions,
             MigratorOptions options,
             IFileUploader uploader,
             ILogger<UploadTransform> logger,
             TemplateMapper templateMapper) :
-            base(options, templateMapper, uploader, logger)
+            base(globalOptions, options, templateMapper, uploader, logger)
         {
         }
 

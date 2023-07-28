@@ -44,7 +44,7 @@ namespace AMSMigrate.Transform
             _transMuxer = transMuxer;
             _logger = logger;
 
-            if (assetDetails.ClientManifest != null && assetDetails.ClientManifest.HasDiscontinuities())
+            if (assetDetails.ClientManifest != null && assetDetails.ClientManifest.HasDiscontinuities(_logger))
             {
                 TransmuxedDownload = true;
             }
@@ -173,7 +173,7 @@ namespace AMSMigrate.Transform
         public async Task DownloadInputsAsync(string workingDirectory, CancellationToken cancellationToken)
         {
             if (_assetDetails.ClientManifest != null &&
-                _assetDetails.ClientManifest.HasDiscontinuities() &&
+                _assetDetails.ClientManifest.HasDiscontinuities(_logger) &&
                 _assetDetails is AssetRecord assetRecord)
             {
                 await StreamingTransMuxAsync(workingDirectory, assetRecord, cancellationToken);

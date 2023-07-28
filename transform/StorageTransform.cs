@@ -13,17 +13,20 @@ namespace AMSMigrate.Transform
 
     internal abstract class StorageTransform : ITransform<AssetDetails, AssetMigrationResult>
     {
+        protected readonly GlobalOptions _globalOptions;
         protected readonly MigratorOptions _options;
         private readonly TemplateMapper _templateMapper;
         protected readonly ILogger _logger;
         protected readonly IFileUploader _fileUploader;     
 
         public StorageTransform(
+            GlobalOptions globalOptions,
             MigratorOptions options,
             TemplateMapper templateMapper,
             IFileUploader fileUploader,
             ILogger logger)
         {
+            _globalOptions = globalOptions;
             _options = options;
             _templateMapper = templateMapper;
             _fileUploader = fileUploader;

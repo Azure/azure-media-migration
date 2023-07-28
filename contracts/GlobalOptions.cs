@@ -7,7 +7,8 @@ namespace AMSMigrate.Contracts
         string ResourceGroup,
         CloudType CloudType,
         LogLevel LogLevel,
-        string LogDirectory)
+        string LogDirectory,
+        bool EnableLiveAsset)
     {
         static private readonly string dateTimeNow = $"{DateTime.Now:HH_mm_ss}";
         private readonly string _logFile = $"MigrationLog_{dateTimeNow}.txt";

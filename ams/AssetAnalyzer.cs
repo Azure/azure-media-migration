@@ -74,7 +74,7 @@ namespace AMSMigrate.Ams
                         }                        
                     }
 
-                    if (!migrateResult.IsSupportedAsset)
+                    if (!migrateResult.IsSupportedAsset(_globalOptions.EnableLiveAsset))
                     {
                         migrateResult.Status = MigrationStatus.Skipped;
                     }
