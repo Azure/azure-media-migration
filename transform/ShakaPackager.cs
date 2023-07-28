@@ -40,7 +40,7 @@ namespace AMSMigrate.Transform
                 _logger.LogDebug("Transmuxing FMP4 asset with multiple tracks in a single file into regular MP4 file.");
                 TransmuxedDownload = true;
             }
-            else if (assetDetails.ClientManifest != null && assetDetails.ClientManifest.HasDiscontinuities())
+            else if (assetDetails.ClientManifest != null && assetDetails.ClientManifest.HasDiscontinuities(_logger))
             {
                 // mux to a single file.
                 Inputs.Clear();
