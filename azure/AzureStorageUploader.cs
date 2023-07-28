@@ -257,11 +257,17 @@ namespace AMSMigrate.Azure
             CancellationToken cancellationToken)
         {
             var lockBlob = await GetLockBlobAsync(containerName, outputPath, cancellationToken);
-            var leaseClient = lockBlob.GetBlobLeaseClient(_leaseId);
 
-            await leaseClient.ReleaseAsync(cancellationToken: cancellationToken);
+            // The lease is guaranteed to hold by this tool, the migration work for the asset
+            // has done, no matter succeed or failed,
+            //
+            // It is safe to delete the lease-detection blob now.
 
-            _logger.LogTrace("The lease for output path {path} under {container} is released.",
+            await lockBlob.DeleteAsync(DeleteSnapshotsOption.IncludeSnapshots,
+                                       new BlobRequestConditions() { LeaseId = _leaseId },
+                                       cancellationToken);
+
+            _logger.LogTrace("The lease-detect blob for output path {path} under {container} is deleted.",
                              outputPath,
                              containerName);
         }
