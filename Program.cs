@@ -1,4 +1,5 @@
-﻿using AMSMigrate.Ams;
+﻿using AMSMigrate.ams;
+using AMSMigrate.Ams;
 using AMSMigrate.Azure;
 using AMSMigrate.Contracts;
 using AMSMigrate.Local;
@@ -54,36 +55,50 @@ This migrates the assets to a different storage account in your subscription.";
                     await MigrateAssetsAsync(context, assetOptions, context.GetCancellationToken());
                 });
 
-// disable storage migrate option until ready
-/*
-            var storageOptionsBinder = new StorageOptionsBinder();
-            var storageCommand = storageOptionsBinder.GetCommand("storage", @"Directly migrate the assets from the storage account.
-Doesn't require the Azure media services to be running.
-Examples:
-amsmigrate storage -s <subscription id> -g <resource group> -n <source storage account> -o <output storage account> -t path-template
-");
-            rootCommand.Add(storageCommand);
-            storageCommand.SetHandler(async context =>
-            {
-                var globalOptions = globalOptionsBinder.GetValue(context.BindingContext);
-                var storageOptions = storageOptionsBinder.GetValue(context.BindingContext);
-                await MigrateStorageAsync(globalOptions, storageOptions, context.GetCancellationToken());
-            });
-*/
 
-// disable key migrate option until ready
-/*
-            var keyOptionsBinder = new KeyOptionsBinder();
-            var keysCommand = keyOptionsBinder.GetCommand();
-            rootCommand.Add(keysCommand);
-            keysCommand.SetHandler(
+            var cleanupOptionsBinder = new CleanupOptionsBinder();
+            var cleanupCommand = cleanupOptionsBinder.GetCommand("cleanup", @"Do the cleanup of AMS account or Storage account
+Examples:
+cleanup -s <subscriptionid> -g <resourcegroup> -n <account> -ax true                                                                                 
+This command forcefully removes the Azure Media Services (AMS) account.");
+            rootCommand.Add(cleanupCommand);
+            cleanupCommand.SetHandler(
                 async context =>
                 {
-                    var globalOptions = globalOptionsBinder.GetValue(context.BindingContext);
-                    var keyOptions = keyOptionsBinder.GetValue(context.BindingContext);
-                    await MigrateKeysAsync(globalOptions, keyOptions, context.GetCancellationToken());
+                    var cleanupOptions = cleanupOptionsBinder.GetValue(context.BindingContext);
+                    await CleanupAsync(context, cleanupOptions, context.GetCancellationToken());
                 });
-*/
+
+            // disable storage migrate option until ready
+            /*
+                        var storageOptionsBinder = new StorageOptionsBinder();
+                        var storageCommand = storageOptionsBinder.GetCommand("storage", @"Directly migrate the assets from the storage account.
+            Doesn't require the Azure media services to be running.
+            Examples:
+            amsmigrate storage -s <subscription id> -g <resource group> -n <source storage account> -o <output storage account> -t path-template
+            ");
+                        rootCommand.Add(storageCommand);
+                        storageCommand.SetHandler(async context =>
+                        {
+                            var globalOptions = globalOptionsBinder.GetValue(context.BindingContext);
+                            var storageOptions = storageOptionsBinder.GetValue(context.BindingContext);
+                            await MigrateStorageAsync(globalOptions, storageOptions, context.GetCancellationToken());
+                        });
+            */
+
+            // disable key migrate option until ready
+            /*
+                        var keyOptionsBinder = new KeyOptionsBinder();
+                        var keysCommand = keyOptionsBinder.GetCommand();
+                        rootCommand.Add(keysCommand);
+                        keysCommand.SetHandler(
+                            async context =>
+                            {
+                                var globalOptions = globalOptionsBinder.GetValue(context.BindingContext);
+                                var keyOptions = keyOptionsBinder.GetValue(context.BindingContext);
+                                await MigrateKeysAsync(globalOptions, keyOptions, context.GetCancellationToken());
+                            });
+            */
 
             var parser = new CommandLineBuilder(rootCommand)
                 .UseDefaults()
@@ -189,6 +204,17 @@ amsmigrate storage -s <subscription id> -g <resource group> -n <source storage a
             await ActivatorUtilities.CreateInstance<StorageMigrator>(provider, storageOptions)
                 .MigrateAsync(cancellationToken);
         }
+
+        static async Task CleanupAsync(
+           InvocationContext context,
+           CleanupOptions cleanupOptions,
+           CancellationToken cancellationToken)
+        {
+            var provider = context.BindingContext.GetRequiredService<IServiceProvider>();
+            await ActivatorUtilities.CreateInstance<CleanupCommand>(provider, cleanupOptions)
+                .CleanUpAsync(cancellationToken);
+        }
+
 
         static async Task MigrateKeysAsync(
             InvocationContext context,
