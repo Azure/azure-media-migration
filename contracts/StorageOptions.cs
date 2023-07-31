@@ -11,7 +11,6 @@
         bool CopyNonStreamable,
         bool OverWrite,
         bool SkipMigrated,
-        bool CleanUp,
         int SegmentDuration,
         int BatchSize)
         : MigratorOptions(
@@ -24,7 +23,6 @@
             CopyNonStreamable,
             OverWrite,
             SkipMigrated,
-            CleanUp,
             SegmentDuration,
             BatchSize);
 }

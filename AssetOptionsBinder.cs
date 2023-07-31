@@ -96,11 +96,6 @@ Visit https://learn.microsoft.com/en-us/azure/media-services/latest/filter-order
             () => true,
             description: @"Skip assets that have been migrated already.");
 
-        private readonly Option<bool> _cleanInputAssets = new(
-           aliases: new[] { "--clean" },
-           () => true,
-           description: @"Clean input assets.");
-
         private readonly Option<bool> _copyNonStreamable = new(
             aliases: new[] { "--copy-nonstreamable" },
             () => true,
@@ -155,7 +150,6 @@ Visit https://learn.microsoft.com/en-us/azure/media-services/latest/filter-order
             command.AddOption(_filter);
             command.AddOption(_overwrite);
             command.AddOption(_skipMigrated);
-            command.AddOption(_cleanInputAssets);
             command.AddOption(_packagerType);
             command.AddOption(_workingDirectory);
             command.AddOption(_copyNonStreamable);
@@ -180,7 +174,6 @@ Visit https://learn.microsoft.com/en-us/azure/media-services/latest/filter-order
                 bindingContext.ParseResult.GetValueForOption(_copyNonStreamable),
                 bindingContext.ParseResult.GetValueForOption(_overwrite),
                 bindingContext.ParseResult.GetValueForOption(_skipMigrated),
-                bindingContext.ParseResult.GetValueForOption(_cleanInputAssets),
                 SegmentDurationInSeconds,
                 bindingContext.ParseResult.GetValueForOption(_batchSize)
             );
