@@ -25,7 +25,7 @@ namespace AMSMigrate.Transform
             }
             else
             {
-                packager = new ShakaPackager(details, _transMuxer, _loggerFactory.CreateLogger<ShakaPackager>());
+                packager = new ShakaPackager(_options, details, _transMuxer, _loggerFactory.CreateLogger<ShakaPackager>());
             }
             return packager;
         }

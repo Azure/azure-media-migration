@@ -1,6 +1,6 @@
-﻿using Microsoft.Extensions.Logging;
+﻿using AMSMigrate.Contracts;
+using Microsoft.Extensions.Logging;
 using System.ComponentModel;
-using System.Reflection;
 using System.Text.RegularExpressions;
 
 namespace AMSMigrate.Transform
@@ -9,19 +9,16 @@ namespace AMSMigrate.Transform
     {
         private readonly TaskCompletionSource<bool> _taskCompletionSource;
 
-        public static readonly string Packager;
+        static readonly string PackagerDirectory = AppContext.BaseDirectory;
+        static readonly string Executable = $"packager-{(OperatingSystem.IsLinux() ? "linux-x64" : OperatingSystem.IsMacOS() ? "osx-x64" : "win-x64.exe")}";
+        public static readonly string Packager = Path.Combine(PackagerDirectory, Executable);
 
-        static ShakaPackager()
-        {
-            var executable = $"packager-{(OperatingSystem.IsLinux() ? "linux-x64" : OperatingSystem.IsMacOS() ? "osx-x64" : "win-x64.exe")}";
-            Packager = Path.Combine(
-                   Path.GetDirectoryName(Assembly.GetExecutingAssembly().Location)!,
-                   executable);
-        }
+        private readonly MigratorOptions _options;
 
-        public ShakaPackager(AssetDetails assetDetails, TransMuxer transMuxer, ILogger<ShakaPackager> logger)
+        public ShakaPackager(MigratorOptions options, AssetDetails assetDetails, TransMuxer transMuxer, ILogger<ShakaPackager> logger)
             : base(assetDetails, transMuxer, logger)
         {
+            _options = options;
             _taskCompletionSource = new TaskCompletionSource<bool>();
             var manifest = assetDetails.Manifest!;
             var baseName = Path.GetFileNameWithoutExtension(manifest.FileName);
@@ -57,13 +54,16 @@ namespace AMSMigrate.Transform
 
         private IEnumerable<string> GetArguments(IList<string> inputs, IList<string> outputs, IList<string> manifests)
         {
+            const string DRM_LABEL = "cenc";
+            var drm_label = _options.EncryptContent ? $",drm_label={DRM_LABEL}" : string.Empty;
+
             List<string> arguments = new(SelectedTracks.Select((t, i) =>
             {
                 var ext = t.IsMultiFile ? MEDIA_FILE : string.Empty;
                 var index = Inputs.Count == 1 ? 0 : Inputs.IndexOf($"{t.Source}{ext}");
                 var stream = Inputs.Count == 1? i.ToString(): t.Type.ToString().ToLowerInvariant();
                 var language = string.IsNullOrEmpty(t.SystemLanguage) || t.SystemLanguage == "und" ? string.Empty : $"language={t.SystemLanguage},";
-                return $"stream={stream},in={inputs[index]},out={outputs[i]},{language}playlist_name={manifests[i]}";
+                return $"stream={stream},in={inputs[index]},out={outputs[i]},{language}playlist_name={manifests[i]}{drm_label}";
             }));
             var dash = manifests[manifests.Count - 1];
             var hls = manifests[manifests.Count - 2];
@@ -77,6 +77,22 @@ namespace AMSMigrate.Transform
                 arguments.Add("--io_block_size");
                 arguments.Add("65536");
             }
+
+            if (_options.EncryptContent)
+            {
+                arguments.Add("--enable_raw_key_encryption");
+                arguments.Add("--protection_scheme");
+                arguments.Add("cbcs");
+                arguments.Add("--keys");
+                arguments.Add($"label={DRM_LABEL}:key_id={_assetDetails.KeyId}:key={_assetDetails.EncryptionKey}");
+                arguments.Add("--hls_key_uri");
+                arguments.Add($"{_assetDetails.LicenseUri}");
+                arguments.Add("--clear_lead");
+                arguments.Add("0");
+            }
+
+            arguments.Add("--temp_dir");
+            arguments.Add(_options.WorkingDirectory);
             arguments.Add("--segment_duration");
             arguments.Add("2");
             arguments.Add("--mpd_output");
@@ -131,7 +147,7 @@ namespace AMSMigrate.Transform
                 var match = ShakaLogRegEx.Match(line);
                 var group = match.Groups["level"];
                 _ = match.Success && group.Success && LogLevels.TryGetValue(group.Value, out logLevel);
-                _logger.Log(logLevel, line);
+                _logger.Log(logLevel, Events.ShakaPackager, line);
             }
         }
     }

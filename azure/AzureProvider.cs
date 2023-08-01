@@ -20,7 +20,7 @@ namespace AMSMigrate.Azure
         public IFileUploader GetStorageProvider(MigratorOptions migratorOptions) 
             => new AzureStorageUploader(migratorOptions, _credentials, _loggerFactory.CreateLogger<AzureStorageUploader>());
 
-        public ISecretUploader GetSecretProvider(KeyOptions keyOptions) 
+        public ISecretUploader GetSecretProvider(KeyVaultOptions keyOptions) 
             => new KeyVaultUploader(keyOptions, _credentials, _loggerFactory.CreateLogger<KeyVaultUploader>());
     }
 }

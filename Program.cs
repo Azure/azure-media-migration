@@ -18,6 +18,9 @@ using System.CommandLine.Parsing;
 using System.Diagnostics;
 using System.Text;
 using Vertical.SpectreLogger;
+using Vertical.SpectreLogger.Core;
+using Vertical.SpectreLogger.Options;
+using Events = AMSMigrate.Contracts.Events;
 
 namespace AMSMigrate
 {
@@ -159,11 +162,14 @@ This command forcefully removes all assets in the given account.");
                     {
                         Level = SourceLevels.All
                     };
+                    LogEventFilterDelegate filter = (in LogEventContext context) => context.EventId != Events.ShakaPackager;
                     builder
                         .SetMinimumLevel(LogLevel.Trace)
                         .AddSpectreConsole(builder =>
                             builder
                                 .SetMinimumLevel(options.LogLevel)
+                                .SetLogEventFilter(filter)
+                                .UseSerilogConsoleStyle()
                                 .UseConsole(console)
                                 .WriteInBackground())
                         .AddTraceSource(logSwitch, listener);

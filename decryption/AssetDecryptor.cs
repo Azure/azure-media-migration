@@ -5,7 +5,6 @@
 //-----------------------------------------------------------------------
 
 using System.Security.Cryptography;
-using System.Threading;
 using Azure.ResourceManager.Media.Models;
 using Azure.Storage.Blobs.Models;
 using Azure.Storage.Blobs.Specialized;

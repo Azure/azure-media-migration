@@ -40,6 +40,7 @@ The content is converted to CMAF format with both a DASH and HLS manifest to sup
 * Support for packaging VOD assets.
 * Support for copying non-streamable assets.
 * Marks migrated assets and provides HTML summary on analyze
+* Support for statically encrypting the cotnent while packaging.
 
 ## Open Issues
 * Live assets are not supported but will be in a future version of this tool.
@@ -63,6 +64,7 @@ You'll need to have the following permissions:
 
 - The identity used to migrate must have 'Contributor' role on the Azure Media Services account being migrated.
 - The identity that runs this migration tool should be added to the ['Storage Blob Data Contributor'](https://learn.microsoft.com/en-us/azure/role-based-access-control/built-in-roles#storage-blob-data-contributor) role for the source and destination storage accounts.
+- The identity used to migrate must have the role ['Key Vault Secrets Officer'](https://learn.microsoft.com/en-us/azure/key-vault/general/rbac-guide?tabs=azure-cli#azure-built-in-roles-for-key-vault-data-plane-operations) on the key vault used to store the keys. If the key vault is not using Azure RBAC then you will have to create an Access policy giving secrets management permission to the identity used.
 
 # Quick Start
 

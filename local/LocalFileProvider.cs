@@ -12,7 +12,7 @@ namespace AMSMigrate.Local
             _loggerFactory = loggerFactory;
         }
 
-        public ISecretUploader GetSecretProvider(KeyOptions keyOptions)
+        public ISecretUploader GetSecretProvider(KeyVaultOptions keyOptions)
         {
             throw new NotImplementedException();
         }
