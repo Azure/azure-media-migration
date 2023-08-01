@@ -26,7 +26,7 @@ Visit https://learn.microsoft.com/en-us/azure/media-services/latest/filter-order
         private readonly Option<bool> _isForceCleanUpAsset = new(
           aliases: new[] {"--force-cleanup", "-x"},
           () => false,
-          description: @"Force the cleanup of migrated assets if the setting is enabled")
+          description: @"Force the cleanup of the selected input assets no matter what migration status is.")
         {
             IsRequired = false
         };
@@ -34,7 +34,7 @@ Visit https://learn.microsoft.com/en-us/azure/media-services/latest/filter-order
         private readonly Option<bool> _isCleanUpAccount = new(
         aliases: new[] {"--cleanup-account", "-ax"},
         () => false,
-        description: @"Delete the whole ams account if the setting to enabled")
+        description: @"Delete the whole ams account.")
         {
             IsRequired = false
         };
@@ -54,7 +54,7 @@ Visit https://learn.microsoft.com/en-us/azure/media-services/latest/filter-order
         protected override CleanupOptions GetBoundValue(BindingContext bindingContext)
         {
             return new CleanupOptions(
-                bindingContext.ParseResult.GetValueForOption(_sourceAccount),
+                bindingContext.ParseResult.GetValueForOption(_sourceAccount)!,
                 bindingContext.ParseResult.GetValueForOption(_filter),
                 bindingContext.ParseResult.GetValueForOption(_isForceCleanUpAsset),
                 bindingContext.ParseResult.GetValueForOption(_isCleanUpAccount)

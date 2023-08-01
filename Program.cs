@@ -36,7 +36,8 @@ Example(s):
 amsmigrate analyze -s <subscriptionid> -g <resourcegroup> -n <account>
 This will analyze the given media account and produce a summary report.");
             rootCommand.Add(analyzeCommand);
-            analyzeCommand.SetHandler(async context => {
+            analyzeCommand.SetHandler(async context =>
+            {
                 var analysisOptions = analysisOptionsBinder.GetValue(context.BindingContext);
                 await AnalyzeAssetsAsync(context, analysisOptions, context.GetCancellationToken());
             });
@@ -58,9 +59,12 @@ This migrates the assets to a different storage account in your subscription.";
 
             var cleanupOptionsBinder = new CleanupOptionsBinder();
             var cleanupCommand = cleanupOptionsBinder.GetCommand("cleanup", @"Do the cleanup of AMS account or Storage account
-Examples:
+Examples to cleanup account:
 cleanup -s <subscriptionid> -g <resourcegroup> -n <account> -ax true                                                                                 
-This command forcefully removes the Azure Media Services (AMS) account.");
+This command forcefully removes the Azure Media Services (AMS) account.
+Examples to cleanup asset:
+cleanup -s <subscriptionid> -g <resourcegroup> -n <account> -x true                                                                                 
+This command forcefully removes all assets in the given account.");
             rootCommand.Add(cleanupCommand);
             cleanupCommand.SetHandler(
                 async context =>
@@ -212,7 +216,7 @@ This command forcefully removes the Azure Media Services (AMS) account.");
         {
             var provider = context.BindingContext.GetRequiredService<IServiceProvider>();
             await ActivatorUtilities.CreateInstance<CleanupCommand>(provider, cleanupOptions)
-                .CleanUpAsync(cancellationToken);
+                .MigrateAsync(cancellationToken);
         }
 
 

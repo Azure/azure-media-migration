@@ -28,7 +28,7 @@ namespace AMSMigrate.Ams
             TokenCredential credential,
             IMigrationTracker<BlobContainerClient, AssetMigrationResult> tracker,
             ILogger<AssetMigrator> logger,
-            TransformFactory transformFactory):
+            TransformFactory transformFactory) :
             base(globalOptions, console, credential)
         {
             _options = assetOptions;
@@ -163,7 +163,6 @@ namespace AMSMigrate.Ams
 
                         result.Status = MigrationStatus.AlreadyMigrated;
                         _logger.LogDebug("Migrated asset: {asset}, container: {container}, type: {type}, status: {status}", asset.Data.Name, asset.Data.Container, result.AssetType, result.Status);
-
                         return result;
                     }
                 }
@@ -194,12 +193,12 @@ namespace AMSMigrate.Ams
                     {
                         var uploader = _transformFactory.GetUploader(_options);
                         var (Container, Path) = _transformFactory.TemplateMapper.ExpandAssetTemplate(
-                                                            record.Asset, 
+                                                            record.Asset,
                                                             _options.PathTemplate);
 
                         var canUpload = await uploader.CanUploadAsync(
-                                                            Container, 
-                                                            Path, 
+                                                            Container,
+                                                            Path,
                                                             cancellationToken);
 
                         if (canUpload)
