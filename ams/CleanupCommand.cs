@@ -71,32 +71,6 @@ namespace AMSMigrate.ams
 
             if (_options.IsCleanUpAccount)
             {
-                var endpoints = account.GetStreamingEndpoints();
-                var liveevents = account.GetMediaLiveEvents();
-                var policies = account.GetContentKeyPolicies();
-
-                if (endpoints != null)
-                {
-                    foreach (var streamingEndpoint in endpoints)
-                    {
-                        await streamingEndpoint.DeleteAsync(WaitUntil.Completed);
-                    }
-                }
-                if (policies != null)
-                {
-                    foreach (var contentKeyPolicy in policies)
-                    {
-                        await contentKeyPolicy.DeleteAsync(WaitUntil.Completed);
-                    }
-                }
-                if (liveevents != null)
-                {
-                    foreach (var liveEvent in liveevents)
-                    {
-                        await liveEvent.DeleteAsync(WaitUntil.Completed);
-                    }
-                }
-                _logger.LogDebug("account {account} is deleted.", account.Data.Name);
                 Dictionary<string, bool> accStats = new Dictionary<string, bool>();
                 var result = await CleanUpAccountAsync(account, cancellationToken);
                 accStats.Add(account.Data.Name, result);
@@ -129,7 +103,32 @@ namespace AMSMigrate.ams
         {
             try
             {
+                var endpoints = account.GetStreamingEndpoints();
+                var liveevents = account.GetMediaLiveEvents();
+                var policies = account.GetContentKeyPolicies();
 
+                if (endpoints != null)
+                {
+                    foreach (var streamingEndpoint in endpoints)
+                    {
+                        await streamingEndpoint.DeleteAsync(WaitUntil.Completed);
+                    }
+                }
+                if (policies != null)
+                {
+                    foreach (var contentKeyPolicy in policies)
+                    {
+                        await contentKeyPolicy.DeleteAsync(WaitUntil.Completed);
+                    }
+                }
+                if (liveevents != null)
+                {
+                    foreach (var liveEvent in liveevents)
+                    {
+                        await liveEvent.DeleteAsync(WaitUntil.Completed);
+                    }
+                }
+             
                 var deleteOperation = await account.DeleteAsync(WaitUntil.Completed);
 
                 if (deleteOperation.HasCompleted && deleteOperation.GetRawResponse().Status == 200)
