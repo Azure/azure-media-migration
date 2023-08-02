@@ -9,7 +9,7 @@ namespace AMSMigrate.Transform
     internal class PackageTransform : StorageTransform
     {
         private readonly PackagerFactory _packagerFactory;
-        private readonly ISecretUploader _secretUploader;
+        private readonly ISecretUploader? _secretUploader = default;
 
         public PackageTransform(
             GlobalOptions globalOptions,
@@ -20,8 +20,11 @@ namespace AMSMigrate.Transform
             PackagerFactory factory)
             : base(globalOptions, options, templateMapper, cloudProvider.GetStorageProvider(options), logger)
         {
-            var vaultOptions = new KeyVaultOptions(options.KeyVaultUri!);
-            _secretUploader = cloudProvider.GetSecretProvider(vaultOptions);
+            if (options.EncryptContent)
+            {
+                var vaultOptions = new KeyVaultOptions(options.KeyVaultUri!);
+                _secretUploader = cloudProvider.GetSecretProvider(vaultOptions);
+            }
             _packagerFactory = factory;
         }
 
@@ -155,7 +158,7 @@ namespace AMSMigrate.Transform
                 if (_options.EncryptContent)
                 {
                     _logger.LogDebug("Saving key with id id: {keyId} for asset: {name} to key vault {vault}", details.KeyId, details.AssetName, _options.KeyVaultUri); ;
-                    await _secretUploader.UploadAsync(details.KeyId, details.EncryptionKey, cancellationToken);
+                    await _secretUploader!.UploadAsync(details.KeyId, details.EncryptionKey, cancellationToken);
                 }
             }
             catch (Exception ex)

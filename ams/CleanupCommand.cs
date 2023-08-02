@@ -8,7 +8,7 @@ using Microsoft.Extensions.Logging;
 using Spectre.Console;
 using System.ComponentModel;
 
-namespace AMSMigrate.ams
+namespace AMSMigrate.Ams
 {
     internal class CleanupCommand : BaseMigrator
     {
@@ -166,20 +166,19 @@ namespace AMSMigrate.ams
                     // The asset container exists, try to check the metadata list first.
               
                 if (isForcedelete||(_tracker.GetMigrationStatusAsync(container, cancellationToken).Result.Status == MigrationStatus.Completed))
-                {
-                  
-                        var locator = await account.GetStreamingLocatorAsync(asset, cancellationToken);
-                        if (locator != null)
-                        {
-                            await locator.DeleteAsync(WaitUntil.Completed);
-                        }
+                {                  
+                    var locator = await account.GetStreamingLocatorAsync(asset, cancellationToken);
+                    if (locator != null)
+                    {
+                        await locator.DeleteAsync(WaitUntil.Completed);
+                    }
 
-                        if (asset != null)
-                        {
-                            await asset.DeleteAsync(WaitUntil.Completed);
-                        }
-                        await container.DeleteAsync();
-                        _logger.LogDebug("locator: {locator}, Migrated asset: {asset} , container: {container} are deleted.", locator?.Data.Name, asset.Data.Name, container?.Name);
+                    if (asset != null)
+                    {
+                        await asset.DeleteAsync(WaitUntil.Completed);
+                    }
+                    await container.DeleteAsync();
+                    _logger.LogDebug("locator: {locator}, Migrated asset: {asset} , container: {container} are deleted.", locator?.Data.Name, asset?.Data.Name, container?.Name);
                     return true;
                 }
                 else
