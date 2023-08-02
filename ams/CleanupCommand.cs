@@ -47,37 +47,44 @@ namespace AMSMigrate.ams
                 var orderBy = "properties/created";
                 assets = account.GetMediaAssets()
                     .GetAllAsync(resourceFilter, orderby: orderBy, cancellationToken: cancellationToken);
+                List<MediaAssetResource>? assetList = await assets.ToListAsync(cancellationToken);
+
+                foreach (var asset in assetList)
+                {
+                    var result = await CleanUpAssetAsync(account, asset, cancellationToken);
+                    stats.Add(asset.Data.Name, result);
+                }
+                WriteSummary(stats, false);
             }
             else
             {
-                assets = account.GetMediaAssets()
-                   .GetAllAsync();
-            }
-            List<MediaAssetResource>? assetList = await assets.ToListAsync(cancellationToken);
+                    Console.Write($"Do you want to delete the account '{account.Data.Name}'? (y/n): ");
+                    string? userResponse = Console.ReadLine();
 
-            foreach (var asset in assetList)
-            {
-                var result = await CleanUpAssetAsync(account, asset, cancellationToken);
-                stats.Add(asset.Data.Name, result);
-            }
-            WriteSummary(stats, false);
-            if (_options.IsCleanUpAccount)
-            {
-                Console.Write($"Do you want to delete the account '{account.Data.Name}'? (y/n): ");
-                string? userResponse = Console.ReadLine();
+                    if (userResponse?.ToLower() == "y")
+                {
+                    assets = account.GetMediaAssets()
+                       .GetAllAsync();
+                    List<MediaAssetResource>? assetList = await assets.ToListAsync(cancellationToken);
 
-                if (userResponse?.ToLower() == "y")
-                {
-                    Dictionary<string, bool> accStats = new Dictionary<string, bool>();
-                    var result = await CleanUpAccountAsync(account, cancellationToken);
-                    accStats.Add(account.Data.Name, result);
-                    WriteSummary(accStats, true);
-                }
-                else
-                {
-                    Console.WriteLine("Account cleanup canceled by user.");
-                }
+                        foreach (var asset in assetList)
+                        {
+                            var res = await CleanUpAssetAsync(account, asset, cancellationToken);
+                            stats.Add(asset.Data.Name, res);
+                        }
+                        WriteSummary(stats, false);
+                        Dictionary<string, bool> accStats = new Dictionary<string, bool>();
+                        var result = await CleanUpAccountAsync(account, cancellationToken);
+                        accStats.Add(account.Data.Name, result);
+                        WriteSummary(accStats, true);
+                    }
+                    else
+                    {
+                        Console.WriteLine("Account cleanup canceled by user.");
+                    }
             }
+         
+          
         }
 
         private void WriteSummary(IDictionary<string, bool> stats, bool isDeletingAccount)
@@ -144,19 +151,61 @@ namespace AMSMigrate.ams
 
                 if (_options.IsCleanUpAccount || _options.IsForceCleanUpAsset || migrateResult.Status == MigrationStatus.Completed)
                 {
-                    var policies = account.GetContentKeyPolicies();
-                    var locator = await account.GetStreamingLocatorAsync(asset, cancellationToken);
                     if (_options.IsCleanUpAccount)
                     {
                         var endpoints = account.GetStreamingEndpoints();
                         var liveevents = account.GetMediaLiveEvents();
-                        await CleanUpContentAsync(container, asset, locator, endpoints, policies, liveevents);
+                        var policies = account.GetContentKeyPolicies();
+                        var locator = await account.GetStreamingLocatorAsync(asset, cancellationToken);
+
+                        if (locator != null)
+                        {
+                            await locator.DeleteAsync(WaitUntil.Completed);
+                        }
+
+                        if (asset != null)
+                        {
+                            await asset.DeleteAsync(WaitUntil.Completed);
+                        }
+
+                        if (endpoints != null)
+                        {
+                            foreach (var streamingEndpoint in endpoints)
+                            {
+                                await streamingEndpoint.DeleteAsync(WaitUntil.Completed);
+                            }
+                        }
+                        if (policies != null)
+                        {
+                            foreach (var contentKeyPolicy in policies)
+                            {
+                                await contentKeyPolicy.DeleteAsync(WaitUntil.Completed);
+                            }
+                        }
+                        if (liveevents != null)
+                        {
+                            foreach (var liveEvent in liveevents)
+                            {
+                                await liveEvent.DeleteAsync(WaitUntil.Completed);
+                            }
+                        }
+                        await container.DeleteAsync();
                         _logger.LogDebug("account {account} is deleted.", account.Data.Name);
 
                     }
                     else
                     {
-                        await CleanUpContentAsync(container, asset, locator, null, policies, null);
+                        var locator = await account.GetStreamingLocatorAsync(asset, cancellationToken);
+                        if (locator != null)
+                        {
+                            await locator.DeleteAsync(WaitUntil.Completed);
+                        }
+
+                        if (asset != null)
+                        {
+                            await asset.DeleteAsync(WaitUntil.Completed);
+                        }
+                        await container.DeleteAsync();
                         _logger.LogDebug("locator: {locator}, Migrated asset: {asset} , container: {container} are deleted.", locator?.Data.Name, asset.Data.Name, container?.Name);
                     }
                     return true;
@@ -172,55 +221,6 @@ namespace AMSMigrate.ams
                 _logger.LogError(ex, "Failed to delete asset {name}", asset.Data.Name);
                 return false;
             }
-        }
-
-        /// <summary>
-        /// Delete the resources that were created.
-        /// </summary>
-        /// <param name="inputAssets">The input Asset List.</param>
-        /// <param name="streamingLocator">The streaming locator. </param>
-        /// <returns>A task.</returns>
-        private async Task CleanUpContentAsync(
-            BlobContainerClient container,
-            MediaAssetResource? inputAsset,
-            StreamingLocatorResource? streamingLocator,
-            StreamingEndpointCollection? streamingEndpoints,
-            ContentKeyPolicyCollection? contentKeyPolicies,
-            MediaLiveEventCollection? liveEvents)
-        {
-
-            if (streamingLocator != null)
-            {
-                await streamingLocator.DeleteAsync(WaitUntil.Completed);
-            }
-
-            if (inputAsset != null)
-            {
-                await inputAsset.DeleteAsync(WaitUntil.Completed);
-            }
-
-            if (streamingEndpoints != null)
-            {
-                foreach (var streamingEndpoint in streamingEndpoints)
-                {
-                    await streamingEndpoint.DeleteAsync(WaitUntil.Completed);
-                }
-            }
-            if (contentKeyPolicies != null)
-            {
-                foreach (var contentKeyPolicy in contentKeyPolicies)
-                {
-                    await contentKeyPolicy.DeleteAsync(WaitUntil.Completed);
-                }
-            }
-            if (liveEvents != null)
-            {
-                foreach (var liveEvent in liveEvents)
-                {
-                    await liveEvent.DeleteAsync(WaitUntil.Completed);
-                }
-            }
-            await container.DeleteAsync();
         }
     }
 }
