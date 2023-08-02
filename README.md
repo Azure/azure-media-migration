@@ -43,7 +43,6 @@ The content is converted to CMAF format with both a DASH and HLS manifest to sup
 
 ## Open Issues
 * Live assets are not supported but will be in a future version of this tool.
-* Storage encrypted VOD contents are not supported but will be in a future version of this tool.
 * Direct migration from an Azure Storage account without using the AMS API is not supported but will be in a future version of this tool.
 
 # Types of Migration

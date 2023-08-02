@@ -1,11 +1,13 @@
 ﻿using AMSMigrate.Ams;
 using AMSMigrate.Contracts;
+using AMSMigrate.Decryption;
 using Azure;
 using Azure.Core;
 using Azure.Storage.Blobs;
 using Azure.Storage.Blobs.Models;
 using Azure.Storage.Blobs.Specialized;
 using Microsoft.Extensions.Logging;
+using System.Reflection.PortableExecutable;
 using System.Text;
 
 namespace AMSMigrate.Azure
@@ -45,6 +47,7 @@ namespace AMSMigrate.Azure
             string containerName,
             string fileName,
             Stream content,
+            Headers headers,
             IProgress<long> progress,
             CancellationToken cancellationToken = default)
         {
@@ -57,6 +60,10 @@ namespace AMSMigrate.Azure
             var options = new BlobUploadOptions
             {
                 ProgressHandler = progress,
+                HttpHeaders = new BlobHttpHeaders
+                {
+                    ContentType = headers.ContentType
+                },
                 Conditions = new BlobRequestConditions
                 {
                     IfNoneMatch = _options.OverWrite ? null : ETag.All
@@ -65,17 +72,43 @@ namespace AMSMigrate.Azure
             await outputBlob.UploadAsync(content, options, cancellationToken: cancellationToken);
         }
 
+        /// <summary>
+        /// Take the source blob, update the content to a destination container.
+        /// </summary>
+        /// <param name="containerName">The destination container.</param>
+        /// <param name="fileName">The output blob in the destination container.</param>
+        /// <param name="blob">The source blob.</param>
+        /// <param name="aesTransform">The optional AesTransform for source content decryption.</param>
+        /// <param name="cancellationToken">The cancellaton token for the async operation.</param>
+        /// <returns></returns>
         public async Task UploadBlobAsync(
             string containerName,
             string fileName,
             BlockBlobClient blob,
+            AesCtrTransform? aesTransform,
             CancellationToken cancellationToken)
         {
             var container = _blobServiceClient.GetBlobContainerClient(containerName);
             await container.CreateIfNotExistsAsync(cancellationToken: cancellationToken);
             var outputBlob = container.GetBlockBlobClient(fileName);
-            var operation = await outputBlob.StartCopyFromUriAsync(blob.Uri, cancellationToken: cancellationToken);
-            await operation.WaitForCompletionAsync(cancellationToken);
+
+            if (aesTransform == null)
+            {
+                var operation = await outputBlob.StartCopyFromUriAsync(blob.Uri, cancellationToken: cancellationToken);
+                await operation.WaitForCompletionAsync(cancellationToken);
+            }
+            else
+            {
+                // The input asset is encrypted, extract the clear content to the destination container
+                // so that the media content can be used after the asset migration without knowing the initial content key.
+                var blobStream = new MemoryStream();
+
+                await AssetDecryptor.DecryptTo(aesTransform, blob, blobStream, cancellationToken);
+
+                blobStream.Position = 0;
+
+                await outputBlob.UploadAsync(blobStream, cancellationToken: cancellationToken);
+            }
         }
 
         /// <summary>
@@ -224,11 +257,17 @@ namespace AMSMigrate.Azure
             CancellationToken cancellationToken)
         {
             var lockBlob = await GetLockBlobAsync(containerName, outputPath, cancellationToken);
-            var leaseClient = lockBlob.GetBlobLeaseClient(_leaseId);
 
-            await leaseClient.ReleaseAsync(cancellationToken: cancellationToken);
+            // The lease is guaranteed to hold by this tool, the migration work for the asset
+            // has done, no matter succeed or failed,
+            //
+            // It is safe to delete the lease-detection blob now.
 
-            _logger.LogTrace("The lease for output path {path} under {container} is released.",
+            await lockBlob.DeleteAsync(DeleteSnapshotsOption.IncludeSnapshots,
+                                       new BlobRequestConditions() { LeaseId = _leaseId },
+                                       cancellationToken);
+
+            _logger.LogTrace("The lease-detect blob for output path {path} under {container} is deleted.",
                              outputPath,
                              containerName);
         }

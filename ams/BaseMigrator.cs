@@ -1,5 +1,4 @@
 ﻿using AMSMigrate.Contracts;
-using Azure;
 using Azure.Core;
 using Azure.Monitor.Query;
 using Azure.Monitor.Query.Models;
@@ -36,31 +35,28 @@ namespace AMSMigrate.Ams
             return _resourceProvider.GetMediaAccountAsync(mediaAccountName, cancellationToken); ;
         }
 
-        protected async Task MigrateInBatches<T>(
-            AsyncPageable<T> pageable,
-            List<T>? filteredList,
-            Func<T[], Task> processBatch,
-            int batchSize = 1,
+
+        protected async Task MigrateInParallel<T>(
+            IAsyncEnumerable<T> values,
+            IEnumerable<T>? filteredList,
+            Func<T, CancellationToken, ValueTask> processItem,
+            int batchSize = 5,
             CancellationToken cancellationToken = default) where T : notnull
         {
+            var options = new ParallelOptions
+            {
+                CancellationToken = cancellationToken,
+                MaxDegreeOfParallelism = batchSize
+            };
             if (filteredList != null)
             {
                 // When the filtered List is already generated,
                 // Take it as higher priority, no need to do extra enumeration on the pageable assets.
-                foreach (var batch in filteredList.Chunk(batchSize))
-                {
-                    await processBatch(batch);
-                }
+                await Parallel.ForEachAsync(filteredList, options, processItem);
             }
             else
             {
-                await foreach (var page in pageable.AsPages())
-                {
-                    foreach (var batch in page.Values.Chunk(batchSize))
-                    {
-                        await processBatch(batch);
-                    }
-                }
+                await Parallel.ForEachAsync(values, options, processItem);
             }
         }
 

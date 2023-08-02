@@ -3,7 +3,6 @@ using AMSMigrate.Transform;
 using Azure;
 using Azure.Core;
 using Azure.ResourceManager.Media;
-using Azure.ResourceManager.Media.Models;
 using Azure.Storage.Blobs;
 using Microsoft.Extensions.Logging;
 using Spectre.Console;
@@ -12,8 +11,6 @@ using System.Threading.Channels;
 
 namespace AMSMigrate.Ams
 {
-    record struct AssetStats(int Total, int Migrated, int Skipped, int Successful, int Failed);
-
     internal class AssetMigrator : BaseMigrator
     {
         private readonly ILogger _logger;
@@ -83,36 +80,15 @@ namespace AMSMigrate.Ams
         {
             var storage = await _resourceProvider.GetStorageAccountAsync(account, cancellationToken);
             var stats = new AssetStats();
-
-            await MigrateInBatches(assets, filteredList, async assets =>
+            await MigrateInParallel(assets, filteredList, async (asset, cancellationToken) =>
             {
-                var results = await Task.WhenAll(assets.Select(async asset => await MigrateAsync(account, storage, asset, cancellationToken)));
-                stats.Total += results.Length;
-                foreach (var result in results)
-                {
-                    switch (result.Status)
-                    {
-                        case MigrationStatus.Completed:
-                            ++stats.Successful;
-                            break;
-                        case MigrationStatus.Skipped:
-                            ++stats.Skipped;
-                            break;
-                        case MigrationStatus.AlreadyMigrated:
-                            ++stats.Migrated;
-                            break;
-                        case MigrationStatus.NotMigrated:
-                            ++stats.Skipped;
-                            break;
-                        default:
-                            ++stats.Failed;
-                            break;
-                    }
-                }
+                var result = await MigrateAsync(account, storage, asset, cancellationToken);
+                stats.Update(result);
                 await writer.WriteAsync(stats.Total, cancellationToken);
             },
             _options.BatchSize,
             cancellationToken);
+
             writer.Complete();
             return stats;
         }
@@ -167,82 +143,74 @@ namespace AMSMigrate.Ams
                     }
                 }
 
-                if (asset.Data.StorageEncryptionFormat != MediaAssetStorageEncryptionFormat.None)
+                var details = await asset.GetDetailsAsync(_logger, cancellationToken, _options.OutputManifest);
+                var record = new AssetRecord(account, asset, details);
+
+                // AssetType and ManifestName are not supposed to change for a specific input asset,
+                // Set AssetType and manifest from the asset container before doing the actual transforming.
+                if (details.Manifest != null)
                 {
-                    _logger.LogWarning("Asset {name} is encrypted using {format}", asset.Data.Name, asset.Data.StorageEncryptionFormat);
-                    result.AssetType = AssetMigrationResult.AssetType_Encrypted;
+                    result.AssetType = details.Manifest.Format;
+                    result.ManifestName = _options.OutputManifest ?? details.Manifest.FileName?.Replace(".ism", "");
                 }
                 else
                 {
-                    var details = await asset.GetDetailsAsync(_logger, cancellationToken, _options.OutputManifest);
-                    var record = new AssetRecord(account, asset, details);
+                    result.AssetType = AssetMigrationResult.AssetType_NonIsm;
+                }
 
-                    // AssetType and ManifestName are not supposed to change for a specific input asset,
-                    // Set AssetType and manifest from the asset container before doing the actual transforming.
-                    if (details.Manifest != null)
+                if (result.IsSupportedAsset(_globalOptions.EnableLiveAsset))
+                {
+                    var uploader = _transformFactory.GetUploader(_options);
+                    var (Container, Path) = _transformFactory.TemplateMapper.ExpandAssetTemplate(
+                                                        record.Asset,
+                                                        _options.PathTemplate);
+
+                    var canUpload = await uploader.CanUploadAsync(
+                                                        Container,
+                                                        Path,
+                                                        cancellationToken);
+
+                    if (canUpload)
                     {
-                        result.AssetType = details.Manifest.Format;
-                        result.ManifestName = _options.OutputManifest ?? details.Manifest.FileName?.Replace(".ism", "");
-                    }
-                    else
-                    {
-                        result.AssetType = AssetMigrationResult.AssetType_NonIsm;
-                    }
-
-                    if (result.IsSupportedAsset)
-                    {
-                        var uploader = _transformFactory.GetUploader(_options);
-                        var (Container, Path) = _transformFactory.TemplateMapper.ExpandAssetTemplate(
-                                                            record.Asset,
-                                                            _options.PathTemplate);
-
-                        var canUpload = await uploader.CanUploadAsync(
-                                                            Container,
-                                                            Path,
-                                                            cancellationToken);
-
-                        if (canUpload)
+                        try
                         {
-                            try
+                            foreach (var transform in _transformFactory.GetTransforms(_globalOptions, _options))
                             {
-                                foreach (var transform in _transformFactory.GetTransforms(_options))
+                                var transformResult = (AssetMigrationResult)await transform.RunAsync(record, cancellationToken);
+
+                                result.Status = transformResult.Status;
+                                result.OutputPath = transformResult.OutputPath;
+
+                                if (result.Status != MigrationStatus.Skipped)
                                 {
-                                    var transformResult = (AssetMigrationResult)await transform.RunAsync(record, cancellationToken);
-
-                                    result.Status = transformResult.Status;
-                                    result.OutputPath = transformResult.OutputPath;
-
-                                    if (result.Status != MigrationStatus.Skipped)
-                                    {
-                                        break;
-                                    }
+                                    break;
                                 }
                             }
-                            finally
-                            {
-                                await uploader.UploadCleanupAsync(Container, Path, cancellationToken);
-                            }
                         }
-                        else
+                        finally
                         {
-                            //
-                            // Another instance of the tool is working on the output container,
-                            //
-                            result.Status = MigrationStatus.Skipped;
-
-                            _logger.LogWarning("Another tool is working on the container {container} and output path: {output}",
-                                               Container,
-                                               Path);
+                            await uploader.UploadCleanupAsync(Container, Path, cancellationToken);
                         }
                     }
                     else
                     {
-                        // The asset type is not supported in this milestone,
-                        // Mark the status as Skipped for caller to do the statistics.
+                        //
+                        // Another instance of the tool is working on the output container,
+                        //
                         result.Status = MigrationStatus.Skipped;
 
-                        _logger.LogWarning("Skipping asset {name} because it is not in a supported format!!!", asset.Data.Name);
+                        _logger.LogWarning("Another tool is working on the container {container} and output path: {output}",
+                                            Container,
+                                            Path);
                     }
+                }
+                else
+                {
+                    // The asset type is not supported in this milestone,
+                    // Mark the status as Skipped for caller to do the statistics.
+                    result.Status = MigrationStatus.Skipped;
+
+                    _logger.LogWarning("Skipping asset {name} because it is not in a supported format!!!", asset.Data.Name);
                 }
 
                 await _tracker.UpdateMigrationStatus(container, result, cancellationToken);

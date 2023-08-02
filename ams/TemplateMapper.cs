@@ -112,6 +112,8 @@ namespace AMSMigrate.Ams
                     path += '/';
                 }
             }
+
+            containerName = containerName.Substring(0, Math.Min(containerName.Length, 63));
             return (containerName, path);
         }
 

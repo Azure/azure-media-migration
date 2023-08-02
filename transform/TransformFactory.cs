@@ -21,7 +21,7 @@ namespace AMSMigrate.Transform
             _cloudProvider = cloudProvider;            
         }
 
-        public IEnumerable<StorageTransform> GetTransforms(MigratorOptions options)
+        public IEnumerable<StorageTransform> GetTransforms(GlobalOptions globalOptions, MigratorOptions options)
         {
             var packagerFactory = new PackagerFactory(_loggerFactory, options);
             var uploader = GetUploader(options);
@@ -30,6 +30,7 @@ namespace AMSMigrate.Transform
             {
                 ++transformCount;
                 yield return new PackageTransform(
+                        globalOptions,
                         options,
                         _loggerFactory.CreateLogger<PackageTransform>(),
                         _templateMapper,
@@ -41,16 +42,16 @@ namespace AMSMigrate.Transform
             {
                 ++transformCount;
                 yield return new UploadTransform(
-                    options, uploader, _loggerFactory.CreateLogger<UploadTransform>(), _templateMapper);
+                    globalOptions, options, uploader, _loggerFactory.CreateLogger<UploadTransform>(), _templateMapper);
             }
 
             // There should be at least one transform.
             Debug.Assert(transformCount > 0, "No transform selected based on the options provided");
         }
 
-        public IEnumerable<AssetTransform> GetTransforms(AssetOptions assetOptions)
+        public IEnumerable<AssetTransform> GetTransforms(GlobalOptions globalOptions, AssetOptions assetOptions)
         {
-            return GetTransforms(assetOptions as MigratorOptions)
+            return GetTransforms(globalOptions, assetOptions as MigratorOptions)
                 .Select(t => new AssetTransform(assetOptions, _templateMapper, t, _loggerFactory.CreateLogger<AssetTransform>()));
         }
 
