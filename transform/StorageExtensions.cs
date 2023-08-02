@@ -184,7 +184,7 @@ namespace AMSMigrate.Transform
 
             if (asset.Data.StorageEncryptionFormat != MediaAssetStorageEncryptionFormat.None)
             {
-                // The asset is encypted with its own key and list of IVs.
+                // The asset is encrypted with its own key and list of IVs.
                 decryptInfo = await asset.GetEncryptionKeyAsync(cancellationToken);
             }
 
