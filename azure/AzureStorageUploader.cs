@@ -107,7 +107,14 @@ namespace AMSMigrate.Azure
 
                 blobStream.Position = 0;
 
-                await outputBlob.UploadAsync(blobStream, cancellationToken: cancellationToken);
+                var inputBlobHeaders = await blob.GetPropertiesAsync(cancellationToken: cancellationToken);
+
+                var httpHeader = new BlobHttpHeaders
+                {
+                    ContentType = inputBlobHeaders?.Value.ContentType ?? "application/octet-stream"
+                };
+
+                await outputBlob.UploadAsync(blobStream, httpHeader, cancellationToken: cancellationToken);
             }
         }
 
