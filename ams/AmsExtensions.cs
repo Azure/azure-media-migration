@@ -2,6 +2,8 @@
 using Azure.ResourceManager.Media;
 using Azure.Storage.Blobs;
 using Azure;
+using AMSMigrate.Transform;
+using AMSMigrate.Contracts;
 
 namespace AMSMigrate.Ams
 {
@@ -72,6 +74,13 @@ namespace AMSMigrate.Ams
                 AssetName = asset.Data.Name,
                 StreamingPolicyName = "migration"
             });
+        }
+
+        public static void GetEncryptionDetails(this AssetDetails details, MigratorOptions options, TemplateMapper templateMapper)
+        {
+            details.EncryptionKey = Guid.NewGuid().ToString("n");
+            details.KeyId = Guid.NewGuid().ToString("n");
+            details.LicenseUri = templateMapper.ExpandKeyUriTemplate(options.KeyUri!, details.KeyId);
         }
     }
 }

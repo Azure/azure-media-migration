@@ -9,21 +9,21 @@ namespace AMSMigrate.Azure
     {
         private readonly ILogger _logger;
         private readonly SecretClient _secretClient;
-        private readonly KeyOptions _keyOptions;
+        private readonly KeyVaultOptions _options;
 
         public KeyVaultUploader(
-            KeyOptions options,
+            KeyVaultOptions options,
             TokenCredential credential,
             ILogger<KeyVaultUploader> logger)
         {
-            _keyOptions = options;
+            _options = options;
             _logger = logger;
             _secretClient = new SecretClient(options.KeyVaultUri, credential);
         }
 
         public async Task UploadAsync(string secretName, string secretValue, CancellationToken cancellationToken)
         {
-            _logger.LogInformation("Saving secret {name} to key vault {vault}", secretName, _keyOptions.KeyVaultUri);
+            _logger.LogInformation("Saving secret {name} to key vault {vault}", secretName, _options.KeyVaultUri);
             await _secretClient.SetSecretAsync(secretName, secretValue, cancellationToken);
         }
     }

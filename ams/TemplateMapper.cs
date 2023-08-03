@@ -164,6 +164,14 @@ namespace AMSMigrate.Ams
             });
         }
 
+        public string ExpandKeyUriTemplate(string uriTemplate, string  keyId)
+        {
+            return ExpandTemplate(uriTemplate, key => key switch {
+                "KeyId" => keyId,
+                _ => null
+            });
+        }
+
         private async Task<string> GetLocatorIdAsync(MediaAssetResource asset)
         {
             var locators = asset.GetStreamingLocatorsAsync();

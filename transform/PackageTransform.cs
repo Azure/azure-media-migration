@@ -9,16 +9,22 @@ namespace AMSMigrate.Transform
     internal class PackageTransform : StorageTransform
     {
         private readonly PackagerFactory _packagerFactory;
+        private readonly ISecretUploader? _secretUploader = default;
 
         public PackageTransform(
             GlobalOptions globalOptions,
             MigratorOptions options,
             ILogger<PackageTransform> logger,
             TemplateMapper templateMapper,
-            IFileUploader uploader,
+            ICloudProvider cloudProvider,
             PackagerFactory factory)
-            : base(globalOptions, options, templateMapper, uploader, logger)
+            : base(globalOptions, options, templateMapper, cloudProvider.GetStorageProvider(options), logger)
         {
+            if (options.EncryptContent)
+            {
+                var vaultOptions = new KeyVaultOptions(options.KeyVaultUri!);
+                _secretUploader = cloudProvider.GetSecretProvider(vaultOptions);
+            }
             _packagerFactory = factory;
         }
 
@@ -44,6 +50,12 @@ namespace AMSMigrate.Transform
             using var source = CancellationTokenSource.CreateLinkedTokenSource(cancellationToken);
             cancellationToken = source.Token;
 
+            if (_options.EncryptContent)
+            {
+                details.GetEncryptionDetails(_options, _templateMapper);
+            }
+
+
             // temporary space for either pipes or files.
             var workingDirectory = Path.Combine(_options.WorkingDirectory, assetName);
             Directory.CreateDirectory(workingDirectory);
@@ -63,10 +75,8 @@ namespace AMSMigrate.Transform
                 var blobs = await container.GetListOfBlobsRemainingAsync(manifest, cancellationToken);
                 allTasks.Add(Task.WhenAll(blobs.Select(async blob =>
                 {
-                    using (AesCtrTransform? aesTransform = AssetDecryptor.GetAesCtrTransform(details.DecryptInfo, blob.Name, false)) 
-                    {
-                        await UploadBlobAsync(blob, aesTransform, outputPath, cancellationToken);
-                    }
+                    using var aesTransform = AssetDecryptor.GetAesCtrTransform(details.DecryptInfo, blob.Name, false);
+                    await UploadBlobAsync(blob, aesTransform, outputPath, cancellationToken);
                 })));
 
                 if (packager.UsePipeForInput)
@@ -144,6 +154,12 @@ namespace AMSMigrate.Transform
                 // Upload any files pending to be uploaded.
                 await Task.WhenAll(
                     uploadPaths.Select(file => UploadFile(file, uploadHelper, cancellationToken)));
+
+                if (_options.EncryptContent)
+                {
+                    _logger.LogDebug("Saving key with id id: {keyId} for asset: {name} to key vault {vault}", details.KeyId, details.AssetName, _options.KeyVaultUri); ;
+                    await _secretUploader!.UploadAsync(details.KeyId, details.EncryptionKey, cancellationToken);
+                }
             }
             catch (Exception ex)
             {
@@ -171,8 +187,23 @@ namespace AMSMigrate.Transform
         private async Task UploadFile(string filePath, UploadHelper uploadHelper, CancellationToken cancellationToken)
         {
             var file = Path.GetFileName(filePath);
+            // Report update for every 1MB.
+            long update = 0;
             var progress = new Progress<long>(p =>
-                _logger.LogTrace("Uploaded {bytes} bytes to {file}", p, file));
+            {
+                if (p >= update)
+                {
+                    lock (this)
+                    {
+                        if (p >= update)
+                        {
+                            _logger.LogTrace("Uploaded {byte} bytes to {file}", p, file);
+                            update += 1024 * 1024;
+                        }
+                    }
+                }
+            });
+
             using var content = File.OpenRead(filePath);
             await uploadHelper.UploadAsync(Path.GetFileName(file), content, GetHeaders(file), progress, cancellationToken);
         }

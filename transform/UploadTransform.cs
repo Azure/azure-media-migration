@@ -2,7 +2,6 @@
 using AMSMigrate.Contracts;
 using AMSMigrate.Decryption;
 using Microsoft.Extensions.Logging;
-using System.Reflection.Metadata;
 
 namespace AMSMigrate.Transform
 {

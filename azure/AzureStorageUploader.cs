@@ -7,7 +7,6 @@ using Azure.Storage.Blobs;
 using Azure.Storage.Blobs.Models;
 using Azure.Storage.Blobs.Specialized;
 using Microsoft.Extensions.Logging;
-using System.Reflection.PortableExecutable;
 using System.Text;
 
 namespace AMSMigrate.Azure

@@ -14,5 +14,12 @@
         bool OverWrite,
         bool SkipMigrated,
         int SegmentDuration,
-        int BatchSize);
+        int BatchSize)
+    {
+        public bool EncryptContent { get; set; }
+
+        public string? KeyUri { get; set; }
+
+        public Uri? KeyVaultUri { get; set; }
+    }
 }

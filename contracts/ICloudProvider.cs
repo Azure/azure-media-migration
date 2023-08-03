@@ -5,6 +5,6 @@ namespace AMSMigrate.Contracts
     {
         IFileUploader GetStorageProvider(MigratorOptions migratorOptions);
 
-        ISecretUploader GetSecretProvider(KeyOptions keyOptions);
+        ISecretUploader GetSecretProvider(KeyVaultOptions keyOptions);
     }
 }

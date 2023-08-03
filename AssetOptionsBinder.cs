@@ -40,14 +40,14 @@ Warning: For custom path template, please ensure that the container name portion
         {
             Arity = ArgumentArity.ZeroOrOne
         };
-                
+
         private readonly Option<string?> _outputManifest = new Option<string?>(
             aliases: new[] { "--output-manifest-name", "-m" },
             description: @"The output manifest name without extension,
 if it is not set, use input asset's manifest name.")
-                    {
-                        Arity = ArgumentArity.ZeroOrOne
-                    };
+        {
+            Arity = ArgumentArity.ZeroOrOne
+        };
 
         private readonly Option<DateTimeOffset?> _creationTimeStart = new Option<DateTimeOffset?>(
             aliases: new[] { "--creation-time-start", "-cs" },
@@ -75,9 +75,9 @@ Visit https://learn.microsoft.com/en-us/azure/media-services/latest/filter-order
         };
 
         private readonly Option<Packager> _packagerType = new(
-    aliases: new[] { "--packager" },
-    () => Packager.Shaka,
-    description: "The packager to use.")
+            aliases: new[] { "--packager" },
+            () => Packager.Shaka,
+            description: "The packager to use.")
         {
             IsHidden = true,
             IsRequired = false
@@ -112,6 +112,23 @@ Visit https://learn.microsoft.com/en-us/azure/media-services/latest/filter-order
             () => DefaultBatchSize,
             description: @"Batch size for parallel processing.");
 
+        private readonly Option<bool> _encryptContent = new (
+            aliases: new[] { "-e", "--encrypt-content" },
+            () => false,
+            description: "Encrypt the content  using CENC"
+            );
+
+        private readonly Option<Uri?> _keyVaultUri = new (
+            aliases: new[] { "--key-vault-uri" },
+            description: "The key vault to store encryption keys."
+            );
+
+        private readonly Option<string?> _keyUri = new(
+            aliases: new[] { "--key-uri" },
+            () => "/.clearkeys?kid=${KeyId}",
+            description: "The key URI to use for requesting the key. This is saved to the manifest."
+            );
+
         const int SegmentDurationInSeconds = 2;
 
         public AssetOptionsBinder()
@@ -125,7 +142,8 @@ Visit https://learn.microsoft.com/en-us/azure/media-services/latest/filter-order
                 }
             });
 
-            _pathTemplate.AddValidator(result => {
+            _pathTemplate.AddValidator(result =>
+            {
                 var value = result.GetValueOrDefault<string>();
                 if (!string.IsNullOrEmpty(value))
                 {
@@ -154,15 +172,34 @@ Visit https://learn.microsoft.com/en-us/azure/media-services/latest/filter-order
             command.AddOption(_workingDirectory);
             command.AddOption(_copyNonStreamable);
             command.AddOption(_batchSize);
+            command.AddOption(_encryptContent);
+            command.AddOption(_keyVaultUri);
+            command.AddOption(_keyUri);
+            command.AddValidator(result =>
+            {
+                if (result.GetValueForOption(_encryptContent))
+                {
+                    if (result.FindResultFor(_keyVaultUri) == null || result.FindResultFor(_keyUri) == null)
+                    {
+                        result.ErrorMessage = "Key vault and key URI must be specified when encryption is enabled.";
+                    }
+                    else if (result.GetValueForOption(_packagerType) != Packager.Shaka)
+                    {
+                        result.ErrorMessage = "Static encryption is only supported with shaka packager.";
+                    }
+                }
+            });
             return command;
         }
 
-        protected override AssetOptions GetBoundValue(BindingContext bindingContext)
+        protected override AssetOptions GetBoundValue(BindingContext bindingContext) => GetValue(bindingContext);
+
+        public AssetOptions GetValue(BindingContext bindingContext)
         {
             var workingDirectory = bindingContext.ParseResult.GetValueForOption(_workingDirectory)!;
             Directory.CreateDirectory(workingDirectory);
             return new AssetOptions(
-                bindingContext.ParseResult.GetValueForOption(_sourceAccount)!,               
+                bindingContext.ParseResult.GetValueForOption(_sourceAccount)!,
                 bindingContext.ParseResult.GetValueForOption(_storageAccount)!,
                 bindingContext.ParseResult.GetValueForOption(_packagerType),
                 bindingContext.ParseResult.GetValueForOption(_pathTemplate)!,
@@ -176,9 +213,12 @@ Visit https://learn.microsoft.com/en-us/azure/media-services/latest/filter-order
                 bindingContext.ParseResult.GetValueForOption(_skipMigrated),
                 SegmentDurationInSeconds,
                 bindingContext.ParseResult.GetValueForOption(_batchSize)
-            );
+            )
+            {
+                EncryptContent = bindingContext.ParseResult.GetValueForOption(_encryptContent),
+                KeyUri = bindingContext.ParseResult.GetValueForOption(_keyUri),
+                KeyVaultUri = bindingContext.ParseResult.GetValueForOption(_keyVaultUri)
+            };
         }
-
-        public AssetOptions GetValue(BindingContext bindingContext) => GetBoundValue(bindingContext);
     }
 }

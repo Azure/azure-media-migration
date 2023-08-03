@@ -34,7 +34,7 @@ namespace AMSMigrate.Transform
                         options,
                         _loggerFactory.CreateLogger<PackageTransform>(),
                         _templateMapper,
-                        uploader,
+                        _cloudProvider,
                         packagerFactory);
             }
             

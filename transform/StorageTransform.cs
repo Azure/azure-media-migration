@@ -9,13 +9,29 @@ using Microsoft.Extensions.Logging;
 
 namespace AMSMigrate.Transform
 {
-    public record AssetDetails(string AssetName, BlobContainerClient Container, Manifest? Manifest, ClientManifest? ClientManifest, string? OutputManifest, StorageEncryptedAssetDecryptionInfo? DecryptInfo);
+    public record AssetDetails(string AssetName, BlobContainerClient Container, Manifest? Manifest, ClientManifest? ClientManifest, string? OutputManifest, StorageEncryptedAssetDecryptionInfo? DecryptInfo)
+    {
+        /// <summary>
+        /// The key ID of the encryption key.
+        /// </summary>
+        public string KeyId { get; set; } = string.Empty;
+
+        /// <summary>
+        /// The encryption key to use.
+        /// </summary>
+        public string EncryptionKey { get; set; } = string.Empty;
+
+        /// <summary>
+        /// The license URL for key delivery.
+        /// </summary>
+        public string LicenseUri { get; set; } = string.Empty;
+    }
 
     internal abstract class StorageTransform : ITransform<AssetDetails, AssetMigrationResult>
     {
         protected readonly GlobalOptions _globalOptions;
         protected readonly MigratorOptions _options;
-        private readonly TemplateMapper _templateMapper;
+        protected readonly TemplateMapper _templateMapper;
         protected readonly ILogger _logger;
         protected readonly IFileUploader _fileUploader;     
 
