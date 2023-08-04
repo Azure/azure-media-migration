@@ -78,7 +78,7 @@ namespace AMSMigrate.Azure
         /// <param name="fileName">The output blob in the destination container.</param>
         /// <param name="blob">The source blob.</param>
         /// <param name="aesTransform">The optional AesTransform for source content decryption.</param>
-        /// <param name="cancellationToken">The cancellaton token for the async operation.</param>
+        /// <param name="cancellationToken">The cancellation token for the async operation.</param>
         /// <returns></returns>
         public async Task UploadBlobAsync(
             string containerName,
