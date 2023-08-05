@@ -13,7 +13,7 @@ param storage bool = false
 @description('The role to assign  to the resource group of the resource.')
 param resourceGroupRoleName string = 'Reader'
 
-@description('Assigna a role to the resoucr group.')
+@description('Assign a role to the resource group.')
 param assignGroupRole bool = false
 
 var roles = {

@@ -145,4 +145,4 @@ You can look at the help for analyze command to further customization.
 
 # Deployment
 ## Running in Azure
-The quickest way to run the tool in Azure is use the deployment scripts. See [deployment.md](deployment/deployment.md) for more instruction how to quikcly run it.
+The quickest way to run the tool in Azure is use the deployment scripts. See [deployment.md](deployment/deployment.md) for more instructions how to quickly run it.

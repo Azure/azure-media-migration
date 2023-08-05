@@ -1,6 +1,6 @@
 using './deployment.bicep'
 
-// The media serivces account being migrated.
+// The media services account being migrated.
 param mediaAccountName = 'provenanceuswc'
 param mediaAccountRG = 'provenance'
 
