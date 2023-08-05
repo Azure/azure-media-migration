@@ -65,7 +65,7 @@ module mediaRoleAssignment 'roleassignment.bicep' = {
 
 var storageAccountIds = map(mediaAccount.properties.storageAccounts, arg => arg.id)
 module storageRoleAssignments 'storageaccounts.bicep' = {
-  name: 'storageRoleAssignements'
+  name: 'storageRoleAssignments'
   params: {
     storageAccounts: storageAccountIds
     principalId: managedIdentity.properties.principalId
@@ -104,7 +104,7 @@ module keyVaultRoleAssignment 'roleassignment.bicep' = if (encrypt) {
   }
 }
 
-// Default argumetns to the migration tool.
+// Default arguments to the migration tool.
 var defaultArguments = [
   'dotnet'
   'AMSMigrate.dll'
