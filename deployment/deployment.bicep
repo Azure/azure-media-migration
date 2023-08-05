@@ -107,7 +107,7 @@ module keyVaultRoleAssignment 'roleassignment.bicep' = if (encrypt) {
 // Default argumetns to the migration tool.
 var defaultArguments = [
   'dotnet'
-  'MediaMigrate.dll'
+  'AMSMigrate.dll'
   'assets'
   '-s'
   subscription().subscriptionId

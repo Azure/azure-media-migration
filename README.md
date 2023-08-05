@@ -142,3 +142,7 @@ To analyze, you will use the analyze command, an example is
 The html file and the log file location will be reported at the end of execution.
 
 You can look at the help for analyze command to further customization.
+
+# Deployment
+## Running in Azure
+The quickest way to run the tool in Azure is use the deployment scripts. See [deployment.md](deployment/deployment.md) for more instruction how to quikcly run it.
