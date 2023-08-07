@@ -4,14 +4,9 @@ using Azure;
 using Azure.Core;
 using Azure.ResourceManager.Media;
 using Azure.Storage.Blobs;
+using Azure.Storage.Blobs.Models;
 using Microsoft.Extensions.Logging;
 using Spectre.Console;
-using System;
-using System.Collections;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
 
 namespace AMSMigrate.ams
 {
@@ -36,19 +31,13 @@ namespace AMSMigrate.ams
         public override async Task MigrateAsync(CancellationToken cancellationToken)
         {
             var account = await GetMediaAccountAsync(_options.AccountName, cancellationToken);
-            _logger.LogInformation("Begin cleaning up on account: {name}", account.Data.Name);
+            _logger.LogInformation("Begin reset assets on account: {name}", account.Data.Name);
 
-            var storage = await _resourceProvider.GetStorageAccountAsync(account, cancellationToken);
-            var totalAssets = await QueryMetricAsync(
-            account.Id.ToString(),
-            "AssetCount",
-            cancellationToken: cancellationToken);
-
-            _logger.LogInformation("The total asset count of the media account is {count}.", totalAssets);
+            var storage = await _resourceProvider.GetStorageAccountAsync(account, cancellationToken);       
             AsyncPageable<MediaAssetResource> assets = account.GetMediaAssets()
                 .GetAllAsync(cancellationToken: cancellationToken);
             List<MediaAssetResource>? assetList = await assets.ToListAsync(cancellationToken);
-
+            int resetedAssetCount = 0;
             foreach (var asset in assetList)
             {
                 var container = storage.GetContainer(asset);
@@ -58,13 +47,39 @@ namespace AMSMigrate.ams
                     return;
                 }
 
-                // The asset container exists, try to check the metadata list first.
-
                 if (_options.all || (_tracker.GetMigrationStatusAsync(container, cancellationToken).Result.Status == MigrationStatus.Failed))
                 {
-                    container.DeleteBlobAsync(cancellationToken);
+                    try
+                    {
+                        BlobContainerProperties properties = await container.GetPropertiesAsync(cancellationToken: cancellationToken);
+                        if (properties.Metadata != null && properties.Metadata.Count == 0)
+                        {
+                            _logger.LogInformation($"Container '{container.Name}' does not have metadata.");
+                        }
+                        else
+                        {   // Clear container metadata
+                            properties.Metadata.Clear();
+                            var deleteOperation = await container.SetMetadataAsync(properties.Metadata);
+                            if (deleteOperation.GetRawResponse().Status == 200)
+                            {
+                                _logger.LogInformation($"Meda data in Container '{container.Name}' is deleted successfully.");
+                                resetedAssetCount++;
+                            }
+                            else
+                            {
+                                _logger.LogInformation($"Meda data in Container '{container.Name}' does not exist or was not deleted.");
+                            }
+                        }
+                      
+                    }
+                    catch (Exception ex)
+                    {
+                        _logger.LogError($"An unexpected error occurred: {ex.Message}");
+                    }
+
                 }
             }
+            _logger.LogDebug($"{resetedAssetCount} out of {assetList.Count} assets has been reseted.");
         }
     }
 }

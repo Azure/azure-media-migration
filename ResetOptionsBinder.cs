@@ -1,13 +1,16 @@
-﻿using System;
+﻿using AMSMigrate.Contracts;
+using FFMpegCore.Enums;
+using System;
 using System.Collections.Generic;
 using System.CommandLine;
+using System.CommandLine.Binding;
 using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
 
 namespace AMSMigrate
 {
-    internal class ResetOptionsBinder
+    internal class ResetOptionsBinder : BinderBase<ResetOptions>
     {
         private readonly Option<string> _sourceAccount = new Option<string>(
            aliases: new[] { "--source-account-name", "-n" },
@@ -29,6 +32,24 @@ namespace AMSMigrate
         {
             IsRequired = false
         };
+        public ResetOptions GetValue(BindingContext context) => GetBoundValue(context);
 
+        public Command GetCommand(string name, string description)
+        {
+            var command = new Command(name, description);
+            command.AddOption(_sourceAccount);
+            command.AddOption(_all);
+            command.AddOption(_failed);
+            return command;
+        }
+
+        protected override ResetOptions GetBoundValue(BindingContext bindingContext)
+        {
+            return new ResetOptions(
+                bindingContext.ParseResult.GetValueForOption(_sourceAccount)!,
+                bindingContext.ParseResult.GetValueForOption(_all),
+                bindingContext.ParseResult.GetValueForOption(_failed)
+            );
+        }
     }
 }

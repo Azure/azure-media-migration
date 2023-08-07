@@ -3,6 +3,7 @@ using AMSMigrate.Contracts;
 using Azure;
 using Azure.Core;
 using Azure.ResourceManager.Media;
+using Azure.ResourceManager.Media.Models;
 using Azure.Storage.Blobs;
 using Microsoft.Extensions.Logging;
 using Spectre.Console;
@@ -46,12 +47,6 @@ namespace AMSMigrate.Ams
             }
 
             Dictionary<string, bool> stats = new Dictionary<string, bool>();
-            var totalAssets = await QueryMetricAsync(
-                account.Id.ToString(),
-                "AssetCount",
-                cancellationToken: cancellationToken);
-
-            _logger.LogInformation("The total asset count of the media account is {count}.", totalAssets);
             AsyncPageable<MediaAssetResource> assets;
            
             //clean up asset
@@ -111,6 +106,7 @@ namespace AMSMigrate.Ams
                 {
                     foreach (var streamingEndpoint in endpoints)
                     {
+                        await streamingEndpoint.StopAsync(WaitUntil.Completed);
                         await streamingEndpoint.DeleteAsync(WaitUntil.Completed);
                     }
                 }
@@ -125,6 +121,10 @@ namespace AMSMigrate.Ams
                 {
                     foreach (var liveEvent in liveevents)
                     {
+                        if (liveEvent?.Data.ResourceState == LiveEventResourceState.Running)
+                        {
+                            await liveEvent.StopAsync(WaitUntil.Completed, new LiveEventActionContent() { RemoveOutputsOnStop = true });
+                        }
                         await liveEvent.DeleteAsync(WaitUntil.Completed);
                     }
                 }

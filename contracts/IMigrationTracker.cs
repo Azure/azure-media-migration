@@ -5,5 +5,7 @@
         Task<TResult> GetMigrationStatusAsync(T resource, CancellationToken cancellationToken);
 
         Task UpdateMigrationStatus(T resource, TResult result, CancellationToken cancellationToken);
+
+        Task<bool> DeleteMigrationStatus(T resource, string MigratedBlobName);
     }
 }

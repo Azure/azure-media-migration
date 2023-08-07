@@ -1,4 +1,5 @@
-﻿using AMSMigrate.Ams;
+﻿using AMSMigrate.ams;
+using AMSMigrate.Ams;
 using AMSMigrate.Azure;
 using AMSMigrate.Contracts;
 using AMSMigrate.Local;
@@ -73,6 +74,21 @@ This command forcefully removes all assets in the given account.");
                 {
                     var cleanupOptions = cleanupOptionsBinder.GetValue(context.BindingContext);
                     await CleanupAsync(context, cleanupOptions, context.GetCancellationToken());
+                });
+
+            var resetOptionsBinder = new ResetOptionsBinder();
+            var resetCommand = resetOptionsBinder.GetCommand("reset", @"Reset assets back to their original NotMigrated state in the AMS account
+Examples to reset assets in the AMS account:
+reset -s <subscriptionid> -g <resourcegroup> -n <account> -a true                                                                                
+This command will forcibly revert all assets in the Azure Media Services (AMS) account to their initial NotMigrated state.
+reset -s <subscriptionid> -g <resourcegroup> -n <account> -f true                                                                                 
+This command will forcefully revert migrated assets that have failed back to their original NotMigrated state within the Azure Media Services (AMS) account.");
+            rootCommand.Add(resetCommand);
+            resetCommand.SetHandler(
+                async context =>
+                {
+                    var resetOptions =resetOptionsBinder.GetValue(context.BindingContext);
+                    await ResetAsync(context, resetOptions, context.GetCancellationToken());
                 });
 
             // disable storage migrate option until ready
@@ -223,7 +239,15 @@ This command forcefully removes all assets in the given account.");
             await ActivatorUtilities.CreateInstance<CleanupCommand>(provider, cleanupOptions)
                 .MigrateAsync(cancellationToken);
         }
-
+        static async Task ResetAsync(
+                 InvocationContext context,
+                 ResetOptions resetOptions,
+                 CancellationToken cancellationToken)
+        {
+            var provider = context.BindingContext.GetRequiredService<IServiceProvider>();
+            await ActivatorUtilities.CreateInstance<ResetCommand>(provider, resetOptions)
+                .MigrateAsync(cancellationToken);
+        }
 
         static async Task MigrateKeysAsync(
             InvocationContext context,
