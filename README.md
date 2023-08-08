@@ -40,7 +40,7 @@ The content is converted to CMAF format with both a DASH and HLS manifest to sup
 * Support for packaging VOD assets.
 * Support for copying non-streamable assets.
 * Marks migrated assets and provides HTML summary on analyze
-* Support for statically encrypting the cotnent while packaging.
+* Support for statically encrypting the content while packaging.
 
 ## Open Issues
 * Live assets are not supported but will be in a future version of this tool.
@@ -66,6 +66,31 @@ You'll need to have the following permissions:
 - The identity that runs this migration tool should be added to the ['Storage Blob Data Contributor'](https://learn.microsoft.com/en-us/azure/role-based-access-control/built-in-roles#storage-blob-data-contributor) role for the source and destination storage accounts.
 - The identity used to migrate must have the role ['Key Vault Secrets Officer'](https://learn.microsoft.com/en-us/azure/key-vault/general/rbac-guide?tabs=azure-cli#azure-built-in-roles-for-key-vault-data-plane-operations) on the key vault used to store the keys. If the key vault is not using Azure RBAC then you will have to create an Access policy giving secrets management permission to the identity used.
 
+# Prerequisite dependencies
+
+The following are the tools that we require the user to install on the machine that is running the migration tool
+
+- [FFmpeg](https://ffmpeg.org/download.html)
+
+    Some types of AMS asset requires FFmpeg in order to complete (e.g. Smooth content).  
+    To handle these type of contents, we expect that user install FFmpeg and add it to the path prior to running the migration tool so that it has access to FFmpeg.
+
+    Please follow info in this [link](https://ffmpeg.org/download.html) to install FFmpeg on yours system and add it to the path of your system.
+
+    Some installation examples:
+
+    - For Ubuntu, you can use the package manager 'apt' which will install and add ffmpeg to your path.
+
+        ```
+        sudo apt install -y ffmpeg
+        ```
+
+    - For Windows 11, you can use 'winget' to install from [gyan.dev](https://www.gyan.dev/ffmpeg/builds/) which will install and add ffmpeg to your path (Note that for windows, after you install, you need to recycle the command prompt windows to get the updated PATH.)
+
+        ```
+        winget install ffmpeg
+        ```
+
 # Quick Start
 
 ## Build project
@@ -75,7 +100,7 @@ To build the project, you can run the following command
     dotnet build
     dotnet publish
 
-the output binary will be in your publish folder (e.g. bin\Debug\net6.0\publish\AMSMigrate.exe for windows, 
+the output binary will be in your publish folder (e.g. bin\Debug\net6.0\publish\AMSMigrate.exe for windows,
                                                        bin\Debug\net6.0\publish\AMSMigrate for Linux)
 
 There are two main commands: analyze and assets.  You can view the help by running the following three commands
@@ -117,3 +142,7 @@ To analyze, you will use the analyze command, an example is
 The html file and the log file location will be reported at the end of execution.
 
 You can look at the help for analyze command to further customization.
+
+# Deployment
+## Running in Azure
+The quickest way to run the tool in Azure is use the deployment scripts. See [deployment.md](deployment/deployment.md) for more instructions how to quickly run it.
