@@ -3,6 +3,7 @@ using AMSMigrate.Contracts;
 using Azure;
 using Azure.Core;
 using Azure.ResourceManager.Media;
+using Azure.ResourceManager.Media.Models;
 using Azure.Storage.Blobs;
 using Microsoft.Extensions.Logging;
 using Spectre.Console;
@@ -46,16 +47,10 @@ namespace AMSMigrate.Ams
             }
 
             Dictionary<string, bool> stats = new Dictionary<string, bool>();
-            var totalAssets = await QueryMetricAsync(
-                account.Id.ToString(),
-                "AssetCount",
-                cancellationToken: cancellationToken);
-
-            _logger.LogInformation("The total asset count of the media account is {count}.", totalAssets);
             AsyncPageable<MediaAssetResource> assets;
-           
+
             //clean up asset
-            var resourceFilter = _options.IsCleanUpAccount? null: GetAssetResourceFilter(_options.ResourceFilter, null, null);
+            var resourceFilter = _options.IsCleanUpAccount ? null : GetAssetResourceFilter(_options.ResourceFilter, null, null);
 
             var orderBy = "properties/created";
             assets = account.GetMediaAssets()
@@ -64,7 +59,7 @@ namespace AMSMigrate.Ams
 
             foreach (var asset in assetList)
             {
-                var result = await CleanUpAssetAsync(_options.IsCleanUpAccount||_options.IsForceCleanUpAsset,account, asset, cancellationToken);
+                var result = await CleanUpAssetAsync(_options.IsCleanUpAccount || _options.IsForceCleanUpAsset, account, asset, cancellationToken);
                 stats.Add(asset.Data.Name, result);
             }
             WriteSummary(stats, false);
@@ -111,6 +106,10 @@ namespace AMSMigrate.Ams
                 {
                     foreach (var streamingEndpoint in endpoints)
                     {
+                        if (streamingEndpoint.Data.ResourceState == StreamingEndpointResourceState.Running)
+                        {
+                            await streamingEndpoint.StopAsync(WaitUntil.Completed);
+                        }
                         await streamingEndpoint.DeleteAsync(WaitUntil.Completed);
                     }
                 }
@@ -125,10 +124,14 @@ namespace AMSMigrate.Ams
                 {
                     foreach (var liveEvent in liveevents)
                     {
+                        if (liveEvent.Data.ResourceState == LiveEventResourceState.Running)
+                        {
+                            await liveEvent.StopAsync(WaitUntil.Completed, new LiveEventActionContent() { RemoveOutputsOnStop = true });
+                        }
                         await liveEvent.DeleteAsync(WaitUntil.Completed);
                     }
                 }
-             
+
                 var deleteOperation = await account.DeleteAsync(WaitUntil.Completed);
 
                 if (deleteOperation.HasCompleted && deleteOperation.GetRawResponse().Status == 200)
@@ -149,7 +152,7 @@ namespace AMSMigrate.Ams
                 return false;
             }
         }
-        private async Task<bool> CleanUpAssetAsync(bool isForcedelete,MediaServicesAccountResource account, MediaAssetResource asset, CancellationToken cancellationToken)
+        private async Task<bool> CleanUpAssetAsync(bool isForcedelete, MediaServicesAccountResource account, MediaAssetResource asset, CancellationToken cancellationToken)
         {
             try
             {
@@ -162,11 +165,11 @@ namespace AMSMigrate.Ams
 
                     return false;
                 }
-               
-                    // The asset container exists, try to check the metadata list first.
-              
-                if (isForcedelete||(_tracker.GetMigrationStatusAsync(container, cancellationToken).Result.Status == MigrationStatus.Completed))
-                {                  
+
+                // The asset container exists, try to check the metadata list first.
+
+                if (isForcedelete || (_tracker.GetMigrationStatusAsync(container, cancellationToken).Result.Status == MigrationStatus.Completed))
+                {
                     var locator = await account.GetStreamingLocatorAsync(asset, cancellationToken);
                     if (locator != null)
                     {

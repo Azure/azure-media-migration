@@ -1,4 +1,5 @@
 ﻿using AMSMigrate.Contracts;
+using Azure;
 using Azure.Storage.Blobs;
 using Azure.Storage.Blobs.Models;
 
@@ -64,7 +65,7 @@ namespace AMSMigrate.Ams
         internal const string MigrateResultKey = "MigrateResult";
         internal const string ManifestNameKey = "ManifestName";
         internal const string OutputPathKey = "OutputPath";
-
+        
         public async Task<AssetMigrationResult> GetMigrationStatusAsync(BlobContainerClient container, CancellationToken cancellationToken)
         {
             BlobContainerProperties properties = await container.GetPropertiesAsync(cancellationToken: cancellationToken);
