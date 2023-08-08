@@ -6,7 +6,7 @@ namespace AMSMigrate.Contracts
     /// </summary>
     public record ResetOptions(
       string AccountName,
-      string category
+      string Category
     );
 
 }

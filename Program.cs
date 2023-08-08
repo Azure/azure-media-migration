@@ -1,5 +1,4 @@
-﻿using AMSMigrate.ams;
-using AMSMigrate.Ams;
+﻿using AMSMigrate.Ams;
 using AMSMigrate.Azure;
 using AMSMigrate.Contracts;
 using AMSMigrate.Local;
