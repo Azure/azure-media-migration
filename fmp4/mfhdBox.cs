@@ -10,7 +10,7 @@ namespace AMSMigrate.Fmp4
     public class mfhdBox : FullBox, IEquatable<mfhdBox>
     {
         /// <summary>
-        /// Default consturctor with a sequence number
+        /// Default constructor with a sequence number
         /// </summary>
         /// <param name="sequenceNumber">The sequence number of the fragment.</param>
         public mfhdBox(UInt32 sequenceNumber) :
@@ -117,7 +117,7 @@ namespace AMSMigrate.Fmp4
         }
 
         /// <summary>
-        /// Returns the hascode of the object.
+        /// Returns the hashcode of the object.
         /// </summary>
         /// <returns></returns>
         public override int GetHashCode()

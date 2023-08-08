@@ -138,7 +138,7 @@ namespace AMSMigrate.Fmp4
         }
 
         /// <summary>
-        /// Pases the body of box. As per 14496-12 section 8.36
+        /// Passes the body of box. As per 14496-12 section 8.36
         /// </summary>
         protected override void ReadBody()
         {
@@ -245,7 +245,7 @@ namespace AMSMigrate.Fmp4
         /// <summary>
         /// Helper method to trow an InvalidDataException if the trun entries are not consistent.
         /// </summary>
-        /// <param name="field">The name of field in trun entry that is inconsitent</param>
+        /// <param name="field">The name of field in trun entry that is inconsistent</param>
         /// <param name="first">first trun entry</param>
         /// <param name="current">current trun entry</param>
         /// <param name="index">index of the current entry</param>

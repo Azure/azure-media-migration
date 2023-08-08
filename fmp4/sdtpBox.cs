@@ -45,7 +45,7 @@ namespace AMSMigrate.Fmp4
         }
 
         /// <summary>
-        /// Pases the body of box. A moof is nothing but a collection of child boxes.
+        /// Passes the body of box. A moof is nothing but a collection of child boxes.
         /// </summary>
         protected override void ReadBody()
         {
@@ -137,7 +137,7 @@ namespace AMSMigrate.Fmp4
         }
 
         /// <summary>
-        /// Object.GetHashCode override. This must be done as a consequence of overridding
+        /// Object.GetHashCode override. This must be done as a consequence of overriding
         /// Object.Equals.
         /// </summary>
         /// <returns>Hash code which will be match the hash code of an object which is equal.</returns>

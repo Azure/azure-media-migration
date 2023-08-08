@@ -40,7 +40,7 @@ namespace AMSMigrate.Fmp4
         }
 
         /// <summary>
-        /// Reutrn the trun child box for this track.
+        /// Return the trun child box for this track.
         /// </summary>
         public trunBox TrackRun
         {
@@ -92,7 +92,7 @@ namespace AMSMigrate.Fmp4
         }
 
         /// <summary>
-        /// Compare two boxes for equality. Use base.Equals() to do the comparsion
+        /// Compare two boxes for equality. Use base.Equals() to do the comparison
         /// </summary>
         /// <param name="other">other box to compare against.</param>
         /// <returns>true if both boxes are equal else false.</returns>

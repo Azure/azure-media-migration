@@ -130,7 +130,7 @@ namespace AMSMigrate.Fmp4
         /// <summary>
         /// This method normalizes the last sample duration. It does so by averaging the durations
         /// of all samples except for the last one, then overwriting the last sample's duration with
-        /// that average. If the input seqeuence only has a single sample, then no normalization
+        /// that average. If the input sequence only has a single sample, then no normalization
         /// takes place. The last sample is still deep-copied, but the duration remains unchanged.
         /// </summary>
         /// <param name="samples">An enumeration of samples. This enumeration shall not be modified
@@ -138,7 +138,7 @@ namespace AMSMigrate.Fmp4
         /// <returns>An enumeration of samples, with the last sample's duration replaced with the
         /// normalized (average) duration. This last sample is a deep copy and so the act of
         /// normalizing the last duration has no side effects on the original sequence.
-        /// If the input seqeuence only has a single sample, then no normalization
+        /// If the input sequence only has a single sample, then no normalization
         /// takes place. The last sample is still deep-copied, but the duration remains unchanged.</returns>
         public static IEnumerable<Fmp4FragmentSample> NormalizeLastSample(this IEnumerable<Fmp4FragmentSample> samples)
         {

@@ -269,7 +269,7 @@ namespace AMSMigrate.Fmp4
         }
 
         /// <summary>
-        /// Object.GetHashCode override. This must be done as a consequence of overridding
+        /// Object.GetHashCode override. This must be done as a consequence of overriding
         /// Object.Equals.
         /// </summary>
         /// <returns>Hash code which will be match the hash code of an object which is equal.</returns>
