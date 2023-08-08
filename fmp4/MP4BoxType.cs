@@ -14,6 +14,8 @@ namespace AMSMigrate.Fmp4
         // Known Box Types (Compact)
         //===================================================================
         public const UInt32 uuid = 0x75756964; // 'uuid'
+        public const UInt32 styp = 0x73747970; // 'styp'
+        public const UInt32 prft = 0x70726674; // 'prft'
         public const UInt32 moof = 0x6D6F6F66; // 'moof'
         public const UInt32 mfhd = 0x6D666864; // 'mfhd'
         public const UInt32 traf = 0x74726166; // 'traf'
@@ -76,7 +78,10 @@ namespace AMSMigrate.Fmp4
         //===================================================================
         // Registered Box Objects (Extended 'uuid' Type)
         //===================================================================
-        private static Dictionary<Guid, Type> _extendedType = new Dictionary<Guid, Type>();
+        private static Dictionary<Guid, Type> _extendedType = new Dictionary<Guid, Type>()
+        {
+            { tfxd, typeof(tfxdBox) }
+        };
 
         public static Dictionary<Guid, Type> ExtendedType
         {
