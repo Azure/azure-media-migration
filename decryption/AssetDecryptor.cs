@@ -12,7 +12,7 @@ using Azure.Storage.Blobs.Specialized;
 namespace AMSMigrate.Decryption
 {
     /// <summary>
-    /// Helper class to decrypt asset blobs when the asset was uploaded with storeage-encryption enabled.
+    /// Helper class to decrypt asset blobs when the asset was uploaded with storage-encryption enabled.
     /// </summary>
     public static class AssetDecryptor
     {
