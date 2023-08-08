@@ -162,16 +162,50 @@ namespace AMSMigrate.Fmp4
         }
 
         /// <summary>
-        /// When preparing a fragment for VOD, or modifying it, it is best to remove
-        /// any existing tfxd or tfrf boxes.
+        /// Replace uuid box tfxd with tfdt, and remove trft as part of the replacement.
         /// </summary>
-        public void RemoveTfxdTfrf()
+        public void ReplaceTfxdWithTfdt()
         {
-            Header.Track.RemoveChildren((trafChild) =>
+            var tfxdBox = Header.Track.Children.Where(b => b.ExtendedType == MP4BoxType.tfxd).SingleOrDefault() as tfxdBox;
+
+            if (tfxdBox != null)
+            {
+                // Figure out the dts from cts and pts from tfxd box.
+                // pts = dts + cts  cts is int32.
+
+                var firstCts = Header.Track.TrackRun.Entries[0].SampleCompositionOffset;
+
+                var chunkDts = tfxdBox.FragmentTime;
+
+                if (firstCts != null && firstCts.Value != 0)
+                {
+                    Int32 cts = firstCts.Value;
+                    ulong absCts = (ulong)Math.Abs(cts);
+
+                    if (cts > 0)
+                    {
+                        // cts is a positive value
+                        chunkDts = (tfxdBox.FragmentTime > absCts) ? (tfxdBox.FragmentTime - absCts) : 0;
+                    }
+                    else
+                    {
+                        // cts is a negative value                      
+                        chunkDts = tfxdBox.FragmentTime + absCts;
+                    }
+                }
+
+                Header.Track.RemoveChildren((trafChild) =>
                 trafChild.ExtendedType == MP4BoxType.tfxd || trafChild.ExtendedType == MP4BoxType.tfrf);
 
-            // If we change the size of the moof we should recompute data offset
-            ResetDataOffset();
+                var tfdt = new tfdtBox(chunkDts);
+
+                // Put the tfdt box after the header box and before trun box,
+                // so index 1 is a good choose.
+                Header.Track.Children.Insert(1, tfdt);
+
+                // If the size of moof box is changed, the data offset in trun box needs to recompute.
+                ResetDataOffset();
+            }
         }
 
         /// <summary>
