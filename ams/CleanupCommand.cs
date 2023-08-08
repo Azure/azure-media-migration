@@ -1,5 +1,4 @@
-﻿using AMSMigrate.Ams;
-using AMSMigrate.Contracts;
+﻿using AMSMigrate.Contracts;
 using Azure;
 using Azure.Core;
 using Azure.ResourceManager.Media;
@@ -7,7 +6,6 @@ using Azure.ResourceManager.Media.Models;
 using Azure.Storage.Blobs;
 using Microsoft.Extensions.Logging;
 using Spectre.Console;
-using System.ComponentModel;
 
 namespace AMSMigrate.Ams
 {
@@ -29,6 +27,7 @@ namespace AMSMigrate.Ams
             _logger = logger;
             _tracker = tracker;
         }
+
         public override async Task MigrateAsync(CancellationToken cancellationToken)
         {
             var account = await GetMediaAccountAsync(_options.AccountName, cancellationToken);
@@ -108,16 +107,16 @@ namespace AMSMigrate.Ams
                     {
                         if (streamingEndpoint.Data.ResourceState == StreamingEndpointResourceState.Running)
                         {
-                            await streamingEndpoint.StopAsync(WaitUntil.Completed);
+                            await streamingEndpoint.StopAsync(WaitUntil.Completed, cancellationToken : cancellationToken);
                         }
-                        await streamingEndpoint.DeleteAsync(WaitUntil.Completed);
+                        await streamingEndpoint.DeleteAsync(WaitUntil.Completed, cancellationToken : cancellationToken);
                     }
                 }
                 if (policies != null)
                 {
                     foreach (var contentKeyPolicy in policies)
                     {
-                        await contentKeyPolicy.DeleteAsync(WaitUntil.Completed);
+                        await contentKeyPolicy.DeleteAsync(WaitUntil.Completed, cancellationToken : cancellationToken);
                     }
                 }
                 if (liveevents != null)
@@ -126,13 +125,13 @@ namespace AMSMigrate.Ams
                     {
                         if (liveEvent.Data.ResourceState == LiveEventResourceState.Running)
                         {
-                            await liveEvent.StopAsync(WaitUntil.Completed, new LiveEventActionContent() { RemoveOutputsOnStop = true });
+                            await liveEvent.StopAsync(WaitUntil.Completed, new LiveEventActionContent() { RemoveOutputsOnStop = true }, cancellationToken : cancellationToken);
                         }
-                        await liveEvent.DeleteAsync(WaitUntil.Completed);
+                        await liveEvent.DeleteAsync(WaitUntil.Completed, cancellationToken : cancellationToken);
                     }
                 }
 
-                var deleteOperation = await account.DeleteAsync(WaitUntil.Completed);
+                var deleteOperation = await account.DeleteAsync(WaitUntil.Completed, cancellationToken : cancellationToken);
 
                 if (deleteOperation.HasCompleted && deleteOperation.GetRawResponse().Status == 200)
                 {
@@ -173,14 +172,14 @@ namespace AMSMigrate.Ams
                     var locator = await account.GetStreamingLocatorAsync(asset, cancellationToken);
                     if (locator != null)
                     {
-                        await locator.DeleteAsync(WaitUntil.Completed);
+                        await locator.DeleteAsync(WaitUntil.Completed, cancellationToken : cancellationToken);
                     }
 
                     if (asset != null)
                     {
-                        await asset.DeleteAsync(WaitUntil.Completed);
+                        await asset.DeleteAsync(WaitUntil.Completed, cancellationToken : cancellationToken);
                     }
-                    await container.DeleteAsync();
+                    await container.DeleteAsync(cancellationToken : cancellationToken);
                     _logger.LogDebug("locator: {locator}, Migrated asset: {asset} , container: {container} are deleted.", locator?.Data.Name, asset?.Data.Name, container?.Name);
                     return true;
                 }

@@ -1,15 +1,13 @@
-﻿using AMSMigrate.Ams;
-using AMSMigrate.Contracts;
+﻿using AMSMigrate.Contracts;
 using Azure;
 using Azure.Core;
 using Azure.ResourceManager.Media;
-using Azure.ResourceManager.Media.Models;
 using Azure.Storage.Blobs;
 using Azure.Storage.Blobs.Models;
 using Microsoft.Extensions.Logging;
 using Spectre.Console;
 
-namespace AMSMigrate.ams
+namespace AMSMigrate.Ams
 {
     internal class ResetCommand : BaseMigrator
     {
@@ -42,7 +40,7 @@ namespace AMSMigrate.ams
             AsyncPageable<MediaAssetResource> assets = account.GetMediaAssets()
                 .GetAllAsync(cancellationToken: cancellationToken);
             List<MediaAssetResource>? assetList = await assets.ToListAsync(cancellationToken);
-            int resetedAssetCount = 0;
+            int resetAssetCount = 0;
             foreach (var asset in assetList)
             {
                 var (storage, _) = await _resourceProvider.GetStorageAccount(asset.Data.StorageAccountName, cancellationToken);
@@ -53,7 +51,7 @@ namespace AMSMigrate.ams
                     return;
                 }
 
-                if (_options.category.Equals("all", StringComparison.OrdinalIgnoreCase) || (_tracker.GetMigrationStatusAsync(container, cancellationToken).Result.Status == MigrationStatus.Failed))
+                if (_options.Category.Equals("all", StringComparison.OrdinalIgnoreCase) || (_tracker.GetMigrationStatusAsync(container, cancellationToken).Result.Status == MigrationStatus.Failed))
                 {
                     try
                     {
@@ -61,7 +59,7 @@ namespace AMSMigrate.ams
 
                         if (properties?.Metadata != null && properties.Metadata.Count == 0)
                         {
-                            _logger.LogInformation($"Container '{container.Name}' does not have metadata.");
+                            _logger.LogInformation("Container '{container}' does not have metadata.", container.Name);
                         }
                         else
                         {   // Clear container metadata
@@ -69,27 +67,25 @@ namespace AMSMigrate.ams
                             properties?.Metadata?.Remove(AssetTypeKey);
                             properties?.Metadata?.Remove(OutputPathKey);
                             properties?.Metadata?.Remove(ManifestNameKey);
-                            var deleteOperation = await container.SetMetadataAsync(properties?.Metadata);
+                            var deleteOperation = await container.SetMetadataAsync(properties?.Metadata, cancellationToken: cancellationToken);
                             if (deleteOperation.GetRawResponse().Status == 200)
                             {
-                                _logger.LogInformation($"Meta data in Container '{container.Name}' is deleted successfully.");
-                                resetedAssetCount++;
+                                _logger.LogInformation("Metadata in Container '{container}' is deleted successfully.", container.Name);
+                                resetAssetCount++;
                             }
                             else
                             {
-                                _logger.LogInformation($"Meta data in Container '{container.Name}' does not exist or was not deleted.");
+                                _logger.LogInformation("Metadata in Container '{container}' does not exist or was not deleted.", container.Name);
                             }
                         }
-
                     }
                     catch (Exception ex)
                     {
-                        _logger.LogError($"An unexpected error occurred: {ex.Message}");
+                        _logger.LogError("An unexpected error occurred: {message}", ex.Message);
                     }
-
                 }
             }
-            _logger.LogDebug($"{resetedAssetCount} out of {assetList.Count} assets has been reseted.");
+            _logger.LogDebug("{resetAssetCount} out of {totalAssetCount} assets has been reset.", resetAssetCount, assetList.Count);
         }
     }
 }
