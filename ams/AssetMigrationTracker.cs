@@ -66,12 +66,6 @@ namespace AMSMigrate.Ams
         internal const string ManifestNameKey = "ManifestName";
         internal const string OutputPathKey = "OutputPath";
         
-        public async Task<bool> DeleteMigrationStatus(BlobContainerClient container,string MigratedBlobName)
-        {
-            return await container.DeleteBlobIfExistsAsync(MigratedBlobName);       
-        }
-
-
         public async Task<AssetMigrationResult> GetMigrationStatusAsync(BlobContainerClient container, CancellationToken cancellationToken)
         {
             BlobContainerProperties properties = await container.GetPropertiesAsync(cancellationToken: cancellationToken);

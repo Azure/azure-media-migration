@@ -20,15 +20,10 @@ namespace AMSMigrate
             Arity = ArgumentArity.ExactlyOne
         };
 
-        private readonly Option<bool> _all = new Option<bool>(
-           aliases: new[] { "--all", "-a" },
-           description: "Reset all assets in the account, regardless of their migration status.")
-        {
-            IsRequired = false
-        };
-        private readonly Option<bool> _failed = new Option<bool>(
-          aliases: new[] { "--failed", "-f" },
-          description: "Reset the failed migrated assets in the account, This is the default setting.")
+        private readonly Option<string> _category = new Option<string>(
+           aliases: new[] { "--category", "-c" },
+           ()=>"all",
+           description: "Define two categories: \"all\" and \"failed\". The \"all\" category encompasses a complete reset of all assets within the account, regardless of their migration status. By default, this parameter is set to \"all\". The \"failed\" category exclusively pertains to resetting only those assets that have encountered migration failures, reverting them back to their non-migrated state.")
         {
             IsRequired = false
         };
@@ -38,8 +33,7 @@ namespace AMSMigrate
         {
             var command = new Command(name, description);
             command.AddOption(_sourceAccount);
-            command.AddOption(_all);
-            command.AddOption(_failed);
+            command.AddOption(_category);
             return command;
         }
 
@@ -47,8 +41,7 @@ namespace AMSMigrate
         {
             return new ResetOptions(
                 bindingContext.ParseResult.GetValueForOption(_sourceAccount)!,
-                bindingContext.ParseResult.GetValueForOption(_all),
-                bindingContext.ParseResult.GetValueForOption(_failed)
+                bindingContext.ParseResult.GetValueForOption(_category)!
             );
         }
     }

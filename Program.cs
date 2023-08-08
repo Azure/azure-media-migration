@@ -77,12 +77,12 @@ This command forcefully removes all assets in the given account.");
                 });
 
             var resetOptionsBinder = new ResetOptionsBinder();
-            var resetCommand = resetOptionsBinder.GetCommand("reset", @"Reset assets back to their original NotMigrated state in the AMS account
+            var resetCommand = resetOptionsBinder.GetCommand("reset", @"Reset assets back to their original NotMigrated state
 Examples to reset assets in the AMS account:
-reset -s <subscriptionid> -g <resourcegroup> -n <account> -a true                                                                                
-This command will forcibly revert all assets in the Azure Media Services (AMS) account to their initial NotMigrated state.
-reset -s <subscriptionid> -g <resourcegroup> -n <account> -f true                                                                                 
-This command will forcefully revert migrated assets that have failed back to their original NotMigrated state within the Azure Media Services (AMS) account.");
+reset -s <subscriptionid> -g <resourcegroup> -n <account> -c all                                                                               
+This command will forcibly revert all assets in source account to their initial NotMigrated state. By default, this parameter is set to ""all"".
+reset -s <subscriptionid> -g <resourcegroup> -n <account> -c failed                                                                                
+This command will forcefully revert migrated assets that have failed back to their original NotMigrated state.");
             rootCommand.Add(resetCommand);
             resetCommand.SetHandler(
                 async context =>
