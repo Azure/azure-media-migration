@@ -116,7 +116,7 @@ namespace AMSMigrate.Fmp4
         /// <summary>
         /// Gets and sets the value of this field. If IsOverridable is false (default), the setting of
         /// Value will cause BitDepth to automatically be set to the minimum value which can house Value.
-        /// If IsOverridable is true, then BitDepth will not change. It is the responsiblity of the caller
+        /// If IsOverridable is true, then BitDepth will not change. It is the responsibility of the caller
         /// to ensure that Value will not be set beyond what can be represented by the maximum, or the current
         /// non-overridable BitDepth. Any attempt to do so will throw an exception.
         /// </summary>
@@ -226,7 +226,7 @@ namespace AMSMigrate.Fmp4
         // be seeing results from the fully derived equality implementations.
         //
         // In other words, Box box = new DerivedBox(), box.Equals(box2). If
-        // Equals(base) is not overriden, then the base implementation of
+        // Equals(base) is not overridden, then the base implementation of
         // Equals(base) is used, which will not compare derived fields.
         //=====================================================================
 
@@ -275,7 +275,7 @@ namespace AMSMigrate.Fmp4
         }
 
         /// <summary>
-        /// Object.GetHashCode override. This must be done as a consequence of overridding
+        /// Object.GetHashCode override. This must be done as a consequence of overriding
         /// Object.Equals.
         /// </summary>
         /// <returns>Hash code which will be match the hash code of an object which is equal.</returns>

@@ -237,7 +237,7 @@ namespace AMSMigrate.Fmp4
         }
 
         /// <summary>
-        /// Returns the hascode of the object.
+        /// Returns the hashcode of the object.
         /// </summary>
         /// <returns></returns>
         public override int GetHashCode()

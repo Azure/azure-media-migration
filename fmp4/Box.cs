@@ -74,7 +74,7 @@ namespace AMSMigrate.Fmp4
         }
 
         /// <summary>
-        /// Constructor to intialize with a type and an optional sub type.
+        /// Constructor to initialize with a type and an optional sub type.
         /// Private constructor to keep all initialization at one place.
         /// </summary>
         /// <param name="boxtype">the type of the box</param>
@@ -141,7 +141,7 @@ namespace AMSMigrate.Fmp4
             }
             else
             {
-                //Copy constructor.  we current do not have member copy so mark as dirty since we dont round trip.
+                //Copy constructor.  we current do not have member copy so mark as dirty since we don't round trip.
                 SetDirty();
             }
 
@@ -149,7 +149,7 @@ namespace AMSMigrate.Fmp4
         }
 
         /// <summary>
-        /// This is overriden by the derived classes to read the actual body of the box.
+        /// This is overridden by the derived classes to read the actual body of the box.
         /// </summary>
         /// <returns>true if the whole body is consumed else false.</returns>
         protected virtual void ReadBody()
@@ -290,7 +290,7 @@ namespace AMSMigrate.Fmp4
             Byte[] bytes = new Byte[bytesToCopy];
             int bytesCopied = reader.BaseStream.Read(bytes, 0, bytes.Length);
 
-            // Even though the stream length was checked to be sufficent, the stream could still end up underdelivering
+            // Even though the stream length was checked to be sufficient, the stream could still end up under delivering
             // Check for this here.
             if (bytesCopied < bytesToCopy)
             {
@@ -817,7 +817,7 @@ namespace AMSMigrate.Fmp4
         // be seeing results from the fully derived equality implementations.
         //
         // In other words, Box box = new DerivedBox(), box.Equals(box2). If
-        // Equals(base) is not overriden, then the base implementation of
+        // Equals(base) is not overridden, then the base implementation of
         // Equals(base) is used, which will not compare derived fields.
         //=====================================================================
 
