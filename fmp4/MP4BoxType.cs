@@ -31,6 +31,7 @@ namespace AMSMigrate.Fmp4
         public const UInt32 mdia = 0x6D646961; // 'mdia'
         public const UInt32 hdlr = 0x68646C72; // 'hdlr'
         public const UInt32 mdhd = 0x6D646864; // 'mdhd'
+        public const UInt32 mfra = 0x6D666661; // 'mfra'
 
 
         //===================================================================

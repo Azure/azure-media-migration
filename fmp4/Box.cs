@@ -752,7 +752,7 @@ namespace AMSMigrate.Fmp4
         /// </summary>
         /// <typeparam name="TChildBoxType">The type of the requested child box.</typeparam>
         /// <returns>A box of the requested type.</returns>
-        public TChildBoxType? GetExactlyOneChildBox<TChildBoxType>() where TChildBoxType : Box
+        public TChildBoxType GetExactlyOneChildBox<TChildBoxType>() where TChildBoxType : Box
         {
             IEnumerable<Box> boxes = _children.Where(b => b is TChildBoxType);
             int numBoxes = boxes.Count();
@@ -776,7 +776,7 @@ namespace AMSMigrate.Fmp4
                         GetType().Name, childBoxName, numBoxes));
             }
 
-            return boxes.Single() as TChildBoxType;
+            return (TChildBoxType) boxes.Single();
         }
 
         /// <summary>

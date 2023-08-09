@@ -48,7 +48,10 @@ namespace AMSMigrate.Ams
         /// </summary>
         public bool IsSupportedAsset(bool enableLiveAsset)
         {
-            return (AssetType != null && (AssetType == AssetType_NonIsm || AssetType.StartsWith("mp4") || (enableLiveAsset && AssetType == "vod-fmp4")));
+            return (AssetType != null && (AssetType == AssetType_NonIsm 
+                || AssetType == "fmp4" 
+                || AssetType.StartsWith("mp4") 
+                || (enableLiveAsset && AssetType == "vod-fmp4")));
         }
 
         public AssetMigrationResult(MigrationStatus status = MigrationStatus.NotMigrated, Uri? outputPath = null, string? assetType = null, string? manifestName = null) : base(status)

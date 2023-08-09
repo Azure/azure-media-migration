@@ -126,7 +126,7 @@ namespace AMSMigrate.Fmp4
             {
                 return _version;
             }
-            protected set
+            set
             {
                 _version = value;
                 SetDirty();

@@ -1,9 +1,10 @@
-﻿using AMSMigrate.Ams;
-using AMSMigrate.Contracts;
+﻿using AMSMigrate.Contracts;
+using AMSMigrate.Fmp4;
 using Azure.ResourceManager.Media.Models;
 using FFMpegCore;
 using FFMpegCore.Pipes;
 using Microsoft.Extensions.Logging;
+using System.Text;
 
 namespace AMSMigrate.Transform
 {
@@ -13,7 +14,6 @@ namespace AMSMigrate.Transform
 
         private readonly MigratorOptions _options;
         private readonly ILogger _logger;
-        private string? _hostName = null;
 
         public TransMuxer(
             MigratorOptions options,
@@ -23,85 +23,23 @@ namespace AMSMigrate.Transform
             _options = options;
         }
 
-        public async Task<Uri?> GetStreamingUrlAsync(AssetRecord record, CancellationToken cancellationToken)
-        {
-            var hostName = await GetHostNameAsync(record, cancellationToken);
-            var locator = await record.Account.GetStreamingLocatorAsync(record.Asset, cancellationToken);
-            if (locator == null)
-            {
-                return null;
-            }
-
-            StreamingPathsResult pathResult = await locator.GetStreamingPathsAsync(cancellationToken);
-            var path = pathResult.StreamingPaths.SingleOrDefault(p => p.StreamingProtocol == Protocol);
-            if (path == null)
-            {
-                _logger.LogWarning("The locator {locator} has no HLS streaming support.", locator.Id);
-                return null;
-            }
-            var uri = new UriBuilder("https", _hostName)
-            {
-                Path = path.Paths[0] + ".m3u8"
-            }.Uri;
-            return uri;
-        }
-
-        private async Task<string> GetHostNameAsync(AssetRecord record, CancellationToken cancellationToken)
-        {
-            if (_hostName == null)
-            {
-                _hostName = await record.Account.GetStreamingEndpointAsync(cancellationToken: cancellationToken);
-            }
-            return _hostName;
-        }
-
         public async Task<IMediaAnalysis> AnalyzeAsync(Uri uri, CancellationToken cancellationToken)
         {
             return await FFProbe.AnalyseAsync(uri, null, cancellationToken);
         }
 
-        public async Task TransmuxUriAsync(Uri uri, FFMpegCore.MediaStream stream, string filePath, CancellationToken cancellationToken)
+        private async Task RunAsync(FFMpegArgumentProcessor processor, CancellationToken cancellationToken)
         {
-            var processor = FFMpegArguments.FromUrlInput(uri)
-                .OutputToFile(filePath, overwrite: true, options =>
-                {
-                    options.CopyChannel()
-                    .SelectStream(stream.Index, 0)
-                    .WithCustomArgument("-movflags faststart");
-                });
-            _logger.LogInformation("Running ffmpeg {args}", processor.Arguments);
-            await processor
-                .CancellableThrough(cancellationToken)
-                .ProcessAsynchronously(true);
-        }
-
-        public async Task TransmuxUriAsync(Uri uri, string filePath, CancellationToken cancellationToken)
-        {
-            var result = await FFProbe.AnalyseAsync(uri, null, cancellationToken);
-            var processor = FFMpegArguments.FromUrlInput(uri)
-                .OutputToFile(filePath, overwrite: true, options =>
-                {
-                    foreach (var stream in result.AudioStreams)
-                    {
-                        options.SelectStream(stream.Index, 0);
-                    }
-                    foreach (var stream in result.VideoStreams)
-                    {
-                        options.SelectStream(stream.Index, 0);
-                    }
-
-                    options.CopyChannel()
-                    .WithCustomArgument("-movflags faststart");
-                });
-            _logger.LogDebug("Running ffmpeg {args}", processor.Arguments);
-            await processor
-                .CancellableThrough(cancellationToken)
-                .ProcessAsynchronously(true);
+            _logger.LogDebug(Events.Ffmpeg, "Running ffmpeg {args}", processor.Arguments);
+            await processor.CancellableThrough(cancellationToken)
+                .NotifyOnError(line => _logger.LogTrace(Events.Ffmpeg, line))
+                .NotifyOnOutput(line => _logger.LogTrace(Events.Ffmpeg, line))
+                .ProcessAsynchronously(throwOnError: true);      
         }
 
         public async Task TransMuxAsync(IPipeSource source, string destination, CancellationToken cancellationToken)
         {
-            await FFMpegArguments
+            var processor = FFMpegArguments
                 .FromPipeInput(source)
                 //.WithGlobalOptions(options => options.WithVerbosityLevel(FFMpegCore.Arguments.VerbosityLevel.Verbose))
                 .OutputToFile(destination, overwrite: false, options =>
@@ -119,7 +57,46 @@ namespace AMSMigrate.Transform
                         .ForceFormat("mp4")
                         .WithCustomArgument("-movflags faststart");
                     }
-                }).ProcessAsynchronously(throwOnError: true);
+                });
+            await RunAsync(processor, cancellationToken);
+        }
+
+        /// <summary>
+        /// Transmux smooth input and filter by track id.
+        /// </summary>
+        /// <param name="trackId">The track id to filter by.</param>
+        public void TransmuxSmooth(Stream source, Stream destination, uint trackId)
+        {
+            using var reader = new MP4Reader(source, Encoding.UTF8, leaveOpen: true);
+            using var writer = new MP4Writer(destination, Encoding.UTF8, leaveOpen: true);
+            bool skip = false;
+            while(source.Position < source.Length)
+            {
+                var box = MP4BoxFactory.ParseSingleBox(reader);
+                if (box is moofBox moof)
+                {
+                    var traf = moof.GetExactlyOneChildBox<trafBox>();
+                    var tfhd = traf.GetExactlyOneChildBox<tfhdBox>();
+                    skip = tfhd.TrackId != trackId;
+                    if (skip)
+                    {
+                        continue;
+                    }
+
+                    // Expression Encoder sets version to 0 even for signed CTS. Always set version to 1
+                    var trun = traf.GetExactlyOneChildBox<trunBox>();
+                    trun.Version = (byte)1;
+                    moof.WriteTo(writer);
+                }
+                else if (box.Type == MP4BoxType.mfra)
+                {
+                    break;
+                }
+                else if (!skip)
+                {
+                    box.WriteTo(writer);
+                }
+            }
         }
     }
 }

@@ -35,7 +35,9 @@ namespace AMSMigrate.Transform
             {
                 return false;
             }
-            return details.Manifest.Format.StartsWith("mp4") || (_globalOptions.EnableLiveAsset && details.Manifest.Format == "vod-fmp4");
+            return details.Manifest.Format.StartsWith("mp4") 
+                || details.Manifest.Format.Equals("fmp4") 
+                || (_globalOptions.EnableLiveAsset && details.Manifest.Format == "vod-fmp4");
         }
 
         protected override async Task<string> TransformAsync(
