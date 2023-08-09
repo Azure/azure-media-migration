@@ -19,7 +19,9 @@ namespace AMSMigrate.Ams
         {
             _globalOptions = options;
             _credentials = credential;
-            var armClient = new ArmClient(credential);
+            var clientOptions = new ArmClientOptions();
+            clientOptions.Diagnostics.ApplicationId = $"AMSMigrate/{GetType().Assembly.GetName().Version}";
+            var armClient = new ArmClient(credential, default, clientOptions);
             var resourceGroupId = ResourceGroupResource.CreateResourceIdentifier(
                 options.SubscriptionId,
                 options.ResourceGroup);
