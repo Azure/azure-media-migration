@@ -18,7 +18,7 @@ namespace AMSMigrate.Transform
         protected readonly TransMuxer _transMuxer;
         protected readonly ILogger _logger;
         protected readonly AssetDetails _assetDetails;
-        private readonly Dictionary<string, IList<Track>> _fileToTrackMap = new Dictionary<string, IList<Track>>();
+        private readonly SortedDictionary<string, IList<Track>> _fileToTrackMap = new ();
 
         public bool UsePipeForInput { get; protected set; } = false;
 
@@ -172,63 +172,46 @@ namespace AMSMigrate.Transform
 
         public async Task DownloadInputsAsync(string workingDirectory, CancellationToken cancellationToken)
         {
-            if (_assetDetails.ClientManifest != null &&
-                _assetDetails.ClientManifest.HasDiscontinuities(_logger) &&
-                _assetDetails is AssetRecord assetRecord)
+            await Task.WhenAll(FileToTrackMap.Select(async item =>
             {
-                await StreamingTransMuxAsync(workingDirectory, assetRecord, cancellationToken);
-            }
-            else
-            {
-                await Task.WhenAll(FileToTrackMap.Select(async item =>
-                {
-                    var (file, tracks) = item;
-                    var filePath = Path.Combine(workingDirectory, file);
-                    await DownloadAsync(filePath, tracks, cancellationToken);
-                }));
-            }
+                var (file, tracks) = item;
+                await DownloadAsync(workingDirectory, file, tracks, cancellationToken);
+            }));
         }
 
 
-        public async Task StreamingTransMuxAsync(string workingDirectory, AssetRecord assetRecord, CancellationToken cancellationToken) 
+        private async Task DownloadAsync(string workingDirectory, string file, IList<Track> tracks, CancellationToken cancellationToken)
         {
-            Debug.Assert(Inputs.Count == 1);
-            var uri = await _transMuxer.GetStreamingUrlAsync(assetRecord, cancellationToken);
-            if (uri == null)
+            var tempDirectory = Path.Combine(workingDirectory, "input");
+            if (TransmuxedDownload)
             {
-                _logger.LogWarning("No streaming locator found for asset {name}", assetRecord.AssetName);
-                throw new NotImplementedException("Failed to get locator");
+                Directory.CreateDirectory(tempDirectory);
             }
-            var filePath = Path.Combine(workingDirectory, Inputs[0]);
-            await _transMuxer.TransmuxUriAsync(uri, filePath, cancellationToken);
-        }
-        
-        private async Task DownloadAsync(string filePath, IList<Track> tracks, CancellationToken cancellationToken)
-        {
-            IPipeSource source;
+            var filePath = Path.Combine(TransmuxedDownload ? tempDirectory : workingDirectory, file);
+
             if (tracks.Count == 1 && tracks[0].IsMultiFile)
             {
                 var track = tracks[0];
                 var multiFileStream = new MultiFileStream(_assetDetails.Container, track, _assetDetails.ClientManifest!, _assetDetails.DecryptInfo, _logger);
-                source = new MultiFilePipe(filePath, multiFileStream);
+                var source = new MultiFilePipe(file, multiFileStream);
+                await source.DownloadAsync(filePath, cancellationToken);
             }
             else
             {
-                var blob = _assetDetails.Container.GetBlockBlobClient(Path.GetFileName(filePath));
-                source = new BlobSource(blob, _assetDetails.DecryptInfo, _logger);
+                var blob = _assetDetails.Container.GetBlockBlobClient(file);
+                var source = new BlobSource(blob, _assetDetails.DecryptInfo, _logger);
+                await source.DownloadAsync(filePath, cancellationToken);
             }
 
             if (TransmuxedDownload)
             {
-                await _transMuxer.TransMuxAsync(source, filePath, cancellationToken);
-            }
-            else if (source is MultiFilePipe pipe)
-            {
-                await pipe.DownloadAsync(filePath, cancellationToken);
-            }
-            else if (source is BlobSource blobSource)
-            {
-                await blobSource.DownloadAsync(filePath, cancellationToken);
+                await Task.WhenAll(tracks.Select(async track =>
+                {
+                    using var sourceFile = File.OpenRead(filePath);
+                    var filename = tracks.Count == 1 ? file : $"{Path.GetFileNameWithoutExtension(file)}_{track.TrackID}{Path.GetExtension(file)}";
+                    using var destFile = File.OpenWrite(Path.Combine(workingDirectory, filename));
+                    await Task.Run(() => _transMuxer.TransmuxSmooth(sourceFile, destFile, track.TrackID));
+                }));
             }
         }
     }

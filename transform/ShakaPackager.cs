@@ -60,10 +60,15 @@ namespace AMSMigrate.Transform
             List<string> arguments = new(SelectedTracks.Select((t, i) =>
             {
                 var ext = t.IsMultiFile ? MEDIA_FILE : string.Empty;
-                var index = Inputs.Count == 1 ? 0 : Inputs.IndexOf($"{t.Source}{ext}");
-                var stream = Inputs.Count == 1? i.ToString(): t.Type.ToString().ToLowerInvariant();
+                var file = $"{t.Source}{ext}";
+                var index = Inputs.IndexOf(file);
+                var multiTrack = TransmuxedDownload && FileToTrackMap[file].Count > 1;
+                var inputFile = multiTrack ? 
+                    Path.Combine(Path.GetDirectoryName(inputs[index])!, $"{Path.GetFileNameWithoutExtension(file)}_{t.TrackID}{Path.GetExtension(file)}") :
+                    inputs[index];
+                var stream = t.Type.ToString().ToLowerInvariant();
                 var language = string.IsNullOrEmpty(t.SystemLanguage) || t.SystemLanguage == "und" ? string.Empty : $"language={t.SystemLanguage},";
-                return $"stream={stream},in={inputs[index]},out={outputs[i]},{language}playlist_name={manifests[i]}{drm_label}";
+                return $"stream={stream},in={inputFile},out={outputs[i]},{language}playlist_name={manifests[i]}{drm_label}";
             }));
             var dash = manifests[manifests.Count - 1];
             var hls = manifests[manifests.Count - 2];

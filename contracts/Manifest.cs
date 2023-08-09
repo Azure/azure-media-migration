@@ -50,6 +50,8 @@ namespace AMSMigrate.Contracts
 
         // Check if the track is stored as one file per fragment.
         public bool IsMultiFile => string.IsNullOrEmpty(Path.GetExtension(Source));
+
+        public uint TrackID => uint.Parse(Parameters.Single(p => p.Name == "trackID").Value);
     }
 
     public class VideoTrack : Track
