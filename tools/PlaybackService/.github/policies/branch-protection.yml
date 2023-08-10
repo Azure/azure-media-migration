@@ -1,0 +1,15 @@
+# Documentation for branch policy: https://aka.ms/gim/docs/policy/branch-protection
+
+name: Default branch protection policy
+description: Requires build & test pass before merging into master branch
+resource: repository
+where: 
+configuration:
+  branchProtectionRules:
+    - branchNamePattern: "master"
+      requiredApprovingReviewsCount: 0
+      requiresPullRequestBeforeMerging: true
+      dismissStaleReviews: true
+      requiresStrictStatusChecks: true
+      requiredStatusChecks: ["build_and_test"]
+      requiresLinearHistory: true
