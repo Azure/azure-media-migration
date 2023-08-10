@@ -4,11 +4,17 @@ param mediaAccountRG string
 @description('Azure Media Services account name')
 param mediaAccountName string
 
+@description('The subscription of the media account')
+param mediaAccountSubscription string = subscription().subscriptionId
+
 @description('The storage account where the migrated data is written')
 param storageAccountName string
 
 @description('The resource group of storage account where the migrated data is written')
 param storageAccountRG string
+
+@description('The resource group of the storage account')
+param storageAccountSubscription string = subscription().subscriptionId
 
 @description('The region where the Azure media services account is present')
 param location string = resourceGroup().location
@@ -17,10 +23,13 @@ param location string = resourceGroup().location
 param encrypt bool = true
 
 @description('The key vault to store the envcryption keys')
-param keyvaultname string
+param keyvaultName string
 
 @description('The resource group where key vault is present.')
 param keyvaultRG string
+
+@description('The subscription where the key vault is present.')
+param keyvaultSubscription = subscription().subscriptionId
 
 @description('Additional command line arguments to pass')
 param arguments array = []
@@ -31,7 +40,7 @@ var tags = {
 
 // The identity to create and the roles to assign.
 var identifier = 'azure-media-migration'
-var mediaRoleName =  'Media Services Media Operator'
+var mediaRoleName =  'Contributor'
 var storageRoleName = 'Storage Blob Data Contributor'
 var keyVaultRoleName = 'Key Vault Secrets Officer'
 
@@ -47,12 +56,12 @@ resource managedIdentity 'Microsoft.ManagedIdentity/userAssignedIdentities@2023-
 }
 
 resource mediaAccount 'Microsoft.Media/mediaservices@2023-01-01' existing = {
-  scope: resourceGroup(mediaAccountRG)
+  scope: resourceGroup(mediaAccountSubscription, mediaAccountRG)
   name: mediaAccountName
 }
 
 module mediaRoleAssignment 'roleassignment.bicep' = {
-  scope: resourceGroup(mediaAccountRG)
+  scope: resourceGroup(mediaAccountSubscription, mediaAccountRG)
   name: 'mediaRoleAssignement'
   params: {
     resourceName: mediaAccountName
@@ -75,11 +84,11 @@ module storageRoleAssignments 'storageaccounts.bicep' = {
 
 resource storageAccount 'Microsoft.Storage/storageAccounts@2022-09-01' existing = {
   name: storageAccountName
-  scope: resourceGroup(storageAccountRG)
+  scope: resourceGroup(storageAccountSubscription, storageAccountRG)
 }
 
 module storageRoleAssignment 'roleassignment.bicep' = {
-  scope: resourceGroup(storageAccountRG)
+  scope: resourceGroup(storageAccountSubscription, storageAccountRG)
   name: 'storageRoleAssignment'
   params: {
     resourceName: storageAccountName
@@ -90,14 +99,14 @@ module storageRoleAssignment 'roleassignment.bicep' = {
 }
 
 resource keyVault 'Microsoft.KeyVault/vaults@2023-02-01' existing = if (encrypt) {
-  name: keyvaultname
-  scope: resourceGroup(keyvaultRG)
+  name: keyvaultName
+  scope: resourceGroup(keyvaultSubscription, keyvaultRG)
 }
 module keyVaultRoleAssignment 'roleassignment.bicep' = if (encrypt) {
-  scope: resourceGroup(keyvaultRG)
+  scope: resourceGroup(keyvaultSubscription, keyvaultRG)
   name: 'keyVaultRoleAssignment'
   params: {
-    resourceName: keyvaultname
+    resourceName: keyvaultName
     principalId: managedIdentity.properties.principalId
     roleName: keyVaultRoleName
     storage: true
@@ -110,7 +119,7 @@ var defaultArguments = [
   'AMSMigrate.dll'
   'assets'
   '-s'
-  subscription().subscriptionId
+  mediaAccountSubscription
   '-g'
   mediaAccountRG
   '-n'
