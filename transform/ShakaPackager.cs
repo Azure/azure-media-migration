@@ -59,7 +59,7 @@ namespace AMSMigrate.Transform
 
             List<string> arguments = new(SelectedTracks.Select((t, i) =>
             {
-                var ext = t.IsMultiFile ? MEDIA_FILE : string.Empty;
+                var ext = t.IsMultiFile ? (t is TextTrack ? VTT_FILE : MEDIA_FILE) : string.Empty;
                 var file = $"{t.Source}{ext}";
                 var index = Inputs.IndexOf(file);
                 var multiTrack = TransmuxedDownload && FileToTrackMap[file].Count > 1;

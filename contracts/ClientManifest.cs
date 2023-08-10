@@ -216,7 +216,9 @@ namespace AMSMigrate.Contracts
         {
             foreach (var stream in Streams)
             {
-                if (stream.Type == track.Type)
+                var streamName = stream.Name ?? stream.Type.ToString();
+
+                if (stream.Type == track.Type && streamName == track.TrackName)
                 {
                     for (var i = 0; i < stream.TrackCount; ++i)
                     {

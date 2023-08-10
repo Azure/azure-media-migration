@@ -52,6 +52,8 @@ namespace AMSMigrate.Contracts
         public bool IsMultiFile => string.IsNullOrEmpty(Path.GetExtension(Source));
 
         public uint TrackID => uint.Parse(Parameters.Single(p => p.Name == "trackID").Value);
+
+        public string TrackName => Parameters.SingleOrDefault(p => p.Name == "trackName")?.Value ?? Type.ToString();
     }
 
     public class VideoTrack : Track

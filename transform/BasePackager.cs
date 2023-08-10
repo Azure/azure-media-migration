@@ -1,7 +1,6 @@
 ﻿using AMSMigrate.Contracts;
 using AMSMigrate.Pipes;
 using Azure.Storage.Blobs.Specialized;
-using FFMpegCore.Pipes;
 using Microsoft.Extensions.Logging;
 using System.Diagnostics;
 
@@ -54,7 +53,23 @@ namespace AMSMigrate.Transform
             SelectedTracks = manifest.Tracks.Where(t  => {
                 if (t is TextTrack)
                 {
-                    return !TransmuxedDownload && !t.IsMultiFile && (t.Source.EndsWith(VTT_FILE) || t.Parameters.Any(t => t.Name == TRANSCRIPT_SOURCE));
+                    bool pickThisTextTrack = !TransmuxedDownload && !t.IsMultiFile && (t.Source.EndsWith(VTT_FILE) || t.Parameters.Any(t => t.Name == TRANSCRIPT_SOURCE));
+
+                    if (manifest.IsLiveArchive)
+                    {
+                        pickThisTextTrack = false;
+
+                        if (t.IsMultiFile)
+                        {
+                            // Choose the text track with a list of fragblobs for close captions.
+                            pickThisTextTrack = assetDetails.ClientManifest!.Streams.Any(
+                                                              stream => (stream.Type == StreamType.Text && 
+                                                                         stream.SubType == "SUBT")      &&
+                                                                         stream.Name == t.TrackName);
+                        }                        
+                    }
+
+                    return pickThisTextTrack;
                 }
                 return true;
             }).ToList();
@@ -66,7 +81,14 @@ namespace AMSMigrate.Transform
                 string input;
                 if (track is TextTrack)
                 {
-                    input = track.Source.EndsWith(VTT_FILE) ? track.Source : track.Parameters.Single(p => p.Name == TRANSCRIPT_SOURCE).Value;
+                    if (manifest.IsLiveArchive)
+                    {
+                        input = $"{track.Source}{VTT_FILE}";
+                    }
+                    else
+                    {
+                        input = track.Source.EndsWith(VTT_FILE) ? track.Source : track.Parameters.Single(p => p.Name == TRANSCRIPT_SOURCE).Value;
+                    }
                 }
                 else
                 {

@@ -52,7 +52,7 @@ namespace AMSMigrate.Transform
                 {
                     foreach (var track in SelectedTracks)
                     {
-                        var ext = track.IsMultiFile ? MEDIA_FILE : string.Empty;
+                        var ext = track.IsMultiFile ? (track is TextTrack ? VTT_FILE : MEDIA_FILE) : string.Empty;
                         var index = Inputs.IndexOf($"{track.Source}{ext}");
                         options.SelectStream(0, index, track is VideoTrack ? Channel.Video : Channel.Audio);
                     }
