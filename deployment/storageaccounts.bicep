@@ -9,7 +9,7 @@ param storageAccounts array
 
 module storageRoleAssignments './roleassignment.bicep' = [for storage in storageAccounts: {
   name: 'storageRoleAssignment-${split(storage, '/')[8]}'
-  scope: resourceGroup(split(storage, '/')[4])
+  scope: resourceGroup(split(storage, '/')[2], split(storage, '/')[4])
   params: {
     resourceName: split(storage, '/')[8]
     roleName: storageRoleName
