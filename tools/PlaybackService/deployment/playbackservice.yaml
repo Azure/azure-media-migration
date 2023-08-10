@@ -1,0 +1,77 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: playbackservice
+spec:
+  replicas: 2
+  selector:
+    matchLabels:
+      app: playbackservice
+  template:
+    metadata:
+      labels:
+        app: playbackservice
+    spec:
+      imagePullSecrets:
+        - name: amtestcr-secret
+      containers:
+      - name: playbackservice
+        image: amstest.azurecr.io/ams-ok/playbackservice:latest
+        ports:
+        - containerPort: 80
+        env:
+          - name: PlaybackService__AzureKeyVaultAccountName
+            value: amsmigrationtooltest
+          - name: PlaybackService__EnableDebugUI
+            value: "true"
+          - name: AZURE_TENANT_ID
+            valueFrom:
+              secretKeyRef:
+                name: azure-app-credentials
+                key: AZURE_TENANT_ID
+          - name: AZURE_CLIENT_ID
+            valueFrom:
+              secretKeyRef:
+                name: azure-app-credentials
+                key: AZURE_CLIENT_ID
+          - name: AZURE_CLIENT_SECRET
+            valueFrom:
+              secretKeyRef:
+                name: azure-app-credentials
+                key: AZURE_CLIENT_SECRET
+      nodeSelector:
+        kubernetes.io/os: linux
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: playbackservice
+spec:
+  ports:
+  - port: 80
+  selector:
+    app: playbackservice
+---
+apiVersion: networking.k8s.io/v1
+kind: Ingress
+metadata:
+  name: playbackservice
+  annotations:
+    kubernetes.io/ingress.class: nginx
+    cert-manager.io/cluster-issuer: letsencrypt
+spec:
+  tls:
+  - hosts:
+    - playback.ams-ok.net
+    secretName: playbackservice-https-cert
+  rules:
+  - host: playback.ams-ok.net
+    http:
+      paths:
+      - path: /
+        pathType: Prefix
+        backend:
+          service:
+            name: playbackservice
+            port:
+              number: 80

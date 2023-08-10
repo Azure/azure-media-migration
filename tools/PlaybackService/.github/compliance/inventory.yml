@@ -1,0 +1,6 @@
+inventory:
+- source: DirectOwners
+  items:
+  - id: yuboxie@microsoft.com
+  - id: pohhsu@microsoft.com
+  isProduction: false

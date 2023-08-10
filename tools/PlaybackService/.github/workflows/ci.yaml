@@ -1,0 +1,86 @@
+name: Master CI
+
+on:
+  pull_request:
+    branches:
+      - master
+
+  push:
+    branches:
+      - master
+
+  workflow_dispatch:
+
+  schedule:
+    - cron: "0 0 * * 1"
+
+jobs:
+  build_and_test:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v2
+
+      - name: Setup DotNet Environment
+        uses: actions/setup-dotnet@v3
+        with:
+          dotnet-version: 7.0.x
+
+      - name: Build and publish
+        run: |
+          dotnet publish -c Release
+
+      - name: Test
+        run: |
+          dotnet test -c Release
+
+      - name: Login Container Repository
+        uses: docker/login-action@v2
+        with:
+          registry: amstest.azurecr.io
+          username: amstest
+          password: ${{ secrets.AMSTEST_REPOSITORY_PASSWORD }}
+
+      - name: Build Container Image
+        uses: docker/build-push-action@v4
+        with:
+          context: src
+          tags: amstest.azurecr.io/ams-ok/playbackservice:${{ github.sha }},amstest.azurecr.io/ams-ok/playbackservice:latest
+
+      - name: Push Container Image
+        if: ${{ github.event_name == 'push' || github.event_name == 'workflow_dispatch' || github.event == 'schedule' }}
+        run: |
+          docker push amstest.azurecr.io/ams-ok/playbackservice:${{ github.sha }}
+          docker push amstest.azurecr.io/ams-ok/playbackservice:latest
+
+      - name: Upload Deployment Files
+        if: ${{ github.event_name == 'push' || github.event_name == 'workflow_dispatch' || github.event == 'schedule' }}
+        uses: actions/upload-artifact@v3
+        with:
+          name: deployment-files
+          path: deployment/
+
+  deploy:
+    if: ${{ github.event_name == 'push' || github.event_name == 'workflow_dispatch' || github.event == 'schedule' }}
+    runs-on: ubuntu-latest
+    needs: [build_and_test]
+    steps:
+      - name: Download Deployment Files
+        uses: actions/download-artifact@v3
+        with:
+          name: deployment-files
+          path: deployment/
+
+      - name: Login Kubernets
+        uses: azure/k8s-set-context@v1
+        with:
+          kubeconfig: '${{ secrets.AMSTEST_EASTUS_KUBECONFIG }}'
+
+      - name: Deploy
+        uses: Azure/k8s-deploy@v4
+        with:
+          namespace: ams-ok
+          manifests: |
+            deployment/playbackservice.yaml
+          images: |
+            amstest.azurecr.io/ams-ok/playbackservice:${{ github.sha }}
