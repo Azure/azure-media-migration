@@ -1,6 +1,7 @@
 ﻿using AMSMigrate.Contracts;
 using AMSMigrate.Decryption;
 using AMSMigrate.Fmp4;
+using AMSMigrate.Transform;
 using Azure.ResourceManager.Media.Models;
 using Azure.Storage.Blobs;
 using Azure.Storage.Blobs.Specialized;
@@ -164,15 +165,25 @@ namespace AMSMigrate.Pipes
             }
 
             var ttmlText = mdatBox.SampleData;
+            try
+            {
+                // Call API to convert ttmlText to VTT text.
+                TtmlToVttConverter vttConverter = new TtmlToVttConverter(ttmlText);
+                var vttText = vttConverter.Convert();
 
-            byte[] vttText = { 0 };
-
-            // Call API to convert ttmlText to VTT text.
-
-            // Uncomment this line, it was put here to pass the compiler.
-            vttText = ttmlText!;
-
-            mp4Writer.Write(vttText);
+                if (vttText != null)
+                {
+                    mp4Writer.Write(vttText);
+                }
+                else
+                {
+                    _logger.LogInformation("vttText is null");
+                }
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "Error converting TTML to VTT.");
+            }
         }
 
         private async Task DownloadClearBlobContent(BlockBlobClient sourceBlob, Stream outputStream, CancellationToken cancellationToken)

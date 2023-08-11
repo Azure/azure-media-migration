@@ -61,12 +61,11 @@ This migrates the assets to a different storage account in your subscription.";
 
             var cleanupOptionsBinder = new CleanupOptionsBinder();
             var cleanupCommand = cleanupOptionsBinder.GetCommand("cleanup", @"Do the cleanup of AMS account or Storage account
-Examples to cleanup account:
-cleanup -s <subscriptionid> -g <resourcegroup> -n <account> -ax true                                                                                 
-This command forcefully removes the Azure Media Services (AMS) account.
-Examples to cleanup asset:
+Examples:
 cleanup -s <subscriptionid> -g <resourcegroup> -n <account> -x true                                                                                 
-This command forcefully removes all assets in the given account.");
+This command forcefully removes all assets in the given account.
+cleanup -s <subscriptionid> -g <resourcegroup> -n <account> -ax true                                                                                 
+This command forcefully removes the Azure Media Services (AMS) account.");
             rootCommand.Add(cleanupCommand);
             cleanupCommand.SetHandler(
                 async context =>
