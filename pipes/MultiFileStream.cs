@@ -7,6 +7,8 @@ using Azure.Storage.Blobs;
 using Azure.Storage.Blobs.Specialized;
 using Microsoft.Extensions.Logging;
 using System.IO.Pipes;
+using System.Text;
+using System.Xml;
 
 namespace AMSMigrate.Pipes
 {
@@ -51,6 +53,14 @@ namespace AMSMigrate.Pipes
                     chunkName = $"{_trackPrefix}/header";
                     blob = _container.GetBlockBlobClient(chunkName);
                     await DownloadClearBlobContent(blob, stream, cancellationToken);
+                }
+                else
+                {
+                    byte[] webvttBytes = Encoding.UTF8.GetBytes("WEBVTT\n");
+                    using (MemoryStream headerStream = new MemoryStream(webvttBytes))
+                    {
+                        headerStream.CopyTo(stream);
+                    }
                 }
 
                 // Report progress every 10%.
@@ -168,8 +178,7 @@ namespace AMSMigrate.Pipes
             try
             {
                 // Call API to convert ttmlText to VTT text.
-                TtmlToVttConverter vttConverter = new TtmlToVttConverter(ttmlText);
-                var vttText = vttConverter.Convert();
+                var vttText = TtmlToVttConverter.Convert(ttmlText);
 
                 if (vttText != null)
                 {
