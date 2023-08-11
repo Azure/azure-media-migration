@@ -16,7 +16,7 @@ param storageAccountRG = 'amsmediacore'
 param encrypt = false
 
 // The key vault to store encryption keys if encryption is turned on.
-param keyvaultname = 'mpprovenance'
+param keyvaultName = 'mpprovenance'
 param keyvaultRG = 'provenance'
 // param keyvaultSubscription = ''
 
