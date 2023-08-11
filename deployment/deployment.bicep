@@ -29,7 +29,7 @@ param keyvaultName string
 param keyvaultRG string
 
 @description('The subscription where the key vault is present.')
-param keyvaultSubscription = subscription().subscriptionId
+param keyvaultSubscription string = subscription().subscriptionId
 
 @description('Additional command line arguments to pass')
 param arguments array = []
