@@ -19,8 +19,6 @@ public static class TtmlToVttConverter
         using (XmlReader reader = XmlReader.Create(mdatStream, settings))
         {
             StringBuilder webVttContent = new StringBuilder();
-            // Add header
-            webVttContent.AppendLine("WEBVTT");
 
             while (!reader.EOF)
             {
