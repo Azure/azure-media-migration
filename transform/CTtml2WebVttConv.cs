@@ -1,5 +1,9 @@
-﻿using System.Text;
+﻿using AMSMigrate.Contracts;
+using System.IO;
+using System.Text;
+using System.Text.RegularExpressions;
 using System.Xml;
+using System.Xml.Serialization;
 
 public static class TtmlToVttConverter
 {
@@ -19,12 +23,13 @@ public static class TtmlToVttConverter
         using (XmlReader reader = XmlReader.Create(mdatStream, settings))
         {
             StringBuilder webVttContent = new StringBuilder();
+           
+            string strStartCue = string.Empty, strCueSize = string.Empty, strAlign = string.Empty;
 
             while (!reader.EOF)
             {
-                string? strStartTime = null, strEndTime = null, strStartCue = null, strCueSize = null, strAlign = null, strEntry = null;
                 StringBuilder strText = new StringBuilder();
-
+                string? strStartTime = null, strEndTime = null, strEntry = null;
                 reader.Read();
                 switch (reader.NodeType)
                 {
@@ -101,24 +106,28 @@ public static class TtmlToVttConverter
                             break;
                     }
                 } while (!fDone);
-
-                if (!string.IsNullOrEmpty(strAlign) && !string.IsNullOrEmpty(strStartCue) && !string.IsNullOrEmpty(strCueSize))
+                var formattedString = strText.ToString();
+                if (!string.IsNullOrEmpty(strAlign) && !string.IsNullOrEmpty(strStartCue) && !string.IsNullOrEmpty(strCueSize)&& !string.IsNullOrEmpty(formattedString))
                 {
                     strEntry = string.Format(
                         "\n\n{0} --> {1} position:{2} align:{3} size:{4}\n{5}",
-                        strStartTime, strEndTime, strStartCue, strAlign, strCueSize, strText.ToString());
+                        strStartTime, strEndTime, strStartCue, strAlign, strCueSize, formattedString);
                 }
-                else
+                else if(!string.IsNullOrEmpty(formattedString))
                 {
                     strEntry = string.Format(
                         "\n\n{0} --> {1}\n{2}",
-                        strStartTime, strEndTime, strText.ToString());
+                        strStartTime, strEndTime, formattedString);
                 }
-                webVttContent.Append(strEntry);
+                if (!string.IsNullOrEmpty(strEntry))
+                 {
+                    webVttContent.Append(strEntry);
+                }
             }
-            webVttContentRes = webVttContent.ToString();
+           
+             webVttContentRes= webVttContent.ToString();
         }
-        return webVttContentRes;
+        return !string.IsNullOrEmpty(webVttContentRes) ? webVttContentRes: null; //webVttContentRes;Regex.Replace(webVttContentRes, @"[\x00-\x1F\x7F]", "\n")
     }
 
     private static void ParseRegionAttributes(XmlReader pReader, out string strStartCue, out string strCueSize, out string strAlign)
