@@ -6,6 +6,7 @@ using Azure.ResourceManager.Media.Models;
 using Azure.Storage.Blobs;
 using Azure.Storage.Blobs.Specialized;
 using Microsoft.Extensions.Logging;
+using System.IO;
 using System.IO.Pipes;
 using System.Text;
 using System.Xml;
@@ -56,7 +57,7 @@ namespace AMSMigrate.Pipes
                 }
                 else
                 {
-                    byte[] webvttBytes = Encoding.UTF8.GetBytes("WEBVTT\n");
+                    byte[] webvttBytes = Encoding.UTF8.GetBytes("WEBVTT");
                     using (MemoryStream headerStream = new MemoryStream(webvttBytes))
                     {
                         headerStream.CopyTo(stream);
@@ -182,7 +183,8 @@ namespace AMSMigrate.Pipes
 
                 if (vttText != null)
                 {
-                    mp4Writer.Write(vttText);
+                    byte[] contentBytes = Encoding.UTF8.GetBytes(RemoveXmlControlCharacters(vttText));
+                    mp4Writer.Write(contentBytes);
                 }
                 else
                 {
@@ -193,6 +195,22 @@ namespace AMSMigrate.Pipes
             {
                 _logger.LogError(ex, "Error converting TTML to VTT.");
             }
+        }
+
+        private string RemoveXmlControlCharacters(string input)
+        {
+            StringBuilder output = new StringBuilder();
+
+            foreach (char c in input)
+            {
+                // Exclude XML control characters (0x00 to 0x1F, except for whitespace characters)
+                if (c >= 0x20 || char.IsWhiteSpace(c))
+                {
+                    output.Append(c);
+                }
+            }
+
+            return output.ToString();
         }
 
         private async Task DownloadClearBlobContent(BlockBlobClient sourceBlob, Stream outputStream, CancellationToken cancellationToken)
