@@ -13,6 +13,8 @@
         bool CopyNonStreamable,
         bool OverWrite,
         bool SkipMigrated,
+        bool BreakOutputLease,
+        bool KeepWorkingFolder,
         int SegmentDuration,
         int BatchSize)
     {
