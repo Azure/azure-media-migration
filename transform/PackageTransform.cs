@@ -170,7 +170,10 @@ namespace AMSMigrate.Transform
             }
             finally
             {
-                Directory.Delete(workingDirectory, true);
+                if (!_options.KeepWorkingFolder)
+                {
+                    Directory.Delete(workingDirectory, true);
+                }
             }
 
             // Mark the output container appropriately so that it won't be used as an input asset in new run.

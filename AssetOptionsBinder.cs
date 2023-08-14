@@ -106,6 +106,16 @@ Visit https://learn.microsoft.com/en-us/azure/media-services/latest/filter-order
             () => true,
             description: @"Overwrite the files in the destination.");
 
+        private readonly Option<bool> _breakOutputLease = new(
+            aliases: new[] { "--break-output-lease" },
+            () => false,
+            description: @"unconditionally break lease on output asset. [for debugging only]");
+
+        private readonly Option<bool> _keepWorkingFolder = new(
+            aliases: new[] { "--keep-working-folder" },
+            () => false,
+            description: @"Keep working folder. [for debugging only]");
+
         const int DefaultBatchSize = 1;
         private readonly Option<int> _batchSize = new(
             aliases: new[] { "--batch-size", "-b" },
@@ -168,6 +178,8 @@ Visit https://learn.microsoft.com/en-us/azure/media-services/latest/filter-order
             command.AddOption(_filter);
             command.AddOption(_overwrite);
             command.AddOption(_skipMigrated);
+            command.AddOption(_breakOutputLease);
+            command.AddOption(_keepWorkingFolder);
             command.AddOption(_packagerType);
             command.AddOption(_workingDirectory);
             command.AddOption(_copyNonStreamable);
@@ -211,6 +223,8 @@ Visit https://learn.microsoft.com/en-us/azure/media-services/latest/filter-order
                 bindingContext.ParseResult.GetValueForOption(_copyNonStreamable),
                 bindingContext.ParseResult.GetValueForOption(_overwrite),
                 bindingContext.ParseResult.GetValueForOption(_skipMigrated),
+                bindingContext.ParseResult.GetValueForOption(_breakOutputLease),
+                bindingContext.ParseResult.GetValueForOption(_keepWorkingFolder),
                 SegmentDurationInSeconds,
                 bindingContext.ParseResult.GetValueForOption(_batchSize)
             )

@@ -209,7 +209,7 @@ namespace AMSMigrate.Azure
                         var lastModifiedTime = properties.Value.LastModified;
                         var elapsed = DateTimeOffset.UtcNow - lastModifiedTime;
 
-                        if (elapsed >= MaximumMigrateTimePerAsset)
+                        if (elapsed >= MaximumMigrateTimePerAsset || _options.BreakOutputLease)
                         {
                             await leaseClient.BreakAsync(cancellationToken: cancellationToken);
 
