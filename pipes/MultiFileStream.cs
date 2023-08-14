@@ -1,11 +1,15 @@
 ﻿using AMSMigrate.Contracts;
 using AMSMigrate.Decryption;
 using AMSMigrate.Fmp4;
+using AMSMigrate.Transform;
 using Azure.ResourceManager.Media.Models;
 using Azure.Storage.Blobs;
 using Azure.Storage.Blobs.Specialized;
 using Microsoft.Extensions.Logging;
+using System.IO;
 using System.IO.Pipes;
+using System.Text;
+using System.Xml;
 
 namespace AMSMigrate.Pipes
 {
@@ -50,6 +54,14 @@ namespace AMSMigrate.Pipes
                     chunkName = $"{_trackPrefix}/header";
                     blob = _container.GetBlockBlobClient(chunkName);
                     await DownloadClearBlobContent(blob, stream, cancellationToken);
+                }
+                else
+                {
+                    byte[] webvttBytes = Encoding.UTF8.GetBytes("WEBVTT");
+                    using (MemoryStream headerStream = new MemoryStream(webvttBytes))
+                    {
+                        headerStream.CopyTo(stream);
+                    }
                 }
 
                 // Report progress every 10%.
@@ -164,15 +176,41 @@ namespace AMSMigrate.Pipes
             }
 
             var ttmlText = mdatBox.SampleData;
+            try
+            {
+                // Call API to convert ttmlText to VTT text.
+                var vttText = TtmlToVttConverter.Convert(ttmlText);
 
-            byte[] vttText = { 0 };
+                if (vttText != null)
+                {
+                    byte[] contentBytes = Encoding.UTF8.GetBytes(RemoveXmlControlCharacters(vttText));
+                    mp4Writer.Write(contentBytes);
+                }
+                else
+                {
+                    _logger.LogInformation("vttText is null");
+                }
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "Error converting TTML to VTT.");
+            }
+        }
 
-            // Call API to convert ttmlText to VTT text.
+        private string RemoveXmlControlCharacters(string input)
+        {
+            StringBuilder output = new StringBuilder();
 
-            // Uncomment this line, it was put here to pass the compiler.
-            vttText = ttmlText!;
+            foreach (char c in input)
+            {
+                // Exclude XML control characters (0x00 to 0x1F, except for whitespace characters)
+                if (c >= 0x20 || char.IsWhiteSpace(c))
+                {
+                    output.Append(c);
+                }
+            }
 
-            mp4Writer.Write(vttText);
+            return output.ToString();
         }
 
         private async Task DownloadClearBlobContent(BlockBlobClient sourceBlob, Stream outputStream, CancellationToken cancellationToken)
