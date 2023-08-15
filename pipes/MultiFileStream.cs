@@ -183,8 +183,7 @@ namespace AMSMigrate.Pipes
 
                 if (vttText != null)
                 {
-                    byte[] contentBytes = Encoding.UTF8.GetBytes(RemoveXmlControlCharacters(vttText));
-                    mp4Writer.Write(contentBytes);
+                    mp4Writer.Write(vttText);
                 }
                 else
                 {
@@ -195,22 +194,6 @@ namespace AMSMigrate.Pipes
             {
                 _logger.LogError(ex, "Error converting TTML to VTT.");
             }
-        }
-
-        private string RemoveXmlControlCharacters(string input)
-        {
-            StringBuilder output = new StringBuilder();
-
-            foreach (char c in input)
-            {
-                // Exclude XML control characters (0x00 to 0x1F, except for whitespace characters)
-                if (c >= 0x20 || char.IsWhiteSpace(c))
-                {
-                    output.Append(c);
-                }
-            }
-
-            return output.ToString();
         }
 
         private async Task DownloadClearBlobContent(BlockBlobClient sourceBlob, Stream outputStream, CancellationToken cancellationToken)

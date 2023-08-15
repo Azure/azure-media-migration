@@ -7,7 +7,7 @@ using System.Xml.Serialization;
 
 public static class TtmlToVttConverter
 {
-    public static string? Convert(byte[]? ttmlText)
+    public static byte[]? Convert(byte[]? ttmlText)
     {
         if (ttmlText == null)
         {
@@ -127,7 +127,12 @@ public static class TtmlToVttConverter
            
              webVttContentRes= webVttContent.ToString();
         }
-        return !string.IsNullOrEmpty(webVttContentRes) ? webVttContentRes: null; //webVttContentRes;Regex.Replace(webVttContentRes, @"[\x00-\x1F\x7F]", "\n")
+        byte[]? contentBytes = null;
+        if (!string.IsNullOrEmpty(webVttContentRes))
+        {
+            contentBytes = Encoding.UTF8.GetBytes(webVttContentRes);
+        }
+        return contentBytes; 
     }
 
     private static void ParseRegionAttributes(XmlReader pReader, out string strStartCue, out string strCueSize, out string strAlign)
