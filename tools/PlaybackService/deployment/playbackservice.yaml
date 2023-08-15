@@ -3,7 +3,7 @@ kind: Deployment
 metadata:
   name: playbackservice
 spec:
-  replicas: 2
+  replicas: 1
   selector:
     matchLabels:
       app: playbackservice
@@ -12,11 +12,9 @@ spec:
       labels:
         app: playbackservice
     spec:
-      imagePullSecrets:
-        - name: amtestcr-secret
       containers:
       - name: playbackservice
-        image: amstest.azurecr.io/ams-ok/playbackservice:latest
+        image: ghcr.io/azure/azure-media-migration-playback-service:latest
         ports:
         - containerPort: 80
         env:
@@ -62,10 +60,10 @@ metadata:
 spec:
   tls:
   - hosts:
-    - playback.ams-ok.net
+    - playback.amstest.org
     secretName: playbackservice-https-cert
   rules:
-  - host: playback.ams-ok.net
+  - host: playback.amstest.org
     http:
       paths:
       - path: /
