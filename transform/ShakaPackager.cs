@@ -35,7 +35,7 @@ namespace AMSMigrate.Transform
             if (manifest.Format == "fmp4")
             {
                 _logger.LogDebug("Transmuxing FMP4 asset with multiple tracks in a single file into regular MP4 file.");
-                TransmuxedDownload = true;
+                TransmuxedSmooth = true;
             }
             else if (assetDetails.ClientManifest != null && assetDetails.ClientManifest.HasDiscontinuities(_logger))
             {
@@ -43,10 +43,8 @@ namespace AMSMigrate.Transform
                 Inputs.Clear();
                 Inputs.Add($"{baseName}.mp4");
             }
-            else if (!TransmuxedDownload)
-            {
-                UsePipeForInput = false;
-            }
+
+            UsePipeForInput = false;
 
             //TODO: Shaka packager write to Windows named pipe fails due to path issue.
             UsePipeForOutput = false;
@@ -62,7 +60,7 @@ namespace AMSMigrate.Transform
                 var ext = t.IsMultiFile ? (t is TextTrack ? VTT_FILE : MEDIA_FILE) : string.Empty;
                 var file = $"{t.Source}{ext}";
                 var index = Inputs.IndexOf(file);
-                var multiTrack = TransmuxedDownload && FileToTrackMap[file].Count > 1;
+                var multiTrack = TransmuxedSmooth && FileToTrackMap[file].Count > 1;
                 var inputFile = multiTrack ? 
                     Path.Combine(Path.GetDirectoryName(inputs[index])!, $"{Path.GetFileNameWithoutExtension(file)}_{t.TrackID}{Path.GetExtension(file)}") :
                     inputs[index];

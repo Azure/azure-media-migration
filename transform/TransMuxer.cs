@@ -37,29 +37,6 @@ namespace AMSMigrate.Transform
                 .ProcessAsynchronously(throwOnError: true);      
         }
 
-        public async Task TransMuxAsync(IPipeSource source, string destination, CancellationToken cancellationToken)
-        {
-            var processor = FFMpegArguments
-                .FromPipeInput(source)
-                //.WithGlobalOptions(options => options.WithVerbosityLevel(FFMpegCore.Arguments.VerbosityLevel.Verbose))
-                .OutputToFile(destination, overwrite: false, options =>
-                {
-                    if (Path.GetExtension(destination) == BasePackager.VTT_FILE)
-                    {
-                        options
-                        .ForceFormat("webvtt")
-                        .WithCustomArgument("-map s -c:s copy");
-                    }
-                    else
-                    {
-                        options
-                        .CopyChannel()
-                        .ForceFormat("mp4")
-                        .WithCustomArgument("-movflags faststart");
-                    }
-                });
-            await RunAsync(processor, cancellationToken);
-        }
 
         /// <summary>
         /// Transmux smooth input and filter by track id.
@@ -97,6 +74,35 @@ namespace AMSMigrate.Transform
                     box.WriteTo(writer);
                 }
             }
+        }
+
+        public async Task TranscodeAudioAsync(string source, string destination, CancellationToken cancellationToken)
+        {
+            var processor = FFMpegArguments
+                .FromFileInput(source)
+                //.WithGlobalOptions(options => options.WithVerbosityLevel(FFMpegCore.Arguments.VerbosityLevel.Verbose))
+                .OutputToFile(destination, overwrite: false, options =>
+                {
+                    // TODO: add silence insertion, trim, resample + transcode
+                    // current just do cmaf copy
+                    bool addSilence = false;
+                    if (addSilence)
+                    {
+                        options
+                        .CopyChannel()
+                        .ForceFormat("mp4")
+                        .WithCustomArgument("-movflags cmaf");
+                    }
+                    else
+                    {
+                        options
+                        .CopyChannel()
+                        .ForceFormat("mp4")
+                        .WithCustomArgument("-movflags cmaf");
+                    }
+                });
+            await RunAsync(processor, cancellationToken);
+            // TODO: rewrite tfdt box from 0 based to video start time in audio time scale.
         }
     }
 }

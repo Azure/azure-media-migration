@@ -189,6 +189,11 @@ namespace AMSMigrate.Contracts
             }
             return false;
         }
+
+        public long GetStartTimeStamp()
+        {
+            return Chunks[0].Time;
+        }
     }
 
     [XmlRoot("SmoothStreamingMedia", Namespace = "")]
