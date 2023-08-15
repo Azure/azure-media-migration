@@ -1,4 +1,5 @@
 ﻿using AMSMigrate.Contracts;
+using AMSMigrate.Fmp4;
 using AMSMigrate.Pipes;
 using Azure.Storage.Blobs.Specialized;
 using Microsoft.Extensions.Logging;
@@ -17,7 +18,7 @@ namespace AMSMigrate.Transform
         protected readonly TransMuxer _transMuxer;
         protected readonly ILogger _logger;
         protected readonly AssetDetails _assetDetails;
-        private readonly SortedDictionary<string, IList<Track>> _fileToTrackMap = new ();
+        private readonly SortedDictionary<string, IList<Track>> _fileToTrackMap = new();
 
         public bool UsePipeForInput { get; protected set; } = false;
 
@@ -25,7 +26,7 @@ namespace AMSMigrate.Transform
 
         public bool UsePipeForManifests { get; protected set; } = false;
 
-        public IList<string> Inputs {get; protected set; }
+        public IList<string> Inputs { get; protected set; }
 
         public IList<string> Outputs { get; protected set; } = new List<string>();
 
@@ -33,7 +34,9 @@ namespace AMSMigrate.Transform
 
         public List<Track> SelectedTracks { get; }
 
-        public bool TransmuxedDownload { get; protected set; }
+        public bool TransmuxedSmooth { get; protected set; }
+
+        public bool TranscodeAudio { get; protected set; }
 
         public IDictionary<string, IList<Track>> FileToTrackMap => _fileToTrackMap;
 
@@ -43,17 +46,13 @@ namespace AMSMigrate.Transform
             _transMuxer = transMuxer;
             _logger = logger;
 
-            if (assetDetails.ClientManifest != null && assetDetails.ClientManifest.HasDiscontinuities(_logger))
-            {
-                TransmuxedDownload = true;
-            }
-
             var manifest = assetDetails.Manifest!;
             // For text tracks pick VTT since it is supported by both shaka and ffmpeg.
-            SelectedTracks = manifest.Tracks.Where(t  => {
+            SelectedTracks = manifest.Tracks.Where(t =>
+            {
                 if (t is TextTrack)
                 {
-                    bool pickThisTextTrack = !TransmuxedDownload && !t.IsMultiFile && (t.Source.EndsWith(VTT_FILE) || t.Parameters.Any(t => t.Name == TRANSCRIPT_SOURCE));
+                    bool pickThisTextTrack = !t.IsMultiFile && (t.Source.EndsWith(VTT_FILE) || t.Parameters.Any(t => t.Name == TRANSCRIPT_SOURCE));
 
                     if (manifest.IsLiveArchive)
                     {
@@ -63,17 +62,16 @@ namespace AMSMigrate.Transform
                         {
                             // Choose the text track with a list of fragblobs for close captions.
                             pickThisTextTrack = assetDetails.ClientManifest!.Streams.Any(
-                                                              stream => (stream.Type == StreamType.Text && 
-                                                                         stream.SubType == "SUBT")      &&
+                                                              stream => (stream.Type == StreamType.Text &&
+                                                                         stream.SubType == "SUBT") &&
                                                                          stream.Name == t.TrackName);
-                        }                        
+                        }
                     }
-
                     return pickThisTextTrack;
                 }
                 return true;
             }).ToList();
-            
+
             var inputs = new List<string>();
             foreach (var track in SelectedTracks)
             {
@@ -100,7 +98,7 @@ namespace AMSMigrate.Transform
                 }
                 else
                 {
-                    _fileToTrackMap.Add(input, new List<Track>{ track });
+                    _fileToTrackMap.Add(input, new List<Track> { track });
                 }
             }
 
@@ -205,35 +203,41 @@ namespace AMSMigrate.Transform
         private async Task DownloadAsync(string workingDirectory, string file, IList<Track> tracks, CancellationToken cancellationToken)
         {
             var tempDirectory = Path.Combine(workingDirectory, "input");
-            if (TransmuxedDownload)
-            {
-                Directory.CreateDirectory(tempDirectory);
-            }
-            var filePath = Path.Combine(TransmuxedDownload ? tempDirectory : workingDirectory, file);
+            Directory.CreateDirectory(tempDirectory);
 
             if (tracks.Count == 1 && tracks[0].IsMultiFile)
             {
+                var filePath = Path.Combine(workingDirectory, file);
                 var track = tracks[0];
+                // TranscodeAudio = true;
+                if (TranscodeAudio && track.Type == StreamType.Audio)
+                {
+                    filePath = Path.Combine(tempDirectory, file);
+                }
                 var multiFileStream = new MultiFileStream(_assetDetails.Container, track, _assetDetails.ClientManifest!, _assetDetails.DecryptInfo, _logger);
                 var source = new MultiFilePipe(file, multiFileStream);
                 await source.DownloadAsync(filePath, cancellationToken);
+                if (TranscodeAudio && track.Type == StreamType.Audio)
+                {
+                    await Task.Run(() => _transMuxer.TranscodeAudioAsync(filePath, Path.Combine(workingDirectory, Path.GetFileName(filePath)), cancellationToken));
+                }
             }
             else
             {
+                var filePath = Path.Combine(TransmuxedSmooth ? tempDirectory : workingDirectory, file);
                 var blob = _assetDetails.Container.GetBlockBlobClient(file);
                 var source = new BlobSource(blob, _assetDetails.DecryptInfo, _logger);
                 await source.DownloadAsync(filePath, cancellationToken);
-            }
-
-            if (TransmuxedDownload)
-            {
-                await Task.WhenAll(tracks.Select(async track =>
+                if (TransmuxedSmooth)
                 {
-                    using var sourceFile = File.OpenRead(filePath);
-                    var filename = tracks.Count == 1 ? file : $"{Path.GetFileNameWithoutExtension(file)}_{track.TrackID}{Path.GetExtension(file)}";
-                    using var destFile = File.OpenWrite(Path.Combine(workingDirectory, filename));
-                    await Task.Run(() => _transMuxer.TransmuxSmooth(sourceFile, destFile, track.TrackID));
-                }));
+                    await Task.WhenAll(tracks.Select(async track =>
+                    {
+                        using var sourceFile = File.OpenRead(filePath);
+                        var filename = tracks.Count == 1 ? file : $"{Path.GetFileNameWithoutExtension(file)}_{track.TrackID}{Path.GetExtension(file)}";
+                        using var destFile = File.OpenWrite(Path.Combine(workingDirectory, filename));
+                        await Task.Run(() => _transMuxer.TransmuxSmooth(sourceFile, destFile, track.TrackID));
+                    }));
+                }
             }
         }
     }
