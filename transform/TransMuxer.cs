@@ -37,9 +37,8 @@ namespace AMSMigrate.Transform
             await processor.CancellableThrough(cancellationToken)
                 .NotifyOnError(line => _logger.LogTrace(Events.Ffmpeg, line))
                 .NotifyOnOutput(line => _logger.LogTrace(Events.Ffmpeg, line))
-                .ProcessAsynchronously(throwOnError: true);      
+                .ProcessAsynchronously(throwOnError: true);
         }
-
 
         /// <summary>
         /// Transmux smooth input and filter by track id.
@@ -50,7 +49,7 @@ namespace AMSMigrate.Transform
             using var reader = new MP4Reader(source, Encoding.UTF8, leaveOpen: true);
             using var writer = new MP4Writer(destination, Encoding.UTF8, leaveOpen: true);
             bool skip = false;
-            while(source.Position < source.Length)
+            while (source.Position < source.Length)
             {
                 var box = MP4BoxFactory.ParseSingleBox(reader);
                 if (box is moofBox moof)
@@ -78,6 +77,7 @@ namespace AMSMigrate.Transform
                 }
             }
         }
+
         public class AudioDelayFilterArgument : IAudioFilterArgument
         {
             private readonly long _delay = 0;
@@ -88,6 +88,65 @@ namespace AMSMigrate.Transform
             }
             public string Key { get; } = "adelay";
             public string Value => $"{_delay}:all=1";
+        }
+
+        static void AddOffsetToTfdtBox(string fileName, ulong decodeTimeOffset)
+        {
+            using var stream = File.Open(fileName, FileMode.Open, FileAccess.ReadWrite);
+            var reader = new MP4Reader(stream);
+            var writer = new MP4Writer(stream);
+            stream.Position = 0;
+
+            while (stream.Position < stream.Length)
+            {
+                Int64 startPosition = reader.BaseStream.Position;
+                Int64 size = reader.ReadUInt32();   // size of current box
+                UInt32 type = reader.ReadUInt32();  // type of current box
+
+                // Parse extended size
+                if (size == 0)
+                {
+                    throw new InvalidDataException("Invalid size.");
+                }
+                else if (size == 1)
+                {
+                    size = reader.ReadInt64();
+                }
+
+                if (type == MP4BoxType.moof)
+                {
+                    stream.Position = startPosition; // rewind
+                    var moofBox = MP4BoxFactory.ParseSingleBox<moofBox>(reader);
+
+                    ulong offsetToTfdt = moofBox.ComputeBaseSizeBox();
+                    foreach (var c in moofBox.Children)
+                    {
+                        if (c.Type == MP4BoxType.traf)
+                        {
+                            offsetToTfdt += moofBox.ComputeBaseSizeBox();
+                            foreach (var cc in c.Children)
+                            {
+                                if (cc.Type == MP4BoxType.tfdt)
+                                {
+                                    tfdtBox tfdtBox = (tfdtBox)cc; // will throw
+                                    long tfdtPosition = startPosition + (long)offsetToTfdt;
+                                    tfdtBox.DecodeTime += decodeTimeOffset;
+                                    stream.Position = tfdtPosition;
+                                    tfdtBox.WriteTo(writer);
+                                    break;
+                                }
+                                offsetToTfdt += cc.Size.Value;
+                            }
+                        }
+                        else
+                        {
+                            offsetToTfdt += c.Size.Value;
+                        }
+                    }
+                }
+                //skip till the beginning of the next box.
+                stream.Position = startPosition + size;
+            }
         }
 
         public class AudioResample : IAudioFilterArgument
@@ -119,9 +178,7 @@ namespace AMSMigrate.Transform
                 .WithAudioCodec(AudioCodec.Aac)
                 .ForceFormat("mp4")
                 .WithCustomArgument("-movflags cmaf"));
-
                 await RunAsync(processor, cancellationToken);
-
             }
             else if (transcodeAudioInfo.AudioStartTime <= transcodeAudioInfo.VideoStartTimeInAudioTimeScale)
             {
@@ -157,8 +214,9 @@ namespace AMSMigrate.Transform
                     .WithCustomArgument("-movflags cmaf"));
                     await RunAsync(processor, cancellationToken);
                 }
-            } 
-            // TODO: rewrite tfdt box from 0 based to video start time in audio time scale.
+            }
+            // FFmpeg will zero out tdft baseMediaDecodeTime, add it back in place.
+            AddOffsetToTfdtBox(destination, (ulong)transcodeAudioInfo.VideoStartTimeInAudioTimeScale);
         }
     }
 }

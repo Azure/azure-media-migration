@@ -1,4 +1,4 @@
-﻿using AMSMigrate.Contracts;
+using AMSMigrate.Contracts;
 using AMSMigrate.Fmp4;
 using AMSMigrate.Pipes;
 using Azure.Storage.Blobs.Specialized;
