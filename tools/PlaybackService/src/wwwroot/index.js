@@ -1,12 +1,6 @@
-async function dashinit() {
-    const video = document.querySelector("video")
-    video.pendingSessionData = []
-    video.addEventListener('encrypted', handleEncryption(video))
-    const player = dashjs.MediaPlayer().create()
-    player.initialize(video, video.src, true)
-}
-
 function play() {
+    removePlayers();
+
     showError("error", "");
     showError("dash-error", "");
     showError("shaka-error", "");
@@ -43,7 +37,7 @@ function play() {
 }
 
 function dashPlay(playUri) {
-    var video = document.getElementById("dashvideo");
+    var video = createVideoElement(document.getElementById("dashvideo-container"));
     var player = dashjs.MediaPlayer().create();
     player.initialize(video, playUri, true);
     player.on("error", (e) => {
@@ -66,7 +60,7 @@ function dashPlay(playUri) {
 }
 
 async function shakaPlay(playUri) {
-    var video = document.getElementById("shakavideo");
+    var video = createVideoElement(document.getElementById("shakavideo-container"));
     var player = new shaka.Player(video);
     player.addEventListener("error", (e) => {
         console.log("shaka-error");
@@ -95,4 +89,28 @@ async function shakaPlay(playUri) {
 function showError(domId, msg) {
     var errorDom = document.getElementById(domId);
     errorDom.innerHTML = `<i>${msg}</i>`;
+}
+
+function removePlayers()
+{
+    var videos = document.getElementsByTagName("video");
+    while (videos.length) {
+        videos[videos.length - 1].remove();
+    }
+}
+
+function clearVideoElement(parent)
+{
+    while (parent.firstChild) {
+        parent.removeChild(parent.lastChild);
+    }
+}
+
+function createVideoElement(parent)
+{
+    var video = document.createElement('video');
+    video.setAttribute("controls", "controls");
+    video.setAttribute("autoplay", "autoplay");
+    parent.appendChild(video);
+    return video;
 }
