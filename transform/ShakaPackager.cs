@@ -83,7 +83,7 @@ namespace AMSMigrate.Transform
                         if (Math.Abs(TranscodeAudioInfoData.AudioStartTime - TranscodeAudioInfoData.VideoStartTimeInAudioTimeScale) <= 0.1 * TranscodeAudioInfoData.AudioTimeScale
                             && !TranscodeAudioInfoData.AudioStreamHasDiscontinuities)
                         {
-                            TranscodeAudio = true;
+                            TranscodeAudio = false;
                         }
                         else
                         {
