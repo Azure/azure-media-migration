@@ -20,9 +20,15 @@
                 width: 1290px;
             }
 
-            video {
+            .video-container {
                 width: 100%;
                 height: 360px;
+                background-color: black;
+
+                & video {
+                    width: 100%;
+                    height: 100%;
+                }
             }
 
             .input {
@@ -64,12 +70,12 @@
             <div class="player-container">
                 <div class="player">
                     <h4>Dash Player</h4>
-                    <video id="dashvideo" controls></video>
+                    <div class="video-container" id="dashvideo-container"></div>
                     <label id="dash-error" class="error"></label>
                 </div>
                 <div class="player">
                     <h4>Shaka Player</h4>
-                    <video id="shakavideo" controls></video>
+                    <div class="video-container" id="shakavideo-container"></div>
                     <label id="shaka-error" class="error"></label>
                 </div>
             </div>
