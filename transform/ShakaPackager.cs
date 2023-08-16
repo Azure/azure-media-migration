@@ -1,6 +1,7 @@
 ﻿using AMSMigrate.Contracts;
 using Microsoft.Extensions.Logging;
 using System.ComponentModel;
+using System.IO;
 using System.Text.RegularExpressions;
 
 namespace AMSMigrate.Transform
@@ -37,11 +38,60 @@ namespace AMSMigrate.Transform
                 _logger.LogDebug("Transmuxing FMP4 asset with multiple tracks in a single file into regular MP4 file.");
                 TransmuxedSmooth = true;
             }
-            else if (assetDetails.ClientManifest != null && assetDetails.ClientManifest.HasDiscontinuities(_logger))
+            else if (manifest.Format == "vod-fmp4")
             {
-                // mux to a single file.
-                Inputs.Clear();
-                Inputs.Add($"{baseName}.mp4");
+                if (assetDetails.ClientManifest != null) {
+                    var clientManifest = assetDetails.ClientManifest!;
+
+                    MediaStream? audioStream = null;
+                    MediaStream? videoStream = null;
+                    // TODO: can there be multiple video streams?  assume no for now.
+                    foreach (var stream in clientManifest.Streams)
+                    {
+                        if (stream.Type == StreamType.Video)
+                        {
+                            videoStream = stream;
+                            break;
+                        }
+                    }
+
+                    // TODO: can there be multiple audio streams?  assume no for now.
+                    foreach (var stream in clientManifest.Streams)
+                    {
+                        if (stream.Type == StreamType.Audio)
+                        {
+                            audioStream = stream;
+                            break;
+                        }
+                    }
+
+                    if (audioStream != null && videoStream != null)
+                    {
+                        TranscodeAudioInfoData.AudioStartTime = audioStream.GetStartTimeStamp();
+                        TranscodeAudioInfoData.AudioTimeScale = audioStream.TimeScale;
+                        TranscodeAudioInfoData.AudioStreamHasDiscontinuities = audioStream.HasDiscontinuities();
+
+                        TranscodeAudioInfoData.VideoStartTime = videoStream.GetStartTimeStamp();
+                        TranscodeAudioInfoData.VideoTimeScale = videoStream.TimeScale;
+                        TranscodeAudioInfoData.VideoStartTimeInAudioTimeScale = TranscodeAudioInfoData.VideoStartTime * TranscodeAudioInfoData.AudioTimeScale / TranscodeAudioInfoData.VideoTimeScale;
+
+                        _logger.LogDebug("Audio start time: {time}, audio time scale: {timeScale}, audio discontinuity: {flag}", TranscodeAudioInfoData.AudioStartTime,
+                            TranscodeAudioInfoData.AudioTimeScale, TranscodeAudioInfoData.AudioStreamHasDiscontinuities);
+                        _logger.LogDebug("Video start time: {time}, video time scale: {timeScale}", TranscodeAudioInfoData.VideoStartTime, TranscodeAudioInfoData.VideoTimeScale);
+                        _logger.LogDebug("video start time in audio time scale: {time}", TranscodeAudioInfoData.VideoStartTimeInAudioTimeScale);
+
+                        if (Math.Abs(TranscodeAudioInfoData.AudioStartTime - TranscodeAudioInfoData.VideoStartTimeInAudioTimeScale) <= 0.1 * TranscodeAudioInfoData.AudioTimeScale
+                            && !TranscodeAudioInfoData.AudioStreamHasDiscontinuities)
+                        {
+                            TranscodeAudio = true;
+                        }
+                        else
+                        {
+                            _logger.LogDebug("video / audio tracks start time not within 0.1 sec and audio stream has discontinuities, transcode required");
+                            TranscodeAudio = true;
+                        }
+                    }
+                }
             }
 
             UsePipeForInput = false;

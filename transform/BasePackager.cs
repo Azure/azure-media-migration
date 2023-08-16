@@ -7,6 +7,16 @@ using System.Diagnostics;
 
 namespace AMSMigrate.Transform
 {
+    public record TranscodeAudioInfo
+    {
+        public long VideoStartTime { get; set; } = 0;
+        public long VideoTimeScale { get; set; } = 0;
+        public long VideoStartTimeInAudioTimeScale { get; set; } = 0;
+        public long AudioStartTime { get; set; } = 0;
+        public long AudioTimeScale { get; set; } = 0;
+        public bool AudioStreamHasDiscontinuities { get; set; } = false;
+    };
+
     abstract class BasePackager : IPackager
     {
         public const string MEDIA_FILE = ".mp4";
@@ -37,6 +47,8 @@ namespace AMSMigrate.Transform
         public bool TransmuxedSmooth { get; protected set; }
 
         public bool TranscodeAudio { get; protected set; }
+
+        public TranscodeAudioInfo TranscodeAudioInfoData { get; protected set; } = new();
 
         public IDictionary<string, IList<Track>> FileToTrackMap => _fileToTrackMap;
 
@@ -209,7 +221,7 @@ namespace AMSMigrate.Transform
             {
                 var filePath = Path.Combine(workingDirectory, file);
                 var track = tracks[0];
-                // TranscodeAudio = true;
+
                 if (TranscodeAudio && track.Type == StreamType.Audio)
                 {
                     filePath = Path.Combine(tempDirectory, file);
@@ -219,7 +231,11 @@ namespace AMSMigrate.Transform
                 await source.DownloadAsync(filePath, cancellationToken);
                 if (TranscodeAudio && track.Type == StreamType.Audio)
                 {
-                    await Task.Run(() => _transMuxer.TranscodeAudioAsync(filePath, Path.Combine(workingDirectory, Path.GetFileName(filePath)), cancellationToken));
+                    await Task.Run(() => _transMuxer.TranscodeAudioAsync(
+                        filePath, 
+                        Path.Combine(workingDirectory, Path.GetFileName(filePath)),
+                        TranscodeAudioInfoData,
+                        cancellationToken));
                 }
             }
             else
