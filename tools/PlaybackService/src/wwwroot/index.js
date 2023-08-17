@@ -62,6 +62,7 @@ function dashPlay(playUri) {
 async function shakaPlay(playUri) {
     var video = createVideoElement(document.getElementById("shakavideo-container"));
     var player = new shaka.Player(video);
+    player.setTextTrackVisibility(true);
     player.addEventListener("error", (e) => {
         console.log("shaka-error");
         console.log(e);
