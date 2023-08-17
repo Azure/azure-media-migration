@@ -162,7 +162,7 @@ namespace AMSMigrate.Fmp4
         }
 
         /// <summary>
-        /// Replace uuid box tfxd with tfdt, and remove trft as part of the replacement.
+        /// Replace uuid box tfxd with tfdt, and remove tfxd as part of the replacement.
         /// </summary>
         public void ReplaceTfxdWithTfdt()
         {

@@ -168,11 +168,11 @@ namespace AMSMigrate.Transform
                 .WithAudioFilters(
                     audioFilterOptions =>
                     {
-                        audioFilterOptions.Arguments.Add(new AudioDelayFilterArgument(delayInMs));
                         if (transcodeAudioInfo.AudioStreamHasDiscontinuities)
                         {
                             audioFilterOptions.Arguments.Add(new AudioResample());
                         }
+                        audioFilterOptions.Arguments.Add(new AudioDelayFilterArgument(delayInMs));
                     }
                 )
                 .WithAudioCodec(AudioCodec.Aac)

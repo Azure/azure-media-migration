@@ -40,11 +40,11 @@ public class PlaybackControllerTest : TestBase
         Assert.Equal("abcdefg", contentType);
 
         // Make suer output is right.
-        AssertOutputIsExpected(output, "test-data/dash.injested.mpd");
+        AssertOutputIsExpected(output, "test-data/dash.ingested.mpd");
 
         // Make sure no-cache is set in the response header.
-        var cacheControll = httpResponseMock.Object.Headers.CacheControl.ToString();
-        Assert.Equal("no-cache, no-store, must-revalidate", cacheControll);
+        var cacheControl = httpResponseMock.Object.Headers.CacheControl.ToString();
+        Assert.Equal("no-cache, no-store, must-revalidate", cacheControl);
 
         var expire = httpResponseMock.Object.Headers.Expires.ToString();
         Assert.Equal("0", expire);
@@ -81,11 +81,11 @@ public class PlaybackControllerTest : TestBase
         Assert.Equal("abcdefg", contentType);
 
         // Make suer output is right.
-        AssertOutputIsExpected(output, "test-data/hls.injested.m3u8");
+        AssertOutputIsExpected(output, "test-data/hls.ingested.m3u8");
 
         // Make sure no-cache is set in the response header.
-        var cacheControll = httpResponseMock.Object.Headers.CacheControl.ToString();
-        Assert.Equal("no-cache, no-store, must-revalidate", cacheControll);
+        var cacheControl = httpResponseMock.Object.Headers.CacheControl.ToString();
+        Assert.Equal("no-cache, no-store, must-revalidate", cacheControl);
 
         var expire = httpResponseMock.Object.Headers.Expires.ToString();
         Assert.Equal("0", expire);

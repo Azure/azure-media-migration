@@ -27,7 +27,7 @@ namespace AMSMigrate.Fmp4
         }
 
         /// <summary>
-        /// Pases the body of box. A mvex is nothing but a collection of child boxes.
+        /// Passes the body of box. A mvex is nothing but a collection of child boxes.
         /// </summary>
         protected override void ReadBody()
         {

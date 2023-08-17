@@ -209,7 +209,7 @@ public class PlaybackController : ControllerBase
                     continue;
                 }
 
-                // Let's injest the format uri.
+                // Let's ingest the format uri.
                 var contentProtectionEL = dash.CreateElement("ContentProtection", adaptationSet.NamespaceURI);
                 contentProtectionEL.SetAttribute("schemeIdUri", "urn:uuid:e2719d58-a985-b3c9-781a-b030af78d30e");
                 contentProtectionEL.SetAttribute("value", "ClearKey1.0");
