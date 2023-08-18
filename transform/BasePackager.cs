@@ -48,6 +48,8 @@ namespace AMSMigrate.Transform
 
         public bool TranscodeAudio { get; protected set; }
 
+        public bool TranscodeVideo { get; protected set; }
+
         public TranscodeAudioInfo TranscodeAudioInfoData { get; protected set; } = new();
 
         public IDictionary<string, IList<Track>> FileToTrackMap => _fileToTrackMap;
@@ -236,6 +238,10 @@ namespace AMSMigrate.Transform
                         Path.Combine(workingDirectory, Path.GetFileName(filePath)),
                         TranscodeAudioInfoData,
                         cancellationToken));
+                }
+                if (TranscodeVideo && track.Type == StreamType.Video)
+                {
+                    _transMuxer.TranscodeVideo(filePath);
                 }
             }
             else

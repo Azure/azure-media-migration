@@ -90,6 +90,11 @@ namespace AMSMigrate.Transform
                             _logger.LogDebug("video / audio tracks start time not within 0.1 sec and audio stream has discontinuities, transcode required");
                             TranscodeAudio = true;
                         }
+
+                        if (videoStream.HasDiscontinuities())
+                        {
+                            TranscodeVideo = true;
+                        }
                     }
                 }
             }
