@@ -218,5 +218,144 @@ namespace AMSMigrate.Transform
             // FFmpeg will zero out tdft baseMediaDecodeTime, add it back in place.
             AddOffsetToTfdtBox(destination, (ulong)transcodeAudioInfo.VideoStartTimeInAudioTimeScale);
         }
+
+        private static List<ulong> GetDecodeMediaTime(string fileName)
+        {
+            using var stream = File.Open(fileName, FileMode.Open, FileAccess.Read);
+            var reader = new MP4Reader(stream);
+            stream.Position = 0;
+            List<ulong> decodeTimes = new();
+            while (stream.Position < stream.Length)
+            {
+                Int64 startPosition = reader.BaseStream.Position;
+                Int64 size = reader.ReadUInt32();   // size of current box
+                UInt32 type = reader.ReadUInt32();  // type of current box
+
+                // Parse extended size
+                if (size == 0)
+                {
+                    throw new InvalidDataException("Invalid size.");
+                }
+                else if (size == 1)
+                {
+                    size = reader.ReadInt64();
+                }
+
+                if (type == MP4BoxType.moof)
+                {
+                    stream.Position = startPosition; // rewind
+                    var moofBox = MP4BoxFactory.ParseSingleBox<moofBox>(reader);
+
+                    foreach (var c in moofBox.Children)
+                    {
+                        if (c.Type == MP4BoxType.traf)
+                        {
+                            foreach (var cc in c.Children)
+                            {
+                                if (cc.Type == MP4BoxType.tfdt)
+                                {
+                                    tfdtBox tfdtBox = (tfdtBox)cc; // will throw
+                                    decodeTimes.Add(tfdtBox.DecodeTime);
+                                    break;
+                                }
+                            }
+                        }
+                    }
+                }
+                //skip till the beginning of the next box.
+                stream.Position = startPosition + size;
+            }
+            return decodeTimes;
+        }
+
+        private void UpdateTrackRunDuration(string fileName)
+        {
+            List<ulong> decodeTimes = GetDecodeMediaTime(fileName);
+
+            using var stream = File.Open(fileName, FileMode.Open, FileAccess.ReadWrite);
+            var reader = new MP4Reader(stream);
+            var writer = new MP4Writer(stream);
+            stream.Position = 0;
+
+
+            int totalDecodeTime = decodeTimes.Count;
+            int curDecodeTimesIndex = 0;
+
+            while (stream.Position < stream.Length)
+            {
+                Int64 startPosition = reader.BaseStream.Position;
+                Int64 size = reader.ReadUInt32();   // size of current box
+                UInt32 type = reader.ReadUInt32();  // type of current box
+
+                // Parse extended size
+                if (size == 0)
+                {
+                    throw new InvalidDataException("Invalid size.");
+                }
+                else if (size == 1)
+                {
+                    size = reader.ReadInt64();
+                }
+
+                if (type == MP4BoxType.moof)
+                {
+                    stream.Position = startPosition; // rewind
+                    var moofBox = MP4BoxFactory.ParseSingleBox<moofBox>(reader);
+
+                    ulong offsetToTrun = moofBox.ComputeBaseSizeBox();
+                    foreach (var c in moofBox.Children)
+                    {
+                        if (c.Type == MP4BoxType.traf)
+                        {
+                            offsetToTrun += moofBox.ComputeBaseSizeBox();
+                            foreach (var cc in c.Children)
+                            {
+                                if (cc.Type == MP4BoxType.trun)
+                                {
+                                    trunBox trunBox = (trunBox)cc; // will throw
+                                    trunBox.TrunFlags flag = (trunBox.TrunFlags) trunBox.Flags;
+                                    if ((flag & trunBox.TrunFlags.SampleDurationPresent) != trunBox.TrunFlags.SampleDurationPresent)
+                                    {
+                                        throw new InvalidDataException("Unexpected, sampleDurationPresent must be present");
+                                    }
+
+                                    long trunPosition = startPosition + (long)offsetToTrun;
+                                    stream.Position = trunPosition;
+                                    ulong totalDuration = 0;
+                                    for (int i = 0; i < trunBox.Entries.Count; ++i)
+                                    {
+                                        totalDuration += (ulong)trunBox.Entries[i].SampleDuration!;
+                                    }
+                                    if (curDecodeTimesIndex + 1 < decodeTimes.Count)
+                                    {
+                                        if (decodeTimes[curDecodeTimesIndex] + totalDuration < decodeTimes[curDecodeTimesIndex + 1])
+                                        {
+                                            ulong offset = decodeTimes[curDecodeTimesIndex + 1] - decodeTimes[curDecodeTimesIndex] - totalDuration;
+                                            _logger.LogTrace("Update duration due to discontinuity at dt {0}, offset {1}.", decodeTimes[curDecodeTimesIndex], offset);
+                                            trunBox.Entries[trunBox.Entries.Count - 1].SampleDuration += (uint)offset;
+                                        }
+                                    }
+                                    trunBox.WriteTo(writer);
+                                    curDecodeTimesIndex++;
+                                    break;
+                                }
+                                offsetToTrun += cc.Size.Value;
+                            }
+                        }
+                        else
+                        {
+                            offsetToTrun += c.Size.Value;
+                        }
+                    }
+                }
+                //skip till the beginning of the next box.
+                stream.Position = startPosition + size;
+            }
+        }
+
+        public void TranscodeVideo(string destination)
+        {
+            UpdateTrackRunDuration(destination);
+        }
     }
 }
