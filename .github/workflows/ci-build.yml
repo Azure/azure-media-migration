@@ -78,21 +78,21 @@ jobs:
         uses: docker/build-push-action@v4
         with:
           context: tools/PlaybackService/src/
-          tags: ghcr.io/azure/azure-media-migration-playback-service:${{ github.sha }}, ghcr.io/azure/azure-media-migration-playback-service:latest
+          tags: amstestpublic.azurecr.io/azure-media-migration/playback-service:${{ github.sha }}, amstestpublic.azurecr.io/azure-media-migration/playback-service:latest
 
       - name: Log in to the Container registry
         uses: docker/login-action@v2
         if: ${{ github.event_name == 'push' }}
         with:
-          registry: ghcr.io
-          username: ${{ github.actor }}
-          password: ${{ secrets.GITHUB_TOKEN }}
+          registry: amstestpublic.azurecr.io
+          username: amstestpublic
+          password: ${{ secrets.AMSTESTPUBLIC_AZACR_PASSWORD }}
 
       - name: Push Container Image
         if: ${{ github.event_name == 'push' }}
         run: |
-          docker push ghcr.io/azure/azure-media-migration-playback-service:${{ github.sha }}
-          docker push ghcr.io/azure/azure-media-migration-playback-service:latest
+          docker push amstestpublic.azurecr.io/azure-media-migration/playback-service:${{ github.sha }}
+          docker push amstestpublic.azurecr.io/azure-media-migration/playback-service:latest
 
       - name: Login Kubernets
         uses: azure/k8s-set-context@v1
@@ -108,4 +108,4 @@ jobs:
           manifests: |
             tools/PlaybackService/deployment/playbackservice.yaml
           images: |
-            ghcr.io/azure/azure-media-migration-playback-service:${{ github.sha }}
+            amstestpublic.azurecr.io/azure-media-migration/playback-service:${{ github.sha }}

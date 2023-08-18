@@ -14,7 +14,7 @@ spec:
     spec:
       containers:
       - name: playbackservice
-        image: ghcr.io/azure/azure-media-migration-playback-service:latest
+        image: amstestpublic.azurecr.io/azure-media-migration/playback-service:latest
         ports:
         - containerPort: 80
         env:
