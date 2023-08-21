@@ -187,7 +187,7 @@ namespace AMSMigrate.Pipes
                 }
                 else
                 {
-                    _logger.LogInformation("vttText is null");
+                    _logger.LogTrace("vttText is null");
                 }
             }
             catch (Exception ex)
