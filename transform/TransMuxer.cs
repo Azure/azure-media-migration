@@ -207,7 +207,7 @@ namespace AMSMigrate.Transform
                     var processor = FFMpegArguments
                     .FromFileInput(source, false, opt => opt.Seek(TimeSpan.FromMilliseconds(trim)))
                     //.WithGlobalOptions(options => options.WithVerbosityLevel(FFMpegCore.Arguments.VerbosityLevel.Verbose))
-                    .OutputToFile(destination, overwrite: false, options =>
+                    .OutputToFile(destination, overwrite: true, options =>
                     options
                     .CopyChannel()
                     .ForceFormat("mp4")
