@@ -112,8 +112,9 @@ namespace AMSMigrate.Transform
 
             List<string> arguments = new(SelectedTracks.Select((t, i) =>
             {
+                var source = t.Parameters.SingleOrDefault(p => p.Name == TRANSCRIPT_SOURCE)?.Value ?? t.Source;
                 var ext = t.IsMultiFile ? (t is TextTrack ? VTT_FILE : MEDIA_FILE) : string.Empty;
-                var file = $"{t.Source}{ext}";
+                var file = $"{source}{ext}";
                 var index = Inputs.IndexOf(file);
                 var multiTrack = TransmuxedSmooth && FileToTrackMap[file].Count > 1;
                 var inputFile = multiTrack ? 

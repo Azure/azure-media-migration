@@ -54,6 +54,21 @@ namespace AMSMigrate.Transform
 
         public IDictionary<string, IList<Track>> FileToTrackMap => _fileToTrackMap;
 
+        public static bool IsTextTrackSupported(Track track, Manifest manifest)
+        {
+            return !track.IsMultiFile && (track.Source.EndsWith(VTT_FILE) || track.Parameters.Any(t => t.Name == TRANSCRIPT_SOURCE));
+        }
+
+        public static bool IsLiveTextTrackSupported(Track track, ClientManifest clientManifest)
+        {
+            return track.IsMultiFile && 
+                // Choose the text track with a list of fragblobs for close captions.
+                clientManifest!.Streams.Any(
+                    stream => (stream.Type == StreamType.Text &&
+                    stream.SubType == "SUBT") &&
+                    stream.Name == track.TrackName);
+        }
+
         public BasePackager(AssetDetails assetDetails, TransMuxer transMuxer, ILogger logger)
         {
             _assetDetails = assetDetails;
@@ -65,24 +80,7 @@ namespace AMSMigrate.Transform
             SelectedTracks = manifest.Tracks.Where(t =>
             {
                 if (t is TextTrack)
-                {
-                    bool pickThisTextTrack = !t.IsMultiFile && (t.Source.EndsWith(VTT_FILE) || t.Parameters.Any(t => t.Name == TRANSCRIPT_SOURCE));
-
-                    if (manifest.IsLiveArchive)
-                    {
-                        pickThisTextTrack = false;
-
-                        if (t.IsMultiFile)
-                        {
-                            // Choose the text track with a list of fragblobs for close captions.
-                            pickThisTextTrack = assetDetails.ClientManifest!.Streams.Any(
-                                                              stream => (stream.Type == StreamType.Text &&
-                                                                         stream.SubType == "SUBT") &&
-                                                                         stream.Name == t.TrackName);
-                        }
-                    }
-                    return pickThisTextTrack;
-                }
+                    return manifest.IsLiveArchive && IsLiveTextTrackSupported(t, assetDetails.ClientManifest!) || IsTextTrackSupported(t, manifest);
                 return true;
             }).ToList();
 
