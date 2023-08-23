@@ -1,5 +1,4 @@
 using AMSMigrate.Contracts;
-using AMSMigrate.Fmp4;
 using AMSMigrate.Pipes;
 using Azure.Storage.Blobs.Specialized;
 using Microsoft.Extensions.Logging;
@@ -91,7 +90,7 @@ namespace AMSMigrate.Transform
                 string input;
                 if (track is TextTrack)
                 {
-                    if (manifest.IsLiveArchive)
+                    if (track.IsMultiFile)
                     {
                         input = $"{track.Source}{VTT_FILE}";
                     }
