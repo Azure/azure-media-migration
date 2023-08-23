@@ -53,7 +53,7 @@ namespace AMSMigrate.Contracts
 
         public uint TrackID => uint.Parse(Parameters.Single(p => p.Name == "trackID").Value);
 
-        public string TrackName => Parameters.SingleOrDefault(p => p.Name == "trackName")?.Value ?? Type.ToString();
+        public string TrackName => Parameters.SingleOrDefault(p => p.Name == "trackName")?.Value ?? Type.ToString().ToLower();
     }
 
     public class VideoTrack : Track
