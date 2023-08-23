@@ -1,15 +1,12 @@
 ﻿using AMSMigrate.Contracts;
 using AMSMigrate.Decryption;
 using AMSMigrate.Fmp4;
-using AMSMigrate.Transform;
 using Azure.ResourceManager.Media.Models;
 using Azure.Storage.Blobs;
 using Azure.Storage.Blobs.Specialized;
 using Microsoft.Extensions.Logging;
-using System.IO;
 using System.IO.Pipes;
 using System.Text;
-using System.Xml;
 
 namespace AMSMigrate.Pipes
 {

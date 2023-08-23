@@ -4,8 +4,6 @@ using Azure.ResourceManager.Media.Models;
 using FFMpegCore;
 using FFMpegCore.Arguments;
 using FFMpegCore.Enums;
-using FFMpegCore.Pipes;
-using Microsoft.Extensions.Azure;
 using Microsoft.Extensions.Logging;
 using System.Text;
 
