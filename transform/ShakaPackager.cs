@@ -44,27 +44,35 @@ namespace AMSMigrate.Transform
 
                     MediaStream? audioStream = null;
                     MediaStream? videoStream = null;
-                    // TODO: can there be multiple video streams?  assume no for now.
+
+                    int numAudioStreams = 0;
+                    int numVideoStreams = 0;
                     foreach (var stream in clientManifest.Streams)
                     {
                         if (stream.Type == StreamType.Video)
                         {
                             videoStream = stream;
-                            break;
+                            numVideoStreams++;
                         }
                     }
 
-                    // TODO: can there be multiple audio streams?  assume no for now.
                     foreach (var stream in clientManifest.Streams)
                     {
                         if (stream.Type == StreamType.Audio)
                         {
                             audioStream = stream;
-                            break;
+                            numAudioStreams++;
                         }
                     }
 
-                    if (audioStream != null && videoStream != null)
+                    if (numAudioStreams > 1 || numVideoStreams > 1)
+                    {
+                        _logger.LogError("audio streams {audioStreams} > 1 or video streams {videoStreams} > 1 found, current this is not supported",
+                            numAudioStreams, numVideoStreams);
+                        throw new InvalidDataException("Multiple audio streams or video streams is not currently supported.");
+                    }
+
+                    if (numAudioStreams == 1 && numVideoStreams == 1 && audioStream != null && videoStream != null)
                     {
                         TranscodeAudioInfoData.AudioStartTime = audioStream.GetStartTimeStamp();
                         TranscodeAudioInfoData.AudioTimeScale = audioStream.TimeScale;
