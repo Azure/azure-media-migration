@@ -40,6 +40,17 @@ namespace AMSMigrate.Transform
                 || (_globalOptions.EnableLiveAsset && details.Manifest.Format == "vod-fmp4");
         }
 
+        static string EscapeName(string name)
+        {
+            char[] specialCharacters = { ':', '/', '\\', '>', '<', '|', '&' };
+            foreach (var c in specialCharacters)
+            {
+                name = name.Replace(c, '_');
+            }
+            return name;
+        }
+
+
         protected override async Task<string> TransformAsync(
             AssetDetails details,
             (string Container, string Prefix) outputPath,
@@ -59,7 +70,8 @@ namespace AMSMigrate.Transform
 
 
             // temporary space for either pipes or files.
-            var workingDirectory = Path.Combine(_options.WorkingDirectory, assetName);
+            var folderName = EscapeName(assetName);
+            var workingDirectory = Path.Combine(_options.WorkingDirectory, folderName);
             Directory.CreateDirectory(workingDirectory);
             var outputDirectory = Path.Combine(workingDirectory, "output");
             Directory.CreateDirectory(outputDirectory);
