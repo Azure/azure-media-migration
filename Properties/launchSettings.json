@@ -1,0 +1,17 @@
+{
+  "profiles": {
+    "AMSMigrate": {
+      "commandName": "Project",
+      "commandLineArgs": "assets -s b2c12710-ecdf-4532-9ba6-7e74a219b5f2 --break-output-lease --keep-working-folder --enable-live-asset -g pohhsuTest -n pohhsumediaservice -f \"name eq 'asset-audio-leading-audio-discontinuity'\" --skip-migrated false -t \"$web/bug/${AssetName}\" -o amsencodermsitest"
+    },
+    "Docker": {
+      "commandName": "Docker",
+      "commandLineArgs": "analyze -s b2c12710-ecdf-4532-9ba6-7e74a219b5f2 -g provenance -n provenanceuswc"
+    },
+    "WSL": {
+      "commandName": "WSL2",
+      "commandLineArgs": "AMSMigrate.dll assets -s b2c12710-ecdf-4532-9ba6-7e74a219b5f2 --break-output-lease --keep-working-folder --enable-live-asset -g pohhsuTest -n pohhsumediaservice -f \"name eq 'asset-audio-leading-audio-discontinuity'\" --skip-migrated false -t \"$web/bug/${AssetName}\" -o amsencodermsitest",
+      "distributionName": ""
+    }
+  }
+}

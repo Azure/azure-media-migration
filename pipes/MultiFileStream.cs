@@ -4,14 +4,14 @@ using AMSMigrate.Fmp4;
 using Azure.ResourceManager.Media.Models;
 using Azure.Storage.Blobs;
 using Azure.Storage.Blobs.Specialized;
+using FFMpegCore.Pipes;
 using Microsoft.Extensions.Logging;
-using System.IO.Pipes;
 using System.Text;
 
 namespace AMSMigrate.Pipes
 {
     // A stream of media track that is spread across multiple files.
-    public class MultiFileStream
+    public class MultiFileStream : IPipeSource
     {
         private readonly BlobContainerClient _container;
         private readonly ILogger _logger;
@@ -254,42 +254,12 @@ namespace AMSMigrate.Pipes
 
             generatedStream.CopyTo(outputStream);
         }
-    }
 
-    //Writes a multi file track to a pipe stream.
-    internal class MultiFilePipe : Pipe
-    {
-        private readonly MultiFileStream _multiFileStream;
+        public string GetStreamArguments() => string.Empty;
 
-        public MultiFilePipe(
-            string filePath,
-            MultiFileStream multiFileStream)
-            : base(filePath, PipeDirection.Out)
+        public async Task WriteAsync(Stream outputStream, CancellationToken cancellationToken)
         {
-            _multiFileStream = multiFileStream;
-        }
-
-        public override async Task RunAsync(CancellationToken cancellationToken)
-        {
-            await RunAsync(async (stream, token) =>
-            {
-                await _multiFileStream.DownloadAsync(stream, token);
-            }, cancellationToken);
-        }
-
-        public override string GetStreamArguments()
-        {
-            return "-f mp4";
-        }
-
-        public override async Task WriteAsync(Stream stream, CancellationToken cancellationToken)
-        {
-            await _multiFileStream.DownloadAsync(stream, cancellationToken);
-        }
-        public async Task DownloadAsync(string path, CancellationToken cancellationToken)
-        {
-            using var file = File.OpenWrite(path);
-            await _multiFileStream.DownloadAsync(file, cancellationToken);
+            await DownloadAsync(outputStream, cancellationToken);
         }
     }
 }
