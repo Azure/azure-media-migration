@@ -62,9 +62,9 @@ This migrates the assets to a different storage account in your subscription.";
             var cleanupOptionsBinder = new CleanupOptionsBinder();
             var cleanupCommand = cleanupOptionsBinder.GetCommand("cleanup", @"Do the cleanup of AMS account or Storage account
 Examples:
-cleanup -s <subscriptionid> -g <resourcegroup> -n <account> -x true                                                                                 
+cleanup -s <subscriptionid> -g <resourcegroup> -n <account> -x true
 This command forcefully removes all assets in the given account.
-cleanup -s <subscriptionid> -g <resourcegroup> -n <account> -ax true                                                                                 
+cleanup -s <subscriptionid> -g <resourcegroup> -n <account> -ax true
 This command forcefully removes the Azure Media Services (AMS) account.");
             rootCommand.Add(cleanupCommand);
             cleanupCommand.SetHandler(
@@ -76,10 +76,10 @@ This command forcefully removes the Azure Media Services (AMS) account.");
 
             var resetOptionsBinder = new ResetOptionsBinder();
             var resetCommand = resetOptionsBinder.GetCommand("reset", @"Reset assets back to their original NotMigrated state
-Examples to reset assets in the AMS account:
-reset -s <subscriptionid> -g <resourcegroup> -n <account> -c all                                                                               
+Examples:
+reset -s <subscriptionid> -g <resourcegroup> -n <account> -c all
 This command will forcibly revert all assets in source account to their initial NotMigrated state. By default, this parameter is set to ""all"".
-reset -s <subscriptionid> -g <resourcegroup> -n <account> -c failed                                                                                
+reset -s <subscriptionid> -g <resourcegroup> -n <account> -c failed
 This command will forcibly revert migrated assets that have failed back to their original NotMigrated state.");
             rootCommand.Add(resetCommand);
             resetCommand.SetHandler(
