@@ -146,3 +146,7 @@ You can look at the help for analyze command to further customization.
 # Deployment
 ## Running in Azure
 The quickest way to run the tool in Azure is use the deployment scripts. See [deployment.md](deployment/deployment.md) for more instructions how to quickly run it.
+
+# Test streaming of migrated content
+One way to test streaming of migrated content is to stream directly from the migrated Azure blob storage.  See [blobStreaming.md](doc/blobStreaming.md) for more instructions.
+
