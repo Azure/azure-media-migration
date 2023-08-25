@@ -83,6 +83,7 @@ namespace AMSMigrate.Pipes
                     else
                     {
                         _logger.LogWarning("Missing Chunk at time {time} for stream {stream}. Ignoring gap by skipping to next.", chunk, _trackPrefix);
+                        throw new InvalidDataException("Unexpected missing chunk indicated by manifest is currently not supported");
                     }
                 }
                 _logger.LogDebug("Finished downloading track {prefix}", _trackPrefix);
