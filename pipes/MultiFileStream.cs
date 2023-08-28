@@ -1,6 +1,7 @@
 ﻿using AMSMigrate.Contracts;
 using AMSMigrate.Decryption;
 using AMSMigrate.Fmp4;
+using AMSMigrate.Transform;
 using Azure.ResourceManager.Media.Models;
 using Azure.Storage.Blobs;
 using Azure.Storage.Blobs.Specialized;
@@ -19,11 +20,13 @@ namespace AMSMigrate.Pipes
         private readonly string _trackPrefix;
         private readonly bool _isCloseCaption;
         private readonly StorageEncryptedAssetDecryptionInfo? _decryptInfo;
-        private ulong _startingTfdt = 0; //
+        private ulong _startingTfdt = 0;
         private bool _firstTfdt = true;
+        private readonly TranscodeAudioInfo _transcodeAudioInfo;
 
         public MultiFileStream(
             BlobContainerClient container,
+            TranscodeAudioInfo transcodeAudioInfo,
             Track track,
             ClientManifest manifest,
             StorageEncryptedAssetDecryptionInfo? decryptInfo,
@@ -34,6 +37,7 @@ namespace AMSMigrate.Pipes
             (_track, _) = manifest.GetStream(track);
             _trackPrefix = track.Source;
             _decryptInfo = decryptInfo;
+            _transcodeAudioInfo = transcodeAudioInfo;
 
             _isCloseCaption = _track.Type == StreamType.Text && _track.SubType == "SUBT";
         }
@@ -183,8 +187,9 @@ namespace AMSMigrate.Pipes
             var ttmlText = mdatBox.SampleData;
             try
             {
+                long offsetInMs = _transcodeAudioInfo.VideoStartTime * 1000 / _transcodeAudioInfo.VideoTimeScale;
                 // Call API to convert ttmlText to VTT text.
-                var vttText = TtmlToVttConverter.Convert(ttmlText);
+                var vttText = TtmlToVttConverter.Convert(ttmlText, offsetInMs);
 
                 if (vttText != null)
                 {

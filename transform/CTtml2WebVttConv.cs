@@ -1,9 +1,57 @@
 ﻿using System.Text;
+using System.Text.RegularExpressions;
 using System.Xml;
 
 public static class TtmlToVttConverter
 {
-    public static byte[]? Convert(byte[]? ttmlText)
+
+    private static ulong ParseVTTTimestampInMs(string timestamp)
+    {
+        ulong ts = 0;
+
+        // match hour form
+        var matchHour = Regex.Match(timestamp, "([0-9]{2,}):([0-9]{2}):([0-9]{2})[\\.]([0-9]{3})");
+        if (matchHour.Success)
+        {
+            ulong h = ulong.Parse(matchHour.Groups[1].Value);
+            ulong m = ulong.Parse(matchHour.Groups[2].Value);
+            ulong s = ulong.Parse(matchHour.Groups[3].Value);
+            ulong ms = ulong.Parse(matchHour.Groups[4].Value);
+            ts = h * 60 * 60 * 1000 + m * 60 * 1000 + s * 1000 + ms;
+            return ts;
+        }
+
+        var match = Regex.Match(timestamp, "([0-9]{2}):([0-9]{2})[,\\.]([0-9]{3})");
+        if (match.Success)
+        {
+            ulong m = ulong.Parse(match.Groups[1].Value);
+            ulong s = ulong.Parse(match.Groups[2].Value);
+            ulong ms = ulong.Parse(match.Groups[3].Value);
+            ts = m * 60 * 1000 + s * 1000 + ms;
+            return ts;
+        }
+
+        throw new InvalidDataException($"Unsupported VTT time stamp {timestamp}");
+    }
+
+    private static string VTTTimestampToString(ulong timestamp)
+    {
+        ulong ms = timestamp;
+        ulong s = ms / 1000;
+        ms = ms - 1000 * s;
+        ulong m = s / 60;
+        s -= m * 60;
+        ulong h = m / 60;
+        m -= 60 * h;
+
+        if (h > 0)
+        {
+            return $"{h:00}:{m:00}:{s:00}.{ms:000}";
+        }
+        return $"00:{m:00}:{s:00}.{ms:000}";
+    }
+
+    public static byte[]? Convert(byte[]? ttmlText, long offsetInMs)
     {
         if (ttmlText == null)
         {
@@ -19,7 +67,7 @@ public static class TtmlToVttConverter
         using (XmlReader reader = XmlReader.Create(mdatStream, settings))
         {
             StringBuilder webVttContent = new StringBuilder();
-           
+
             string strStartCue = string.Empty, strCueSize = string.Empty, strAlign = string.Empty;
 
             while (!reader.EOF)
@@ -103,32 +151,50 @@ public static class TtmlToVttConverter
                     }
                 } while (!fDone);
                 var formattedString = strText.ToString();
-                if (!string.IsNullOrEmpty(strAlign) && !string.IsNullOrEmpty(strStartCue) && !string.IsNullOrEmpty(strCueSize)&& !string.IsNullOrEmpty(formattedString))
+
+                long startTime = (long)ParseVTTTimestampInMs(strStartTime);
+                long endTime = (long)ParseVTTTimestampInMs(strEndTime);
+
+                startTime -= offsetInMs;
+                endTime -= offsetInMs;
+
+                if (endTime > 0)
                 {
-                    strEntry = string.Format(
-                        "\n\n{0} --> {1} position:{2} align:{3} size:{4}\n{5}",
-                        strStartTime, strEndTime, strStartCue, strAlign, strCueSize, formattedString);
-                }
-                else if(!string.IsNullOrEmpty(formattedString))
-                {
-                    strEntry = string.Format(
-                        "\n\n{0} --> {1}\n{2}",
-                        strStartTime, strEndTime, formattedString);
-                }
-                if (!string.IsNullOrEmpty(strEntry))
-                 {
-                    webVttContent.Append(strEntry);
+                    if (startTime < 0)
+                    {
+                        startTime = 0;
+                    }
+
+                    var startTimeStr = VTTTimestampToString((ulong)startTime);
+                    var endTimeStr = VTTTimestampToString((ulong)endTime);
+
+                    if (!string.IsNullOrEmpty(strAlign) && !string.IsNullOrEmpty(strStartCue) && !string.IsNullOrEmpty(strCueSize) && !string.IsNullOrEmpty(formattedString))
+                    {
+                        strEntry = string.Format(
+                            "\n\n{0} --> {1} position:{2} align:{3} size:{4}\n{5}",
+                            startTimeStr, endTimeStr, strStartCue, strAlign, strCueSize, formattedString);
+                    }
+                    else if (!string.IsNullOrEmpty(formattedString))
+                    {
+                        strEntry = string.Format(
+                            "\n\n{0} --> {1}\n{2}",
+                            startTimeStr, endTimeStr, formattedString);
+                    }
+                    if (!string.IsNullOrEmpty(strEntry))
+                    {
+                        webVttContent.Append(strEntry);
+                    }
                 }
             }
-           
-             webVttContentRes= webVttContent.ToString();
+
+            webVttContentRes = webVttContent.ToString();
         }
         byte[]? contentBytes = null;
         if (!string.IsNullOrEmpty(webVttContentRes))
         {
             contentBytes = Encoding.UTF8.GetBytes(webVttContentRes);
         }
-        return contentBytes; 
+        return contentBytes;
     }
 
     private static void ParseRegionAttributes(XmlReader pReader, out string strStartCue, out string strCueSize, out string strAlign)
