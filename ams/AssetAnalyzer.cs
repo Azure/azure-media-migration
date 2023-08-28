@@ -176,7 +176,7 @@ namespace AMSMigrate.Ams
                 .AddColumn(string.Empty)
                 .AddRow("[yellow]Total[/]", $"{statistics.Total}")
                 .AddRow("[darkgreen]Streamable[/]", $"{statistics.Streamable}")
-                .AddRow("[green]Migrated[/]", $"{statistics.Successful}")
+                .AddRow("[green]Migrated[/]", $"{statistics.Migrated+ statistics.Successful}")
                 .AddRow("[red]Failed[/]", $"{statistics.Failed}")
                 .AddRow("[darkorange]Skipped[/]", $"{statistics.Skipped}")
                 .AddRow("[grey]No locators[/]", $"{statistics.NoLocators}");
