@@ -102,7 +102,6 @@ namespace AMSMigrate.Ams
             double totalAssets = await QueryMetricAsync(account.Id.ToString(), "AssetCount", cancellationToken);
             _logger.LogInformation("The total asset count of the media account is {count}.", totalAssets);
 
-            var storage = await _resourceProvider.GetStorageAccountAsync(account, cancellationToken);
             ReportGenerator? reportGenerator = null;
 
             var resourceFilter = GetAssetResourceFilter(_analysisOptions.ResourceFilter,
@@ -139,6 +138,8 @@ namespace AMSMigrate.Ams
             var writer = channel.Writer;
             await MigrateInParallel(assets, filteredList, async (asset, cancellationToken) =>
             {
+                var storage = await _resourceProvider.GetStorageAccountAsync(account, asset, cancellationToken);
+
                 var result = await AnalyzeAsync(asset, storage, cancellationToken);
                 var assetType = result.AssetType ?? "unknown";
                 assetTypes.AddOrUpdate(assetType, 1, (key, value) => Interlocked.Increment(ref value));
@@ -175,7 +176,7 @@ namespace AMSMigrate.Ams
                 .AddColumn(string.Empty)
                 .AddRow("[yellow]Total[/]", $"{statistics.Total}")
                 .AddRow("[darkgreen]Streamable[/]", $"{statistics.Streamable}")
-                .AddRow("[green]Migrated[/]", $"{statistics.Migrated}")
+                .AddRow("[green]Migrated[/]", $"{statistics.Migrated+ statistics.Successful}")
                 .AddRow("[red]Failed[/]", $"{statistics.Failed}")
                 .AddRow("[darkorange]Skipped[/]", $"{statistics.Skipped}")
                 .AddRow("[grey]No locators[/]", $"{statistics.NoLocators}");

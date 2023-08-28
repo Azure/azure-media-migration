@@ -78,10 +78,10 @@ namespace AMSMigrate.Ams
 
         private async Task<AssetStats> MigrateAsync(MediaServicesAccountResource account, AsyncPageable<MediaAssetResource> assets, List<MediaAssetResource>? filteredList, ChannelWriter<double> writer, CancellationToken cancellationToken)
         {
-            var storage = await _resourceProvider.GetStorageAccountAsync(account, cancellationToken);
             var stats = new AssetStats();
             await MigrateInParallel(assets, filteredList, async (asset, cancellationToken) =>
             {
+                var storage = await _resourceProvider.GetStorageAccountAsync(account, asset, cancellationToken);
                 var result = await MigrateAsync(account, storage, asset, cancellationToken);
                 stats.Update(result);
                 await writer.WriteAsync(stats.Total, cancellationToken);
