@@ -5,17 +5,10 @@ using System.Runtime.InteropServices;
 
 namespace AMSMigrate.Pipes
 {
-    public interface IPipe: IPipeSource, IPipeSink
-    {
-        string PipePath { get; }
-
-        Task RunAsync(CancellationToken cancellationToken);
-    }
-
     /// <summary>
     /// A class to abstract platform specific pipe.
     /// </summary>
-    abstract class Pipe : IDisposable, IPipe
+    abstract class Pipe : IDisposable
     {
         protected readonly NamedPipeServerStream? _server;
         protected readonly PipeDirection _direction;
@@ -44,9 +37,9 @@ namespace AMSMigrate.Pipes
             }
         }
 
-        private void CreatePipe(string filePath)
+        private static void CreatePipe(string filePath)
         {
-            var startInfo = new ProcessStartInfo("mkfifo", PipePath)
+            var startInfo = new ProcessStartInfo("mkfifo", filePath)
             {
                 RedirectStandardError = false,
                 RedirectStandardOutput = false,
@@ -102,31 +95,21 @@ namespace AMSMigrate.Pipes
         }
 
         public abstract Task RunAsync(CancellationToken cancellationToken);
+    }
 
-        public virtual string GetStreamArguments()
+    class SourcePipe : Pipe
+    {
+        private readonly IPipeSource _pipeSource;
+        public SourcePipe(string filePath, IPipeSource source) : base(filePath)
         {
-            return "-seekable 0";
+            _pipeSource = source;
         }
 
-        public virtual async Task WriteAsync(Stream outputStream, CancellationToken cancellationToken)
+        public override async Task RunAsync(CancellationToken cancellationToken)
         {
-            await RunAsync(async (stream, cancellationToken) =>
-            {
-                await stream.CopyToAsync(outputStream, cancellationToken);
-            }, cancellationToken);
-        }
-
-        public async Task ReadAsync(Stream inputStream, CancellationToken cancellationToken)
-        {
-            await RunAsync(async (stream, cancellationToken) =>
-            {
-                await inputStream.CopyToAsync(stream, cancellationToken);
-            }, cancellationToken);
-        }
-
-        public string GetFormat()
-        {
-            return string.Empty;
+            await RunAsync(
+                async (stream, token) => await _pipeSource.WriteAsync(stream, token),
+                cancellationToken);
         }
     }
 }

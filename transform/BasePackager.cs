@@ -1,6 +1,7 @@
 using AMSMigrate.Contracts;
 using AMSMigrate.Pipes;
 using Azure.Storage.Blobs.Specialized;
+using FFMpegCore.Pipes;
 using Microsoft.Extensions.Logging;
 using System.Diagnostics;
 
@@ -192,11 +193,12 @@ namespace AMSMigrate.Transform
                 {
                     var track = tracks[0];
                     var multiFileStream = new MultiFileStream(_assetDetails.Container, track, _assetDetails.ClientManifest!, _assetDetails.DecryptInfo, _logger);
-                    return new MultiFilePipe(file, multiFileStream);
+                    return new SourcePipe(file, multiFileStream);
                 }
                 else
                 {
-                    return new BlobPipe(Path.Combine(workingDirectory, file), _assetDetails.Container, _assetDetails.DecryptInfo, _logger) as Pipe;
+                    var stream = new BlobSource(_assetDetails.Container, file, _assetDetails.DecryptInfo, _logger);
+                    return new SourcePipe(Path.Combine(workingDirectory, file), stream);
                 }
             }).ToArray();
         }
@@ -226,8 +228,10 @@ namespace AMSMigrate.Transform
                     filePath = Path.Combine(tempDirectory, file);
                 }
                 var multiFileStream = new MultiFileStream(_assetDetails.Container, track, _assetDetails.ClientManifest!, _assetDetails.DecryptInfo, _logger);
-                var source = new MultiFilePipe(file, multiFileStream);
-                await source.DownloadAsync(filePath, cancellationToken);
+                using (var stream = File.OpenWrite(filePath))
+                {
+                    await multiFileStream.DownloadAsync(stream, cancellationToken);
+                }
                 if (TranscodeAudio && track.Type == StreamType.Audio)
                 {
                     await Task.Run(() => _transMuxer.TranscodeAudioAsync(
