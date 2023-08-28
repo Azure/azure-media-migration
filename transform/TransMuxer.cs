@@ -88,65 +88,6 @@ namespace AMSMigrate.Transform
             public string Value => $"{_delay}:all=1";
         }
 
-        static void AddOffsetToTfdtBox(string fileName, ulong decodeTimeOffset)
-        {
-            using var stream = File.Open(fileName, FileMode.Open, FileAccess.ReadWrite);
-            var reader = new MP4Reader(stream);
-            var writer = new MP4Writer(stream);
-            stream.Position = 0;
-
-            while (stream.Position < stream.Length)
-            {
-                Int64 startPosition = reader.BaseStream.Position;
-                Int64 size = reader.ReadUInt32();   // size of current box
-                UInt32 type = reader.ReadUInt32();  // type of current box
-
-                // Parse extended size
-                if (size == 0)
-                {
-                    throw new InvalidDataException("Invalid size.");
-                }
-                else if (size == 1)
-                {
-                    size = reader.ReadInt64();
-                }
-
-                if (type == MP4BoxType.moof)
-                {
-                    stream.Position = startPosition; // rewind
-                    var moofBox = MP4BoxFactory.ParseSingleBox<moofBox>(reader);
-
-                    ulong offsetToTfdt = moofBox.ComputeBaseSizeBox();
-                    foreach (var c in moofBox.Children)
-                    {
-                        if (c.Type == MP4BoxType.traf)
-                        {
-                            offsetToTfdt += moofBox.ComputeBaseSizeBox();
-                            foreach (var cc in c.Children)
-                            {
-                                if (cc.Type == MP4BoxType.tfdt)
-                                {
-                                    tfdtBox tfdtBox = (tfdtBox)cc; // will throw
-                                    long tfdtPosition = startPosition + (long)offsetToTfdt;
-                                    tfdtBox.DecodeTime += decodeTimeOffset;
-                                    stream.Position = tfdtPosition;
-                                    tfdtBox.WriteTo(writer);
-                                    break;
-                                }
-                                offsetToTfdt += cc.Size.Value;
-                            }
-                        }
-                        else
-                        {
-                            offsetToTfdt += c.Size.Value;
-                        }
-                    }
-                }
-                //skip till the beginning of the next box.
-                stream.Position = startPosition + size;
-            }
-        }
-
         public class AudioResample : IAudioFilterArgument
         {
             public string Key { get; } = "aresample";
@@ -213,8 +154,6 @@ namespace AMSMigrate.Transform
                     await RunAsync(processor, cancellationToken);
                 }
             }
-            // FFmpeg will zero out tdft baseMediaDecodeTime, add it back in place.
-            AddOffsetToTfdtBox(destination, (ulong)transcodeAudioInfo.VideoStartTimeInAudioTimeScale);
         }
 
         private static List<ulong> GetDecodeMediaTime(string fileName)

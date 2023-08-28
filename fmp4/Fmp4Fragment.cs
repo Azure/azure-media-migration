@@ -164,8 +164,10 @@ namespace AMSMigrate.Fmp4
         /// <summary>
         /// Replace uuid box tfxd with tfdt, and remove tfxd as part of the replacement.
         /// </summary>
-        public void ReplaceTfxdWithTfdt()
+        public ulong ReplaceTfxdWithTfdt(bool firstTfdt, ulong startTfdt)
         {
+            ulong chunkDts = 0;
+
             var tfxdBox = Header.Track.Children.Where(b => b.ExtendedType == MP4BoxType.tfxd).SingleOrDefault() as tfxdBox;
 
             if (tfxdBox != null)
@@ -175,7 +177,7 @@ namespace AMSMigrate.Fmp4
 
                 var firstCts = Header.Track.TrackRun.Entries[0].SampleCompositionOffset;
 
-                var chunkDts = tfxdBox.FragmentTime;
+                chunkDts = tfxdBox.FragmentTime;
 
                 if (firstCts != null && firstCts.Value != 0)
                 {
@@ -197,7 +199,16 @@ namespace AMSMigrate.Fmp4
                 Header.Track.RemoveChildren((trafChild) =>
                 trafChild.ExtendedType == MP4BoxType.tfxd || trafChild.ExtendedType == MP4BoxType.tfrf);
 
-                var tfdt = new tfdtBox(chunkDts);
+                // zero base timestamp
+                if (firstTfdt)
+                {
+                    startTfdt = chunkDts;
+                }
+                if (chunkDts < startTfdt)
+                {
+                    throw new Exception("Unexpected: chunkDts < startTdft");
+                }
+                var tfdt = new tfdtBox(chunkDts - startTfdt);
 
                 // Put the tfdt box after the header box and before trun box,
                 // so index 1 is a good choose.
@@ -206,6 +217,8 @@ namespace AMSMigrate.Fmp4
                 // If the size of moof box is changed, the data offset in trun box needs to recompute.
                 ResetDataOffset();
             }
+
+            return chunkDts;
         }
 
         /// <summary>

@@ -19,6 +19,8 @@ namespace AMSMigrate.Pipes
         private readonly string _trackPrefix;
         private readonly bool _isCloseCaption;
         private readonly StorageEncryptedAssetDecryptionInfo? _decryptInfo;
+        private ulong _startingTfdt = 0; //
+        private bool _firstTfdt = true;
 
         public MultiFileStream(
             BlobContainerClient container,
@@ -123,7 +125,12 @@ namespace AMSMigrate.Pipes
 
                 var fragment = new Fmp4Fragment(moofBox, mdatBox);
 
-                fragment.ReplaceTfxdWithTfdt();
+                ulong tfdt = fragment.ReplaceTfxdWithTfdt(_firstTfdt, _startingTfdt);
+                if (_firstTfdt)
+                {
+                    _firstTfdt = false;
+                    _startingTfdt = tfdt;
+                }
 
                 fragment.WriteTo(mp4Writer);
             }
