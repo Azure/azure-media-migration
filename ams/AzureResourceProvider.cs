@@ -38,10 +38,11 @@ namespace AMSMigrate.Ams
 
         public async Task<BlobServiceClient> GetStorageAccountAsync(
             MediaServicesAccountResource account,
+            MediaAssetResource asset,
             CancellationToken cancellationToken)
         {
-            var storage = account.Data.StorageAccounts[0];
-            var resource = await _resourceGroup.GetStorageAccountAsync(storage.Id.Name, cancellationToken: cancellationToken);
+            string assetStorageAccountName = asset.Data.StorageAccountName;
+            var resource = await _resourceGroup.GetStorageAccountAsync(asset.Data.StorageAccountName, cancellationToken: cancellationToken);
             return GetStorageAccount(resource);
         }
 

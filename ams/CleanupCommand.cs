@@ -156,7 +156,7 @@ namespace AMSMigrate.Ams
             try
             {
 
-                var storage = await _resourceProvider.GetStorageAccountAsync(account, cancellationToken);
+                var storage = await _resourceProvider.GetStorageAccountAsync(account, asset,cancellationToken);
                 var container = storage.GetContainer(asset);
                 if (!await container.ExistsAsync(cancellationToken))
                 {
