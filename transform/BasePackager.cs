@@ -192,7 +192,7 @@ namespace AMSMigrate.Transform
                 if (tracks.Count == 1 && tracks[0].IsMultiFile)
                 {
                     var track = tracks[0];
-                    var multiFileStream = new MultiFileStream(_assetDetails.Container, track, _assetDetails.ClientManifest!, _assetDetails.DecryptInfo, _logger);
+                    var multiFileStream = new MultiFileStream(_assetDetails.Container, TranscodeAudioInfoData, track, _assetDetails.ClientManifest!, _assetDetails.DecryptInfo, _logger);
                     return new SourcePipe(file, multiFileStream);
                 }
                 else
@@ -227,7 +227,7 @@ namespace AMSMigrate.Transform
                 {
                     filePath = Path.Combine(tempDirectory, file);
                 }
-                var multiFileStream = new MultiFileStream(_assetDetails.Container, track, _assetDetails.ClientManifest!, _assetDetails.DecryptInfo, _logger);
+                var multiFileStream = new MultiFileStream(_assetDetails.Container, TranscodeAudioInfoData, track, _assetDetails.ClientManifest!, _assetDetails.DecryptInfo, _logger);
                 using (var stream = File.OpenWrite(filePath))
                 {
                     await multiFileStream.DownloadAsync(stream, cancellationToken);
