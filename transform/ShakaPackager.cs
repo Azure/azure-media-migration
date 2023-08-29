@@ -5,6 +5,13 @@ using System.Text.RegularExpressions;
 
 namespace AMSMigrate.Transform
 {
+    enum TextTrackRole
+    {
+        Main,
+        Alternate,
+        Supplementary
+    }
+
     internal class ShakaPackager : BasePackager
     {
         private readonly TaskCompletionSource<bool> _taskCompletionSource;
@@ -116,7 +123,8 @@ namespace AMSMigrate.Transform
         {
             const string DRM_LABEL = "cenc";
             var drm_label = _options.EncryptContent ? $",drm_label={DRM_LABEL}" : string.Empty;
-
+            var values = Enum.GetValues<TextTrackRole>();
+            var text_tracks = 0;
             List<string> arguments = new(SelectedTracks.Select((t, i) =>
             {
                 var source = t.Parameters.SingleOrDefault(p => p.Name == TRANSCRIPT_SOURCE)?.Value ?? t.Source;
@@ -128,8 +136,9 @@ namespace AMSMigrate.Transform
                     Path.Combine(Path.GetDirectoryName(inputs[index])!, $"{Path.GetFileNameWithoutExtension(file)}_{t.TrackID}{Path.GetExtension(file)}") :
                     inputs[index];
                 var stream = t.Type.ToString().ToLowerInvariant();
-                var language = string.IsNullOrEmpty(t.SystemLanguage) || t.SystemLanguage == "und" ? string.Empty : $"language={t.SystemLanguage},";
-                return $"stream={stream},in={inputFile},out={outputs[i]},{language}playlist_name={manifests[i]}{drm_label}";
+                var language = string.IsNullOrEmpty(t.SystemLanguage) || t.SystemLanguage == "und" ? string.Empty : $",language={t.SystemLanguage},";
+                var role = t is TextTrack ? $",dash_role={values[text_tracks++ % values.Length].ToString().ToLowerInvariant()}" : string.Empty;
+                return $"stream={stream},in={inputFile},out={outputs[i]},playlist_name={manifests[i]}{language}{drm_label}{role}";
             }));
             var dash = manifests[manifests.Count - 1];
             var hls = manifests[manifests.Count - 2];
