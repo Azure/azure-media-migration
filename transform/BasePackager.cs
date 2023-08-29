@@ -61,7 +61,8 @@ namespace AMSMigrate.Transform
 
         public static bool IsLiveTextTrackSupported(Track track, ClientManifest clientManifest)
         {
-            return track.IsMultiFile && 
+            return track.Source.EndsWith(VTT_FILE) ||
+                track.IsMultiFile && 
                 // Choose the text track with a list of fragblobs for close captions.
                 clientManifest!.Streams.Any(
                     stream => (stream.Type == StreamType.Text &&
