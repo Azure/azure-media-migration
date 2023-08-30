@@ -24,7 +24,7 @@ Visit https://learn.microsoft.com/en-us/azure/media-services/latest/filter-order
         };
 
         private readonly Option<bool> _isForceCleanUpAsset = new(
-          aliases: new[] {"--force-cleanup", "-x"},
+          aliases: new[] { "--force-cleanup", "-x" },
           () => false,
           description: @"Force the cleanup of the selected input assets no matter what migration status is.")
         {
@@ -32,7 +32,7 @@ Visit https://learn.microsoft.com/en-us/azure/media-services/latest/filter-order
         };
 
         private readonly Option<bool> _isCleanUpAccount = new(
-        aliases: new[] {"--cleanup-account", "-ax"},
+        aliases: new[] { "--cleanup-account", "-ax" },
         () => false,
         description: @"Delete the whole ams account.")
         {

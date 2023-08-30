@@ -107,16 +107,16 @@ namespace AMSMigrate.Ams
                     {
                         if (streamingEndpoint.Data.ResourceState == StreamingEndpointResourceState.Running)
                         {
-                            await streamingEndpoint.StopAsync(WaitUntil.Completed, cancellationToken : cancellationToken);
+                            await streamingEndpoint.StopAsync(WaitUntil.Completed, cancellationToken: cancellationToken);
                         }
-                        await streamingEndpoint.DeleteAsync(WaitUntil.Completed, cancellationToken : cancellationToken);
+                        await streamingEndpoint.DeleteAsync(WaitUntil.Completed, cancellationToken: cancellationToken);
                     }
                 }
                 if (policies != null)
                 {
                     foreach (var contentKeyPolicy in policies)
                     {
-                        await contentKeyPolicy.DeleteAsync(WaitUntil.Completed, cancellationToken : cancellationToken);
+                        await contentKeyPolicy.DeleteAsync(WaitUntil.Completed, cancellationToken: cancellationToken);
                     }
                 }
                 if (liveevents != null)
@@ -125,13 +125,13 @@ namespace AMSMigrate.Ams
                     {
                         if (liveEvent.Data.ResourceState == LiveEventResourceState.Running)
                         {
-                            await liveEvent.StopAsync(WaitUntil.Completed, new LiveEventActionContent() { RemoveOutputsOnStop = true }, cancellationToken : cancellationToken);
+                            await liveEvent.StopAsync(WaitUntil.Completed, new LiveEventActionContent() { RemoveOutputsOnStop = true }, cancellationToken: cancellationToken);
                         }
-                        await liveEvent.DeleteAsync(WaitUntil.Completed, cancellationToken : cancellationToken);
+                        await liveEvent.DeleteAsync(WaitUntil.Completed, cancellationToken: cancellationToken);
                     }
                 }
 
-                var deleteOperation = await account.DeleteAsync(WaitUntil.Completed, cancellationToken : cancellationToken);
+                var deleteOperation = await account.DeleteAsync(WaitUntil.Completed, cancellationToken: cancellationToken);
 
                 if (deleteOperation.HasCompleted && deleteOperation.GetRawResponse().Status == 200)
                 {
@@ -156,7 +156,7 @@ namespace AMSMigrate.Ams
             try
             {
 
-                var storage = await _resourceProvider.GetStorageAccountAsync(account, asset,cancellationToken);
+                var storage = await _resourceProvider.GetStorageAccountAsync(account, asset, cancellationToken);
                 var container = storage.GetContainer(asset);
                 if (!await container.ExistsAsync(cancellationToken))
                 {
@@ -172,14 +172,14 @@ namespace AMSMigrate.Ams
                     var locator = await account.GetStreamingLocatorAsync(asset, cancellationToken);
                     if (locator != null)
                     {
-                        await locator.DeleteAsync(WaitUntil.Completed, cancellationToken : cancellationToken);
+                        await locator.DeleteAsync(WaitUntil.Completed, cancellationToken: cancellationToken);
                     }
 
                     if (asset != null)
                     {
-                        await asset.DeleteAsync(WaitUntil.Completed, cancellationToken : cancellationToken);
+                        await asset.DeleteAsync(WaitUntil.Completed, cancellationToken: cancellationToken);
                     }
-                    await container.DeleteAsync(cancellationToken : cancellationToken);
+                    await container.DeleteAsync(cancellationToken: cancellationToken);
                     _logger.LogDebug("locator: {locator}, Migrated asset: {asset} , container: {container} are deleted.", locator?.Data.Name, asset?.Data.Name, container?.Name);
                     return true;
                 }

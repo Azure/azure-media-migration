@@ -47,9 +47,9 @@ namespace AMSMigrate.Ams
         /// </summary>
         public bool IsSupportedAsset(bool enableLiveAsset)
         {
-            return (AssetType != null && (AssetType == AssetType_NonIsm 
-                || AssetType == "fmp4" 
-                || AssetType.StartsWith("mp4") 
+            return (AssetType != null && (AssetType == AssetType_NonIsm
+                || AssetType == "fmp4"
+                || AssetType.StartsWith("mp4")
                 || (enableLiveAsset && AssetType == "vod-fmp4")));
         }
 
@@ -67,7 +67,7 @@ namespace AMSMigrate.Ams
         internal const string MigrateResultKey = "MigrateResult";
         internal const string ManifestNameKey = "ManifestName";
         internal const string OutputPathKey = "OutputPath";
-        
+
         public async Task<AssetMigrationResult> GetMigrationStatusAsync(BlobContainerClient container, CancellationToken cancellationToken)
         {
             BlobContainerProperties properties = await container.GetPropertiesAsync(cancellationToken: cancellationToken);
@@ -82,7 +82,7 @@ namespace AMSMigrate.Ams
             {
                 if (metadataList.TryGetValue(MigrateResultKey, out var value) && !string.IsNullOrEmpty(value))
                 {
-                    status = (MigrationStatus) Enum.Parse(typeof(MigrationStatus), value);
+                    status = (MigrationStatus)Enum.Parse(typeof(MigrationStatus), value);
                 }
 
                 metadataList.TryGetValue(AssetTypeKey, out assetType);

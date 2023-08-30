@@ -250,7 +250,7 @@ namespace AMSMigrate.Transform
                                 if (cc.Type == MP4BoxType.trun)
                                 {
                                     trunBox trunBox = (trunBox)cc; // will throw
-                                    trunBox.TrunFlags flag = (trunBox.TrunFlags) trunBox.Flags;
+                                    trunBox.TrunFlags flag = (trunBox.TrunFlags)trunBox.Flags;
                                     if ((flag & trunBox.TrunFlags.SampleDurationPresent) != trunBox.TrunFlags.SampleDurationPresent)
                                     {
                                         throw new InvalidDataException("Unexpected, sampleDurationPresent must be present");

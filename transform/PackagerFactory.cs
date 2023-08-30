@@ -9,8 +9,8 @@ namespace AMSMigrate.Transform
         private readonly ILoggerFactory _loggerFactory;
         private readonly TransMuxer _transMuxer;
 
-        public PackagerFactory(ILoggerFactory factory, MigratorOptions options) 
-        {          
+        public PackagerFactory(ILoggerFactory factory, MigratorOptions options)
+        {
             _loggerFactory = factory;
             _options = options;
             _transMuxer = new TransMuxer(options, _loggerFactory.CreateLogger<TransMuxer>());

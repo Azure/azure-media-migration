@@ -1,5 +1,4 @@
-﻿
-namespace AMSMigrate.Contracts
+﻿namespace AMSMigrate.Contracts
 {
     /// <summary>
     /// It holds the options for cleanup commands.

@@ -1,5 +1,4 @@
-﻿
-namespace AMSMigrate.Contracts
+﻿namespace AMSMigrate.Contracts
 {
     interface ICloudProvider
     {

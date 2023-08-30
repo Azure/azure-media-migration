@@ -1,5 +1,4 @@
-﻿
-namespace AMSMigrate.Contracts
+﻿namespace AMSMigrate.Contracts
 {
     class MigrationResult
     {
@@ -10,7 +9,7 @@ namespace AMSMigrate.Contracts
 
         public MigrationStatus Status { get; protected set; }
 
-        public static implicit operator MigrationResult(MigrationStatus status) 
+        public static implicit operator MigrationResult(MigrationStatus status)
             => new MigrationResult(status);
     }
 

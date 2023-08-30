@@ -67,7 +67,7 @@ namespace AMSMigrate.Ams
 
         public void WriteRow(AnalysisResult result)
         {
-            lock(this)
+            lock (this)
             {
                 _writer.Write($"<tr><td>{result.AssetName}</td><td>{result.AssetType}</td><td>{result.Status}</td><td>");
                 if (result.OutputPath != null)

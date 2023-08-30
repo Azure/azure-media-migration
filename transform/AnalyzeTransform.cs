@@ -14,6 +14,6 @@ namespace AMSMigrate.Transform
 
         public int Locators { get; internal set; }
 
-        public string AssetName { get; set; }        
+        public string AssetName { get; set; }
     }
 }

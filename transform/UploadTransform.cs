@@ -27,7 +27,7 @@ namespace AMSMigrate.Transform
             CancellationToken cancellationToken = default)
         {
             var (assetName, inputContainer, manifest, _, _, _) = details;
-            var inputBlobs = await inputContainer.GetListOfBlobsAsync(cancellationToken, manifest);            
+            var inputBlobs = await inputContainer.GetListOfBlobsAsync(cancellationToken, manifest);
 
             var uploads = inputBlobs.Select(async blob =>
                                     {

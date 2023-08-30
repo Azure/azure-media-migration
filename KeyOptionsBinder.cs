@@ -28,10 +28,10 @@ Visit https://learn.microsoft.com/en-us/azure/media-services/latest/filter-order
             description: @"The vault for migrating keys.
 Specific to the cloud you are migrating to.
 For Azure it is <https://valutname.azure.net>")
-                {
-                    IsRequired = true,
-                    Arity = ArgumentArity.ExactlyOne
-                };
+        {
+            IsRequired = true,
+            Arity = ArgumentArity.ExactlyOne
+        };
 
         private readonly Option<string?> _keyTemplate = new Option<string?>(
             aliases: new[] { "--vault-template", "-t" },
@@ -49,7 +49,8 @@ Can use ${KeyId} ${KeyName} in the template.")
 
         public KeyOptionsBinder()
         {
-            _keyTemplate.AddValidator(result => {
+            _keyTemplate.AddValidator(result =>
+            {
                 var value = result.GetValueOrDefault<string>();
                 if (!string.IsNullOrEmpty(value))
                 {

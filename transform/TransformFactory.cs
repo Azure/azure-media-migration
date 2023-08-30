@@ -18,14 +18,14 @@ namespace AMSMigrate.Transform
         {
             _loggerFactory = loggerFactory;
             _templateMapper = templateMapper;
-            _cloudProvider = cloudProvider;            
+            _cloudProvider = cloudProvider;
         }
 
         public IEnumerable<StorageTransform> GetTransforms(GlobalOptions globalOptions, MigratorOptions options)
         {
             var packagerFactory = new PackagerFactory(_loggerFactory, options);
             var uploader = GetUploader(options);
-            var transformCount  = 0;
+            var transformCount = 0;
             if (options.Packager != Packager.None)
             {
                 ++transformCount;
@@ -37,7 +37,7 @@ namespace AMSMigrate.Transform
                         _cloudProvider,
                         packagerFactory);
             }
-            
+
             if (options.CopyNonStreamable || options.Packager == Packager.None)
             {
                 ++transformCount;

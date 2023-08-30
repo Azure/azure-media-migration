@@ -33,7 +33,7 @@ namespace AMSMigrate.Transform
         protected readonly MigratorOptions _options;
         protected readonly TemplateMapper _templateMapper;
         protected readonly ILogger _logger;
-        protected readonly IFileUploader _fileUploader;     
+        protected readonly IFileUploader _fileUploader;
 
         public StorageTransform(
             GlobalOptions globalOptions,
@@ -80,7 +80,7 @@ namespace AMSMigrate.Transform
             else
             {
                 var format = details.Manifest != null ? details.Manifest.Format : "non_ism";
-                _logger.LogInformation("The asset {asset} with format {format} is not supported by transform {transform} in current version, try next transform...", 
+                _logger.LogInformation("The asset {asset} with format {format} is not supported by transform {transform} in current version, try next transform...",
                     details.AssetName,
                     format,
                     this.GetType().Name);

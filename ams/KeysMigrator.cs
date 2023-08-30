@@ -21,7 +21,7 @@ namespace AMSMigrate.Ams
             ILogger<KeysMigrator> logger,
             TemplateMapper templateMapper,
             ICloudProvider cloudProvider,
-            TokenCredential credential) : 
+            TokenCredential credential) :
             base(globalOptions, console, credential)
         {
             _logger = logger;
