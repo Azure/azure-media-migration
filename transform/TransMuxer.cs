@@ -94,11 +94,11 @@ namespace AMSMigrate.Transform
             public string Value => $"async=1";
         }
 
-        public async Task TranscodeAudioAsync(string source, string destination, TranscodeAudioInfo transcodeAudioInfo, CancellationToken cancellationToken)
+        public async Task ProcessLiveArchiveAudioAsync(string source, string destination, LiveArchiveStreamInfo liveArchiveInfo, CancellationToken cancellationToken)
         {
-            if (transcodeAudioInfo.AudioStartTime > transcodeAudioInfo.VideoStartTimeInAudioTimeScale)
+            if (liveArchiveInfo.AudioStartTime > liveArchiveInfo.VideoStartTimeInAudioTimeScale)
             {
-                long delayInMs = (transcodeAudioInfo.AudioStartTime - transcodeAudioInfo.VideoStartTimeInAudioTimeScale) * 1000 / transcodeAudioInfo.AudioTimeScale;
+                long delayInMs = (liveArchiveInfo.AudioStartTime - liveArchiveInfo.VideoStartTimeInAudioTimeScale) * 1000 / liveArchiveInfo.AudioTimeScale;
                 var processor = FFMpegArguments
                 .FromFileInput(source)
                 //.WithGlobalOptions(options => options.WithVerbosityLevel(FFMpegCore.Arguments.VerbosityLevel.Verbose))
@@ -107,7 +107,7 @@ namespace AMSMigrate.Transform
                 .WithAudioFilters(
                     audioFilterOptions =>
                     {
-                        if (transcodeAudioInfo.AudioStreamHasDiscontinuities)
+                        if (liveArchiveInfo.AudioStreamHasDiscontinuities)
                         {
                             audioFilterOptions.Arguments.Add(new AudioResample());
                         }
@@ -119,11 +119,11 @@ namespace AMSMigrate.Transform
                 .WithCustomArgument("-movflags cmaf"));
                 await RunAsync(processor, cancellationToken);
             }
-            else if (transcodeAudioInfo.AudioStartTime <= transcodeAudioInfo.VideoStartTimeInAudioTimeScale)
+            else if (liveArchiveInfo.AudioStartTime <= liveArchiveInfo.VideoStartTimeInAudioTimeScale)
             {
-                if (transcodeAudioInfo.AudioStreamHasDiscontinuities)
+                if (liveArchiveInfo.AudioStreamHasDiscontinuities)
                 {
-                    long trimInMs = (transcodeAudioInfo.VideoStartTimeInAudioTimeScale - transcodeAudioInfo.AudioStartTime) * 1000 / transcodeAudioInfo.AudioTimeScale;
+                    long trimInMs = (liveArchiveInfo.VideoStartTimeInAudioTimeScale - liveArchiveInfo.AudioStartTime) * 1000 / liveArchiveInfo.AudioTimeScale;
                     var processor = FFMpegArguments
                     .FromFileInput(source, false, opt => opt.Seek(TimeSpan.FromMilliseconds(trimInMs)))
                     //.WithGlobalOptions(options => options.WithVerbosityLevel(FFMpegCore.Arguments.VerbosityLevel.Verbose))
@@ -142,7 +142,7 @@ namespace AMSMigrate.Transform
                 }
                 else
                 {
-                    double trim = (transcodeAudioInfo.VideoStartTimeInAudioTimeScale - transcodeAudioInfo.AudioStartTime) * 1000.0 / transcodeAudioInfo.AudioTimeScale;
+                    double trim = (liveArchiveInfo.VideoStartTimeInAudioTimeScale - liveArchiveInfo.AudioStartTime) * 1000.0 / liveArchiveInfo.AudioTimeScale;
                     var processor = FFMpegArguments
                     .FromFileInput(source, false, opt => opt.Seek(TimeSpan.FromMilliseconds(trim)))
                     //.WithGlobalOptions(options => options.WithVerbosityLevel(FFMpegCore.Arguments.VerbosityLevel.Verbose))
@@ -290,7 +290,7 @@ namespace AMSMigrate.Transform
             }
         }
 
-        public void TranscodeVideo(string destination)
+        public void ProcessLiveArchiveVideo(string destination)
         {
             UpdateTrackRunDuration(destination);
         }

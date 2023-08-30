@@ -7,7 +7,7 @@ using System.Diagnostics;
 
 namespace AMSMigrate.Transform
 {
-    public record TranscodeAudioInfo
+    public record LiveArchiveStreamInfo
     {
         public long VideoStartTime { get; set; } = 0;
         public long VideoTimeScale { get; set; } = 0;
@@ -46,11 +46,13 @@ namespace AMSMigrate.Transform
 
         public bool TransmuxedSmooth { get; protected set; }
 
-        public bool TranscodeAudio { get; protected set; }
+        public bool ProcessLiveArchiveAudio { get; protected set; }
 
-        public bool TranscodeVideo { get; protected set; }
+        public bool ProcessLiveArchiveVideo { get; protected set; }
 
-        public TranscodeAudioInfo TranscodeAudioInfoData { get; protected set; } = new();
+        public bool ProcessLiveArchiveVTT { get; protected set; }
+
+        public LiveArchiveStreamInfo LiveArchiveStreamInfoData { get; protected set; } = new();
 
         public IDictionary<string, IList<Track>> FileToTrackMap => _fileToTrackMap;
 
@@ -193,7 +195,7 @@ namespace AMSMigrate.Transform
                 if (tracks.Count == 1 && tracks[0].IsMultiFile)
                 {
                     var track = tracks[0];
-                    var multiFileStream = new MultiFileStream(_assetDetails.Container, TranscodeAudioInfoData, track, _assetDetails.ClientManifest!, _assetDetails.DecryptInfo, _logger);
+                    var multiFileStream = new MultiFileStream(_assetDetails.Container, LiveArchiveStreamInfoData, track, _assetDetails.ClientManifest!, _assetDetails.DecryptInfo, _logger);
                     return new SourcePipe(file, multiFileStream);
                 }
                 else
@@ -224,44 +226,48 @@ namespace AMSMigrate.Transform
                 var filePath = Path.Combine(workingDirectory, file);
                 var track = tracks[0];
 
-                if (TranscodeAudio && track.Type == StreamType.Audio)
+                if (ProcessLiveArchiveAudio && track.Type == StreamType.Audio)
                 {
                     filePath = Path.Combine(tempDirectory, file);
                 }
-                var multiFileStream = new MultiFileStream(_assetDetails.Container, TranscodeAudioInfoData, track, _assetDetails.ClientManifest!, _assetDetails.DecryptInfo, _logger);
+                var multiFileStream = new MultiFileStream(_assetDetails.Container, LiveArchiveStreamInfoData, track, _assetDetails.ClientManifest!, _assetDetails.DecryptInfo, _logger);
                 using (var stream = File.OpenWrite(filePath))
                 {
                     await multiFileStream.DownloadAsync(stream, cancellationToken);
                 }
-                if (TranscodeAudio && track.Type == StreamType.Audio)
+                if (ProcessLiveArchiveAudio && track.Type == StreamType.Audio)
                 {
-                    await Task.Run(() => _transMuxer.TranscodeAudioAsync(
+                    await Task.Run(() => _transMuxer.ProcessLiveArchiveAudioAsync(
                         filePath,
                         Path.Combine(workingDirectory, Path.GetFileName(filePath)),
-                        TranscodeAudioInfoData,
+                        LiveArchiveStreamInfoData,
                         cancellationToken));
                 }
-                if (TranscodeVideo && track.Type == StreamType.Video)
+                if (ProcessLiveArchiveVideo && track.Type == StreamType.Video)
                 {
-                    _transMuxer.TranscodeVideo(filePath);
+                    _transMuxer.ProcessLiveArchiveVideo(filePath);
                 }
             }
-            else
+            else if (TransmuxedSmooth)
             {
-                var filePath = Path.Combine(TransmuxedSmooth ? tempDirectory : workingDirectory, file);
+                var filePath = Path.Combine(tempDirectory, file);
                 var blob = _assetDetails.Container.GetBlockBlobClient(file);
                 var source = new BlobSource(blob, _assetDetails.DecryptInfo, _logger);
                 await source.DownloadAsync(filePath, cancellationToken);
-                if (TransmuxedSmooth)
+                await Task.WhenAll(tracks.Select(async track =>
                 {
-                    await Task.WhenAll(tracks.Select(async track =>
-                    {
-                        using var sourceFile = File.OpenRead(filePath);
-                        var filename = tracks.Count == 1 ? file : $"{Path.GetFileNameWithoutExtension(file)}_{track.TrackID}{Path.GetExtension(file)}";
-                        using var destFile = File.OpenWrite(Path.Combine(workingDirectory, filename));
-                        await Task.Run(() => _transMuxer.TransmuxSmooth(sourceFile, destFile, track.TrackID));
-                    }));
-                }
+                    using var sourceFile = File.OpenRead(filePath);
+                    var filename = tracks.Count == 1 ? file : $"{Path.GetFileNameWithoutExtension(file)}_{track.TrackID}{Path.GetExtension(file)}";
+                    using var destFile = File.OpenWrite(Path.Combine(workingDirectory, filename));
+                    await Task.Run(() => _transMuxer.TransmuxSmooth(sourceFile, destFile, track.TrackID));
+                }));
+            }
+            else
+            {
+                var filePath = Path.Combine(workingDirectory, file);
+                var blob = _assetDetails.Container.GetBlockBlobClient(file);
+                var source = new BlobSource(blob, _assetDetails.DecryptInfo, _logger);
+                await source.DownloadAsync(filePath, cancellationToken);
             }
         }
     }

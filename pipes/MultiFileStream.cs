@@ -22,11 +22,11 @@ namespace AMSMigrate.Pipes
         private readonly StorageEncryptedAssetDecryptionInfo? _decryptInfo;
         private ulong _startingTfdt = 0;
         private bool _firstTfdt = true;
-        private readonly TranscodeAudioInfo _transcodeAudioInfo;
+        private readonly LiveArchiveStreamInfo _liveArchiveStreamInfo;
 
         public MultiFileStream(
             BlobContainerClient container,
-            TranscodeAudioInfo transcodeAudioInfo,
+            LiveArchiveStreamInfo liveArchiveStreamInfo,
             Track track,
             ClientManifest manifest,
             StorageEncryptedAssetDecryptionInfo? decryptInfo,
@@ -37,7 +37,7 @@ namespace AMSMigrate.Pipes
             (_track, _) = manifest.GetStream(track);
             _trackPrefix = track.Source;
             _decryptInfo = decryptInfo;
-            _transcodeAudioInfo = transcodeAudioInfo;
+            _liveArchiveStreamInfo = liveArchiveStreamInfo;
 
             _isCloseCaption = _track.Type == StreamType.Text && _track.SubType == "SUBT";
         }
@@ -187,7 +187,7 @@ namespace AMSMigrate.Pipes
             var ttmlText = mdatBox.SampleData;
             try
             {
-                long offsetInMs = _transcodeAudioInfo.VideoStartTime * 1000 / _transcodeAudioInfo.VideoTimeScale;
+                long offsetInMs = _liveArchiveStreamInfo.VideoStartTime * 1000 / _liveArchiveStreamInfo.VideoTimeScale;
                 // Call API to convert ttmlText to VTT text.
                 var vttText = VttConverter.ConvertTTMLtoVTT(ttmlText, offsetInMs);
 

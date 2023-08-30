@@ -82,34 +82,35 @@ namespace AMSMigrate.Transform
 
                     if (numAudioStreams == 1 && numVideoStreams == 1 && audioStream != null && videoStream != null)
                     {
-                        TranscodeAudioInfoData.AudioStartTime = audioStream.GetStartTimeStamp();
-                        TranscodeAudioInfoData.AudioTimeScale = audioStream.TimeScale;
-                        TranscodeAudioInfoData.AudioStreamHasDiscontinuities = audioStream.HasDiscontinuities();
+                        LiveArchiveStreamInfoData.AudioTimeScale = audioStream.TimeScale;
+                        LiveArchiveStreamInfoData.AudioStreamHasDiscontinuities = audioStream.HasDiscontinuities();
 
-                        TranscodeAudioInfoData.VideoStartTime = videoStream.GetStartTimeStamp();
-                        TranscodeAudioInfoData.VideoTimeScale = videoStream.TimeScale;
-                        TranscodeAudioInfoData.VideoStartTimeInAudioTimeScale = TranscodeAudioInfoData.VideoStartTime * TranscodeAudioInfoData.AudioTimeScale / TranscodeAudioInfoData.VideoTimeScale;
+                        LiveArchiveStreamInfoData.VideoStartTime = videoStream.GetStartTimeStamp();
+                        LiveArchiveStreamInfoData.VideoTimeScale = videoStream.TimeScale;
+                        LiveArchiveStreamInfoData.VideoStartTimeInAudioTimeScale = LiveArchiveStreamInfoData.VideoStartTime * LiveArchiveStreamInfoData.AudioTimeScale / LiveArchiveStreamInfoData.VideoTimeScale;
 
-                        _logger.LogDebug("Audio start time: {time}, audio time scale: {timeScale}, audio discontinuity: {flag}", TranscodeAudioInfoData.AudioStartTime,
-                            TranscodeAudioInfoData.AudioTimeScale, TranscodeAudioInfoData.AudioStreamHasDiscontinuities);
-                        _logger.LogDebug("Video start time: {time}, video time scale: {timeScale}", TranscodeAudioInfoData.VideoStartTime, TranscodeAudioInfoData.VideoTimeScale);
-                        _logger.LogDebug("video start time in audio time scale: {time}", TranscodeAudioInfoData.VideoStartTimeInAudioTimeScale);
+                        _logger.LogDebug("Audio start time: {time}, audio time scale: {timeScale}, audio discontinuity: {flag}", LiveArchiveStreamInfoData.AudioStartTime,
+                            LiveArchiveStreamInfoData.AudioTimeScale, LiveArchiveStreamInfoData.AudioStreamHasDiscontinuities);
+                        _logger.LogDebug("Video start time: {time}, video time scale: {timeScale}", LiveArchiveStreamInfoData.VideoStartTime, LiveArchiveStreamInfoData.VideoTimeScale);
+                        _logger.LogDebug("video start time in audio time scale: {time}", LiveArchiveStreamInfoData.VideoStartTimeInAudioTimeScale);
 
-                        if (Math.Abs(TranscodeAudioInfoData.AudioStartTime - TranscodeAudioInfoData.VideoStartTimeInAudioTimeScale) <= 0.1 * TranscodeAudioInfoData.AudioTimeScale
-                            && !TranscodeAudioInfoData.AudioStreamHasDiscontinuities)
+                        if (Math.Abs(LiveArchiveStreamInfoData.AudioStartTime - LiveArchiveStreamInfoData.VideoStartTimeInAudioTimeScale) <= 0.1 * LiveArchiveStreamInfoData.AudioTimeScale
+                            && !LiveArchiveStreamInfoData.AudioStreamHasDiscontinuities)
                         {
-                            TranscodeAudio = false;
+                            ProcessLiveArchiveAudio = false;
                         }
                         else
                         {
                             _logger.LogDebug("video / audio tracks start time not within 0.1 sec or audio stream has discontinuities, transcode required");
-                            TranscodeAudio = true;
+                            ProcessLiveArchiveAudio = true;
                         }
 
                         if (videoStream.HasDiscontinuities())
                         {
-                            TranscodeVideo = true;
+                            ProcessLiveArchiveVideo = true;
                         }
+
+                        ProcessLiveArchiveVTT = true;
                     }
                 }
             }
