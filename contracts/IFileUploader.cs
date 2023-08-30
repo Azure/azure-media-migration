@@ -1,5 +1,4 @@
-﻿
-namespace AMSMigrate.Contracts
+﻿namespace AMSMigrate.Contracts
 {
     public record Headers(string? ContentType);
 
@@ -20,7 +19,7 @@ namespace AMSMigrate.Contracts
             CancellationToken cancellationToken);
 
         Task<bool> CanUploadAsync(
-            string containerName, 
+            string containerName,
             string outputPath,
             CancellationToken cancellationToken);
 

@@ -35,8 +35,8 @@ namespace AMSMigrate.Transform
             {
                 return false;
             }
-            return details.Manifest.Format.StartsWith("mp4") 
-                || details.Manifest.Format.Equals("fmp4") 
+            return details.Manifest.Format.StartsWith("mp4")
+                || details.Manifest.Format.Equals("fmp4")
                 || (_globalOptions.EnableLiveAsset && details.Manifest.Format == "vod-fmp4");
         }
 
@@ -58,7 +58,7 @@ namespace AMSMigrate.Transform
         {
             var (assetName, container, manifest, clientManifest, outputManifest, decryptor) = details;
             if (manifest == null) throw new ArgumentNullException(nameof(manifest));
-            
+
             // create a linked source which when disposed cancels all tasks.
             using var source = CancellationTokenSource.CreateLinkedTokenSource(cancellationToken);
             cancellationToken = source.Token;

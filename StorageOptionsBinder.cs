@@ -25,7 +25,7 @@ For Azure specify the storage account name or the URL <https://accountname.blob.
             Arity = ArgumentArity.ExactlyOne
         };
 
-        private readonly Option<string?> _pathTemplate = new (
+        private readonly Option<string?> _pathTemplate = new(
             aliases: new[] { "--path-template", "-t" },
             () => "ams-migration-output/${ContainerName}/",
             description: @"Path template to determine the final path in the storage where files are uploaded.
@@ -111,7 +111,8 @@ if it is not set, use input asset's manifest name.")
                 }
             });
 
-            _pathTemplate.AddValidator(result => {
+            _pathTemplate.AddValidator(result =>
+            {
                 var value = result.GetValueOrDefault<string>();
                 if (!string.IsNullOrEmpty(value))
                 {
@@ -148,11 +149,11 @@ if it is not set, use input asset's manifest name.")
             var workingDirectory = bindingContext.ParseResult.GetValueForOption(_workingDirectory)!;
             Directory.CreateDirectory(workingDirectory);
             return new StorageOptions(
-                bindingContext.ParseResult.GetValueForOption(_sourceAccount)!,               
+                bindingContext.ParseResult.GetValueForOption(_sourceAccount)!,
                 bindingContext.ParseResult.GetValueForOption(_storageAccount)!,
                 bindingContext.ParseResult.GetValueForOption(_packagerType),
                 bindingContext.ParseResult.GetValueForOption(_pathTemplate)!,
-                bindingContext.ParseResult.GetValueForOption(_outputManifest)!,                
+                bindingContext.ParseResult.GetValueForOption(_outputManifest)!,
                 bindingContext.ParseResult.GetValueForOption(_prefix),
                 workingDirectory,
                 bindingContext.ParseResult.GetValueForOption(_copyNonStreamable),

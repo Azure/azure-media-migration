@@ -46,9 +46,9 @@ namespace AMSMigrate.Ams
             return GetStorageAccount(resource);
         }
 
-        public async Task<(BlobServiceClient, ResourceIdentifier)> GetStorageAccount(string storageAccountName,CancellationToken cancellationToken)
+        public async Task<(BlobServiceClient, ResourceIdentifier)> GetStorageAccount(string storageAccountName, CancellationToken cancellationToken)
         {
-            StorageAccountResource storage = 
+            StorageAccountResource storage =
                 await _resourceGroup.GetStorageAccountAsync(storageAccountName, cancellationToken: cancellationToken);
             return (GetStorageAccount(storage), storage.Id);
         }

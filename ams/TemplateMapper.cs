@@ -19,10 +19,10 @@ namespace AMSMigrate.Ams
 
         private static readonly IDictionary<TemplateType, string[]> Keys = new Dictionary<TemplateType, string[]>
         {
-            { 
+            {
                 TemplateType.Containers, new [] {
                     "ContainerName"
-                } 
+                }
             },
             {
                 TemplateType.Assets, new [] {
@@ -131,9 +131,9 @@ namespace AMSMigrate.Ams
                         return asset.Data.Container;
                     case "AlternateId":
                         return asset.Data.AlternateId ?? asset.Data.Name;
-                    // case "LocatorId":
-                    //    var locatorId = GetLocatorIdAsync(asset).Result;
-                    //    return locatorId;
+                        // case "LocatorId":
+                        //    var locatorId = GetLocatorIdAsync(asset).Result;
+                        //    return locatorId;
                 }
                 return null;
             });
@@ -164,9 +164,10 @@ namespace AMSMigrate.Ams
             });
         }
 
-        public string ExpandKeyUriTemplate(string uriTemplate, string  keyId)
+        public string ExpandKeyUriTemplate(string uriTemplate, string keyId)
         {
-            return ExpandTemplate(uriTemplate, key => key switch {
+            return ExpandTemplate(uriTemplate, key => key switch
+            {
                 "KeyId" => keyId,
                 _ => null
             });

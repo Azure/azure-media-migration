@@ -2,7 +2,7 @@
 {
     public record AssetOptions(
         string AccountName,
-        string StoragePath,        
+        string StoragePath,
         Packager Packager,
         string PathTemplate,
         string OutputManifest,
@@ -26,7 +26,7 @@
             WorkingDirectory,
             CopyNonStreamable,
             OverWrite,
-            SkipMigrated, 
+            SkipMigrated,
             BreakOutputLease,
             KeepWorkingFolder,
             SegmentDuration,

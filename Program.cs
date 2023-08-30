@@ -85,7 +85,7 @@ This command will forcibly revert migrated assets that have failed back to their
             resetCommand.SetHandler(
                 async context =>
                 {
-                    var resetOptions =resetOptionsBinder.GetValue(context.BindingContext);
+                    var resetOptions = resetOptionsBinder.GetValue(context.BindingContext);
                     await ResetAsync(context, resetOptions, context.GetCancellationToken());
                 });
 

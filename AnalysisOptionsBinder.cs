@@ -46,9 +46,9 @@ Visit https://learn.microsoft.com/en-us/azure/media-services/latest/filter-order
 Summary - Summary of migration
 Detailed - A detailed classification of assets,
 Report - A migration report")
-            {
-                IsRequired = false
-            };
+        {
+            IsRequired = false
+        };
 
         const int DefaultBatchSize = 5;
         private readonly Option<int> _batchSize = new(

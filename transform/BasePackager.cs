@@ -62,7 +62,7 @@ namespace AMSMigrate.Transform
         public static bool IsLiveTextTrackSupported(Track track, ClientManifest clientManifest)
         {
             return track.Source.EndsWith(VTT_FILE) ||
-                track.IsMultiFile && 
+                track.IsMultiFile &&
                 // Choose the text track with a list of fragblobs for close captions.
                 clientManifest!.Streams.Any(
                     stream => (stream.Type == StreamType.Text &&
@@ -236,7 +236,7 @@ namespace AMSMigrate.Transform
                 if (TranscodeAudio && track.Type == StreamType.Audio)
                 {
                     await Task.Run(() => _transMuxer.TranscodeAudioAsync(
-                        filePath, 
+                        filePath,
                         Path.Combine(workingDirectory, Path.GetFileName(filePath)),
                         TranscodeAudioInfoData,
                         cancellationToken));

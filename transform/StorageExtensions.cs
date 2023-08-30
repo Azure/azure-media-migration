@@ -89,7 +89,7 @@ namespace AMSMigrate.Transform
                         await blob.DownloadStreamingAsync(cancellationToken: cancellationToken);
 
                 ismcStream = result.Content;
-            }            
+            }
 
             return ClientManifest.Parse(ismcStream, blob.Name, logger);
         }
@@ -121,7 +121,7 @@ namespace AMSMigrate.Transform
                     await blobClient.DownloadStreamingAsync(cancellationToken: cancellationToken);
 
                 ismStream = result.Content;
-            }            
+            }
 
             return Manifest.Parse(ismStream, manifestName, logger); ;
         }

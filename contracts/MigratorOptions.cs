@@ -5,7 +5,7 @@
     /// </summary>
     public record MigratorOptions(
         string AccountName,
-        string StoragePath,        
+        string StoragePath,
         Packager Packager,
         string PathTemplate,
         string OutputManifest,

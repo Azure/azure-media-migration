@@ -49,7 +49,7 @@ namespace AMSMigrate.Pipes
             {
                 _logger.LogDebug("Begin downloading track: {name}", _trackPrefix);
 
-                BlockBlobClient blob;           
+                BlockBlobClient blob;
 
                 if (!_isCloseCaption)
                 {
@@ -96,7 +96,7 @@ namespace AMSMigrate.Pipes
             }
             catch (Exception ex)
             {
-                _logger.LogError("Failed to download chunk {chunkName} for live stream: {name}. Error: {ex}", chunkName, _trackPrefix , ex);
+                _logger.LogError("Failed to download chunk {chunkName} for live stream: {name}. Error: {ex}", chunkName, _trackPrefix, ex);
                 throw;
             }
         }
@@ -189,7 +189,7 @@ namespace AMSMigrate.Pipes
             {
                 long offsetInMs = _transcodeAudioInfo.VideoStartTime * 1000 / _transcodeAudioInfo.VideoTimeScale;
                 // Call API to convert ttmlText to VTT text.
-                var vttText = TtmlToVttConverter.Convert(ttmlText, offsetInMs);
+                var vttText = VttConverter.ConvertTTMLtoVTT(ttmlText, offsetInMs);
 
                 if (vttText != null)
                 {
@@ -208,7 +208,7 @@ namespace AMSMigrate.Pipes
 
         private async Task DownloadClearBlobContent(BlockBlobClient sourceBlob, Stream outputStream, CancellationToken cancellationToken)
         {
-            using var tmpStream = new MemoryStream();            
+            using var tmpStream = new MemoryStream();
 
             using var aesTransform = AssetDecryptor.GetAesCtrTransform(_decryptInfo, _trackPrefix, true);
 
@@ -260,7 +260,7 @@ namespace AMSMigrate.Pipes
                     // Generate cmaf fragment from the input stream.
                     GenerateCmafFragment(boxes, writer);
                 }
-             }
+            }
 
             writer.Flush();
             generatedStream.Position = 0; // Rewind stream

@@ -16,7 +16,7 @@ namespace AMSMigrate
 
         private readonly Option<string> _category = new Option<string>(
            aliases: new[] { "--category", "-c" },
-           ()=>"all",
+           () => "all",
            description: "Define two categories: \"all\" and \"failed\". The \"all\" category encompasses a complete reset of all assets within the account, regardless of their migration status. By default, this parameter is set to \"all\". The \"failed\" category exclusively pertains to resetting only those assets that have encountered migration failures, reverting them back to their non-migrated state.")
         {
             IsRequired = false

@@ -2,7 +2,10 @@
 using System.Text.RegularExpressions;
 using System.Xml;
 
-public static class TtmlToVttConverter
+
+namespace AMSMigrate.Transform;
+
+public static class VttConverter
 {
 
     private static ulong ParseVTTTimestampInMs(string timestamp)
@@ -51,7 +54,7 @@ public static class TtmlToVttConverter
         return $"00:{m:00}:{s:00}.{ms:000}";
     }
 
-    public static byte[]? Convert(byte[]? ttmlText, long offsetInMs)
+    public static byte[]? ConvertTTMLtoVTT(byte[]? ttmlText, long offsetInMs)
     {
         if (ttmlText == null)
         {

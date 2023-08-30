@@ -5,7 +5,7 @@
     /// </summary>
     public record CleanupOptions(
       string AccountName,
-      string? ResourceFilter, 
+      string? ResourceFilter,
       bool IsForceCleanUpAsset,
       bool IsCleanUpAccount
     );

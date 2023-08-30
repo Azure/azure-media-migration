@@ -88,7 +88,7 @@ namespace AMSMigrate.Ams
                 .StartAsync(async context =>
                 {
                     chart.AddItems(GetItems(new AssetStats()));
-                    await foreach(var value in stats.ReadAllAsync())
+                    await foreach (var value in stats.ReadAllAsync())
                     {
                         BarChartItem[] items = GetItems(value);
                         chart.Data.Clear();
@@ -136,9 +136,9 @@ namespace AMSMigrate.Ams
                 _logger.LogDebug("Container: {name} holds the migrated data.", container.Name);
                 result.Status = MigrationStatus.Skipped;
                 return result;
-            }            
+            }
 
-            var assetDetails = await containerClient.GetDetailsAsync(_logger, cancellationToken, _storageOptions.OutputManifest);            
+            var assetDetails = await containerClient.GetDetailsAsync(_logger, cancellationToken, _storageOptions.OutputManifest);
 
             // AssetType and ManifestName are not supposed to change for a specific input asset,
             // Set AssetType and manifest from the input container before doing the actual transforming.
@@ -207,12 +207,12 @@ namespace AMSMigrate.Ams
 
                 _logger.LogWarning("Skipping container {name} because it is not in a supported format!!!", container.Name);
             }
-            
+
             await _tracker.UpdateMigrationStatus(containerClient, result, cancellationToken);
 
             return result;
         }
-        
+
         private async Task<AssetStats> MigrateAsync(
             BlobServiceClient storageClient,
             AsyncPageable<BlobContainerItem> containers,

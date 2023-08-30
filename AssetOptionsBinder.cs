@@ -25,7 +25,7 @@ For Azure specify the storage account name or the URL <https://accountname.blob.
             Arity = ArgumentArity.ExactlyOne
         };
 
-        private readonly Option<string?> _pathTemplate = new (
+        private readonly Option<string?> _pathTemplate = new(
             aliases: new[] { "--path-template", "-t" },
             () => "ams-migration-output/${ContainerName}/",
             description: @"Path template to determine the final path in the storage where files are uploaded.
@@ -122,13 +122,13 @@ Visit https://learn.microsoft.com/en-us/azure/media-services/latest/filter-order
             () => DefaultBatchSize,
             description: @"Batch size for parallel processing.");
 
-        private readonly Option<bool> _encryptContent = new (
+        private readonly Option<bool> _encryptContent = new(
             aliases: new[] { "-e", "--encrypt-content" },
             () => false,
             description: "Encrypt the content  using CENC"
             );
 
-        private readonly Option<Uri?> _keyVaultUri = new (
+        private readonly Option<Uri?> _keyVaultUri = new(
             aliases: new[] { "--key-vault-uri" },
             description: "The key vault to store encryption keys."
             );

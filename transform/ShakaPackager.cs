@@ -46,7 +46,8 @@ namespace AMSMigrate.Transform
             }
             else if (manifest.Format == "vod-fmp4")
             {
-                if (assetDetails.ClientManifest != null) {
+                if (assetDetails.ClientManifest != null)
+                {
                     var clientManifest = assetDetails.ClientManifest!;
 
                     MediaStream? audioStream = null;
@@ -132,7 +133,7 @@ namespace AMSMigrate.Transform
                 var file = $"{source}{ext}";
                 var index = Inputs.IndexOf(file);
                 var multiTrack = TransmuxedSmooth && FileToTrackMap[file].Count > 1;
-                var inputFile = multiTrack ? 
+                var inputFile = multiTrack ?
                     Path.Combine(Path.GetDirectoryName(inputs[index])!, $"{Path.GetFileNameWithoutExtension(file)}_{t.TrackID}{Path.GetExtension(file)}") :
                     inputs[index];
                 var stream = t.Type.ToString().ToLowerInvariant();
@@ -185,7 +186,7 @@ namespace AMSMigrate.Transform
             CancellationToken cancellationToken)
         {
             var arguments = GetArguments(inputs, outputs, manifests);
-            var process = StartProcess(Packager, arguments, 
+            var process = StartProcess(Packager, arguments,
                 process =>
                 {
                     if (process.ExitCode == 0)
@@ -214,7 +215,7 @@ namespace AMSMigrate.Transform
             { "VERBOSE2", LogLevel.Trace },
         };
 
-        private void LogStandardError(string? line )
+        private void LogStandardError(string? line)
         {
             if (line != null)
             {

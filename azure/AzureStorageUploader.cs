@@ -23,7 +23,7 @@ namespace AMSMigrate.Azure
 
         public AzureStorageUploader(
             MigratorOptions options,
-            TokenCredential credential, 
+            TokenCredential credential,
             ILogger<AzureStorageUploader> logger)
         {
             _options = options;
@@ -156,7 +156,7 @@ namespace AMSMigrate.Azure
             var retryForAcquire = false;
 
             var lockBlob = await GetLockBlobAsync(containerName, outputPath, cancellationToken);
-            var leaseClient = lockBlob.GetBlobLeaseClient(_leaseId);            
+            var leaseClient = lockBlob.GetBlobLeaseClient(_leaseId);
 
             do
             {
@@ -170,7 +170,7 @@ namespace AMSMigrate.Azure
                     // list of metadata with the current LeaseId.
                     await lockBlob.SetMetadataAsync(
                                      new Dictionary<string, string>(),
-                                     new BlobRequestConditions() { LeaseId = _leaseId }, 
+                                     new BlobRequestConditions() { LeaseId = _leaseId },
                                      cancellationToken);
 
                     // Remove old media files that might be uploaded by other migrator tool
@@ -178,7 +178,7 @@ namespace AMSMigrate.Azure
 
                     var container = _blobServiceClient.GetBlobContainerClient(containerName);
 
-                    var blobItems = await container.GetBlobsAsync(prefix: outputPath, 
+                    var blobItems = await container.GetBlobsAsync(prefix: outputPath,
                                                         cancellationToken: cancellationToken
                                                        ).ToListAsync();
 
