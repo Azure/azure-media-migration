@@ -82,6 +82,7 @@ namespace AMSMigrate.Transform
 
                     if (numAudioStreams == 1 && numVideoStreams == 1 && audioStream != null && videoStream != null)
                     {
+                        LiveArchiveStreamInfoData.AudioStartTime = audioStream.GetStartTimeStamp();
                         LiveArchiveStreamInfoData.AudioTimeScale = audioStream.TimeScale;
                         LiveArchiveStreamInfoData.AudioStreamHasDiscontinuities = audioStream.HasDiscontinuities();
 
