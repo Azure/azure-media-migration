@@ -1,4 +1,5 @@
-﻿using System.Text;
+﻿using Microsoft.Extensions.Logging;
+using System.Text;
 using System.Text.RegularExpressions;
 using System.Xml;
 
@@ -242,6 +243,127 @@ public static class VttConverter
                     strCueSize = pszTmp;
                 }
             }
+        }
+    }
+
+    static private List<string> GetVTTBlock(StreamReader src)
+    {
+        List<string> block = new();
+        string? line;
+
+        bool skipStartingLineTerminator = true;
+        while ((line = src.ReadLine()) != null)
+        {
+            if (skipStartingLineTerminator)
+            {
+                if (String.IsNullOrEmpty(line))
+                {
+                    continue;
+                }
+                skipStartingLineTerminator = false;
+            }
+
+            if (String.IsNullOrEmpty(line))
+            {
+                break;
+            }
+            block.Add(line);
+        }
+
+        return block;
+    }
+
+    static public void AdjustVTTFileTimeStampWithOffset(ILogger logger, string source, string destination, long offsetInMs)
+    {
+        try
+        {
+            using var src = new StreamReader(source, Encoding.UTF8);
+            using var dst = new StreamWriter(destination, false, Encoding.UTF8);
+
+            List<string> header = GetVTTBlock(src);
+            if (!header[0].StartsWith("WEBVTT"))
+            {
+                throw new InvalidDataException("vtt file needs to start with WEBVTT");
+            }
+            dst.WriteLine("WEBVTT"); // rewrite header to make shaka packager happy.
+
+            while (true)
+            {
+                List<string> block = GetVTTBlock(src);
+                if (block.Count == 0)
+                {
+                    break;
+                }
+
+                if (offsetInMs > 0)
+                {
+                    int vttTimingLine = -1;
+                    for (int i = 0; i < block.Count; ++i)
+                    {
+                        if (block[i].Contains("-->"))
+                        {
+                            vttTimingLine = i;
+                            break;
+                        }
+                    }
+
+                    if (vttTimingLine >= 0)
+                    {
+                        var cueTimingParts = block[vttTimingLine].Split(new string[] { "-->" }, StringSplitOptions.None);
+                        if (cueTimingParts.Length != 2)
+                        {
+                            throw new InvalidDataException("Incorrect vtt cue timing line");
+                        }
+                        var rightCueTimingSubparts = cueTimingParts[1].Trim().Split(null, 2);
+
+                        long startTime = (long)ParseVTTTimestampInMs(cueTimingParts[0].Trim());
+                        long endTime = (long)ParseVTTTimestampInMs(rightCueTimingSubparts[0].Trim());
+                        var vttCueSettings = "";
+                        if (rightCueTimingSubparts.Length > 1)
+                        {
+                            vttCueSettings = rightCueTimingSubparts[1];
+                        }
+
+                        startTime -= offsetInMs;
+                        endTime -= offsetInMs;
+
+                        if (endTime > 0)
+                        {
+                            if (startTime < 0)
+                            {
+                                startTime = 0;
+                            }
+
+                            string reconstructedStartTimeOffset = VTTTimestampToString((ulong)startTime);
+                            string reconstructedEndTimeOffset = VTTTimestampToString((ulong)endTime);
+                            if (String.IsNullOrEmpty(vttCueSettings))
+                            {
+                                block[vttTimingLine] = $"{reconstructedStartTimeOffset} --> {reconstructedEndTimeOffset}";
+                            }
+                            else
+                            {
+                                block[vttTimingLine] = $"{reconstructedStartTimeOffset} --> {reconstructedEndTimeOffset} {vttCueSettings}";
+                            }
+                        }
+                        else
+                        {
+                            continue; // skip this block since it is less than offsetInMs
+                        }
+                    }
+                }
+
+                // write
+                dst.WriteLine();
+                foreach (var line in block)
+                {
+                    dst.WriteLine(line);
+                }
+            }
+        }
+        catch (Exception e)
+        {
+            logger.LogError("VTT rewrite failed with exception: {ex}", e.ToString());
+            throw;
         }
     }
 }

@@ -265,9 +265,21 @@ namespace AMSMigrate.Transform
             else
             {
                 var filePath = Path.Combine(workingDirectory, file);
+                if (ProcessLiveArchiveVTT && file.EndsWith(VTT_FILE))
+                {
+                    filePath = Path.Combine(tempDirectory, file);
+                }
                 var blob = _assetDetails.Container.GetBlockBlobClient(file);
                 var source = new BlobSource(blob, _assetDetails.DecryptInfo, _logger);
                 await source.DownloadAsync(filePath, cancellationToken);
+
+                if (ProcessLiveArchiveVTT && file.EndsWith(VTT_FILE))
+                {
+                    long offsetInMs = LiveArchiveStreamInfoData.VideoStartTime * 1000 / LiveArchiveStreamInfoData.VideoTimeScale;
+                    VttConverter.AdjustVTTFileTimeStampWithOffset(_logger, filePath,
+                        Path.Combine(workingDirectory, Path.GetFileName(filePath)),
+                        offsetInMs);
+                }
             }
         }
     }
