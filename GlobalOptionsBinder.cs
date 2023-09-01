@@ -40,14 +40,6 @@ namespace AMSMigrate
             Arity = ArgumentArity.ExactlyOne
         };
 
-        private static readonly Option<bool> _enableLiveAsset = new Option<bool>(
-            aliases: new[] { "--enable-live-asset" },
-            description: "Enable flag to enable packaging of AMS live asset (experimental only, do not use in production). Defaults to false.")
-        {
-            IsRequired = false,
-            Arity = ArgumentArity.ZeroOrOne
-        };
-
         public GlobalOptionsBinder()
         {
         }
@@ -61,7 +53,6 @@ namespace AMSMigrate
             command.AddGlobalOption(_logDirectory);
             command.AddGlobalOption(_subscription);
             command.AddGlobalOption(_resourceGroup);
-            command.AddGlobalOption(_enableLiveAsset);
 
             return command;
         }
@@ -73,8 +64,7 @@ namespace AMSMigrate
                 bindingContext.ParseResult.GetValueForOption(_resourceGroup)!,
                 CloudType.Azure, //TODO: add an option.
                 bindingContext.ParseResult.GetValueForOption(_logLevel),
-                bindingContext.ParseResult.GetValueForOption(_logDirectory)!,
-                bindingContext.ParseResult.GetValueForOption(_enableLiveAsset)
+                bindingContext.ParseResult.GetValueForOption(_logDirectory)!
             );
         }
     }
