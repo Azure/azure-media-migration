@@ -38,12 +38,13 @@ The content is converted to CMAF format with both a DASH and HLS manifest to sup
 * Cross-Platform. Works on all platforms where .NET core is available.  Tested platforms are Windows and Linux.
 * Simple command line interface. Intuitive and easy to use.
 * Support for packaging VOD assets.
+* Support for packaging live archive assets.
 * Support for copying non-streamable assets.
 * Marks migrated assets and provides HTML summary on analyze
 * Support for statically encrypting the content while packaging.
 
 ## Open Issues
-* Live assets are not supported but will be in a future version of this tool.
+* Some MES copy asset might not be supported (contents wiht negative timestamp).
 * Direct migration from an Azure Storage account without using the AMS API is not supported but will be in a future version of this tool.
 
 # Types of Migration
