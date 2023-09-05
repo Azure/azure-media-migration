@@ -183,8 +183,7 @@ This command will forcibly revert migrated assets that have failed back to their
                                 .SetMinimumLevel(options.LogLevel)
                                 .SetLogEventFilter(filter)
                                 .UseSerilogConsoleStyle()
-                                .UseConsole(console)
-                                .WriteInBackground())
+                                .UseConsole(console))
                         .AddTraceSource(logSwitch, listener);
                 });
             if (options.CloudType == CloudType.Local)
