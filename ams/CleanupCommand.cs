@@ -157,14 +157,17 @@ namespace AMSMigrate.Ams
             {
 
                 var storage = await _resourceProvider.GetStorageAccountAsync(account, asset, cancellationToken);
+                if (storage == null)
+                {
+                    _logger.LogError("Storage account is null for asset {asset}", asset.Data.Name);
+                    return false;
+                }
                 var container = storage.GetContainer(asset);
                 if (!await container.ExistsAsync(cancellationToken))
                 {
                     _logger.LogWarning("Container {name} missing for asset {asset}", container.Name, asset.Data.Name);
-
                     return false;
                 }
-
                 // The asset container exists, try to check the metadata list first.
 
                 if (isForcedelete || (_tracker.GetMigrationStatusAsync(container, cancellationToken).Result.Status == MigrationStatus.Completed))
