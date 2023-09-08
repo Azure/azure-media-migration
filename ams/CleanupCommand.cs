@@ -158,11 +158,6 @@ namespace AMSMigrate.Ams
             {
 
                 var storage = await _resourceProvider.GetStorageAccountAsync(account, asset, cancellationToken);
-                if (storage == null)
-                {
-                    _logger.LogError("Storage account is null for asset {asset}", asset.Data.Name);
-                    return false;
-                }
                 var container = storage.GetContainer(asset);
                 if (!await container.ExistsAsync(cancellationToken))
                 {

@@ -83,16 +83,11 @@ namespace AMSMigrate.Ams
             await MigrateInParallel(assets, filteredList, async (asset, cancellationToken) =>
             {
                 var storage = await _resourceProvider.GetStorageAccountAsync(account, asset, cancellationToken);
-                if (storage != null)
-                {
-                    var result = await MigrateAsync(account, storage, asset, cancellationToken);
-                    stats.Update(result);
-                    await writer.WriteAsync(stats.Total, cancellationToken);
-                }
-                else 
-                {
-                    _logger.LogError("Storage account is null for asset {asset}", asset.Data.Name);
-                }
+
+                var result = await MigrateAsync(account, storage, asset, cancellationToken);
+                stats.Update(result);
+                await writer.WriteAsync(stats.Total, cancellationToken);
+
             },
             _options.BatchSize,
             cancellationToken);
