@@ -15,6 +15,7 @@ namespace AMSMigrate.Ams
         protected readonly ResourceGroupResource _resourceGroup;
         protected readonly GlobalOptions _globalOptions;
         protected readonly TokenCredential _credentials;
+        protected readonly ArmClient _armClient;
 
         public Dictionary<string, ResourceGroupResource> StorageResourceGroups { get; set; }
 
@@ -24,11 +25,11 @@ namespace AMSMigrate.Ams
             _credentials = credential;
             var clientOptions = new ArmClientOptions();
             clientOptions.Diagnostics.ApplicationId = $"AMSMigrate/{GetType().Assembly.GetName().Version}";
-            var armClient = new ArmClient(credential, default, clientOptions);
+            _armClient = new ArmClient(credential, default, clientOptions);
             var resourceGroupId = ResourceGroupResource.CreateResourceIdentifier(
                 options.SubscriptionId,
                 options.ResourceGroup);
-            _resourceGroup = armClient.GetResourceGroupResource(resourceGroupId);
+            _resourceGroup = _armClient.GetResourceGroupResource(resourceGroupId);
             StorageResourceGroups = new Dictionary<string, ResourceGroupResource>();
         }
 
@@ -41,13 +42,10 @@ namespace AMSMigrate.Ams
                 {
                     string subscriptionId = arm.Value.SubscriptionId;
                     string resourceGroupName = arm.Value.ResourceGroupName;
-                    var clientOptions = new ArmClientOptions();
-                    clientOptions.Diagnostics.ApplicationId = $"AMSMigrate/{GetType().Assembly.GetName().Version}";
-                    var armClient = new ArmClient(_credentials, default, clientOptions);
-                    var resourceGroupId = ResourceGroupResource.CreateResourceIdentifier(
+                   var resourceGroupId = ResourceGroupResource.CreateResourceIdentifier(
                         subscriptionId,
                         resourceGroupName);
-                    var _resourceGroup = armClient.GetResourceGroupResource(resourceGroupId);
+                    var _resourceGroup = _armClient.GetResourceGroupResource(resourceGroupId);
                     StorageResourceGroups.Add(arm.Key, _resourceGroup);
                 }
             }
