@@ -52,7 +52,7 @@ namespace AMSMigrate.Ams
 
             var orderBy = "properties/created";
           
-            await _resourceProvider.SetResourceGroupsAsync(account, cancellationToken);
+            await _resourceProvider.SetStorageResourceGroupsAsync(account, cancellationToken);
             var assets = account.GetMediaAssets().GetAllAsync(resourceFilter, orderby: orderBy, cancellationToken: cancellationToken);
 
             List<MediaAssetResource>? filteredList = null;

@@ -36,7 +36,7 @@ namespace AMSMigrate.Ams
         {
             var account = await GetMediaAccountAsync(_options.AccountName, cancellationToken);
             _logger.LogInformation("Begin reset assets on account: {name}", account.Data.Name);
-            await _resourceProvider.SetResourceGroupsAsync(account, cancellationToken);
+            await _resourceProvider.SetStorageResourceGroupsAsync(account, cancellationToken);
             AsyncPageable<MediaAssetResource> assets = account.GetMediaAssets()
                 .GetAllAsync(cancellationToken: cancellationToken);
             List<MediaAssetResource>? assetList = await assets.ToListAsync(cancellationToken);

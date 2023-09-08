@@ -115,7 +115,7 @@ namespace AMSMigrate.Ams
                 reportGenerator = new ReportGenerator(file);
                 reportGenerator.WriteHeader();
             }
-            await _resourceProvider.SetResourceGroupsAsync(account, cancellationToken);
+            await _resourceProvider.SetStorageResourceGroupsAsync(account, cancellationToken);
             var assets = account.GetMediaAssets()
                 .GetAllAsync(resourceFilter, cancellationToken: cancellationToken);
             var statistics = new AssetStats();

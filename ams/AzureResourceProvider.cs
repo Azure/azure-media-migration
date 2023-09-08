@@ -17,7 +17,7 @@ namespace AMSMigrate.Ams
         protected readonly TokenCredential _credentials;
         protected readonly ArmClient _armClient;
 
-        public Dictionary<string, ResourceGroupResource> StorageResourceGroups { get; set; }
+        private Dictionary<string, ResourceGroupResource> StorageResourceGroups;
 
         public AzureResourceProvider(TokenCredential credential, GlobalOptions options)
         {
@@ -33,21 +33,35 @@ namespace AMSMigrate.Ams
             StorageResourceGroups = new Dictionary<string, ResourceGroupResource>();
         }
 
-        public async Task SetResourceGroupsAsync(MediaServicesAccountResource account, CancellationToken cancellationToken)
+        public async Task SetStorageResourceGroupsAsync(MediaServicesAccountResource account, CancellationToken cancellationToken)
         {
-            var armDics = await GetResourceGroupNameAsync(account, cancellationToken);
-            if (armDics != null)
+            IList<MediaServicesStorageAccount> storageAccounts;
+            var mediaServiceResource = await account.GetAsync(cancellationToken: cancellationToken);
+            if (mediaServiceResource.GetRawResponse().Status == 200)
             {
-                foreach (var arm in armDics)
+                storageAccounts = mediaServiceResource.Value.Data.StorageAccounts;
+                if (storageAccounts != null && storageAccounts.Any())
                 {
-                    string subscriptionId = arm.Value.SubscriptionId;
-                    string resourceGroupName = arm.Value.ResourceGroupName;
-                   var resourceGroupId = ResourceGroupResource.CreateResourceIdentifier(
-                        subscriptionId,
-                        resourceGroupName);
-                    var _resourceGroup = _armClient.GetResourceGroupResource(resourceGroupId);
-                    StorageResourceGroups.Add(arm.Key, _resourceGroup);
+                    foreach (var storageAccount in storageAccounts)
+                    {
+                        string? storageAccountId = storageAccount.Id;
+                        string[] parts;
+                        ///subscriptions/{subscriptionId}/resourceGroups/{resourceGroupName}/providers/microsoft.storage/storageaccounts/{accountName}
+                        if (!string.IsNullOrEmpty(storageAccountId))
+                        {
+                            parts = storageAccountId.Split('/');
+                            string resourceGroupName = parts[4];
+                            string storageAccName = parts[8];
+                            string subscriptionId = parts[2];
+                            var resourceGroupId = ResourceGroupResource.CreateResourceIdentifier(
+                                 subscriptionId,
+                                 resourceGroupName);
+                            var _resourceGroup = _armClient.GetResourceGroupResource(resourceGroupId);
+                            StorageResourceGroups.Add(storageAccName, _resourceGroup);
+                       }
+                    }
                 }
+
             }
         }
 
@@ -57,7 +71,7 @@ namespace AMSMigrate.Ams
         {
             return await _resourceGroup.GetMediaServicesAccountAsync(
                mediaAccountName, cancellationToken);
-        }
+       }
 
         public async Task<BlobServiceClient> GetStorageAccountAsync(
             MediaServicesAccountResource account,
@@ -82,36 +96,5 @@ namespace AMSMigrate.Ams
             var uri = storage.Data.PrimaryEndpoints.BlobUri!;
             return new BlobServiceClient(uri, _credentials);
         }
-
-        private async Task<Dictionary<string, dynamic>> GetResourceGroupNameAsync(MediaServicesAccountResource account, CancellationToken cancellationToken)
-        {
-            IList<MediaServicesStorageAccount> storageAccounts;
-            Dictionary<string, dynamic> armDics = new Dictionary<string, dynamic>();
-            var mediaServiceResource = await account.GetAsync(cancellationToken: cancellationToken);
-            if (mediaServiceResource.GetRawResponse().Status == 200)
-            {
-                storageAccounts = mediaServiceResource.Value.Data.StorageAccounts;
-                if (storageAccounts != null && storageAccounts.Any())
-                {
-                    foreach (var storageAccount in storageAccounts)
-                    {
-                        string? storageAccountId = storageAccount.Id;
-                        string[] parts;
-
-                        if (!string.IsNullOrEmpty(storageAccountId))
-                        {
-                            parts = storageAccountId.Split('/');
-                            string resourceGroupName = parts[parts.Length - 5];
-                            string storageAccName = parts[parts.Length - 1];
-                            string subscriptionId = parts[parts.Length - 7];
-                            armDics.Add(storageAccName,  new { SubscriptionId = subscriptionId, ResourceGroupName = resourceGroupName });
-                        }
-                    }
-                }
-
-            }
-            return armDics;
-        }
-
     }
 }
