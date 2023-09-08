@@ -169,7 +169,31 @@ namespace AMSMigrate.Transform
             CancellationToken cancellationToken)
         {
             var blobs = await GetListOfBlobsAsync(container, cancellationToken);
-            return blobs.Where(blob => !manifest.Tracks.Any(t => t.Source == blob.Name));
+            return blobs.Where(blob => !manifest.Tracks.Any(t => IsValidTrackSource(blob.Name, t)));
+        }
+
+        private static bool IsValidTrackSource(string fileName, Track track)
+        {
+            bool validSource = false;
+
+            if (track.Source == fileName)
+            {
+                validSource = true;
+            }
+            else
+            {
+                if (track.Source.ToLower().EndsWith(BasePackager.CMFT_FILE))
+                {
+                    var transcriptsrc = track.Parameters.Single(p => p.Name == BasePackager.TRANSCRIPT_SOURCE);
+
+                    if (transcriptsrc != null && transcriptsrc.Value == fileName)
+                    {
+                        validSource = true;
+                    }
+                }
+            }
+
+            return validSource;
         }
 
         public static async Task<AssetDetails> GetDetailsAsync(

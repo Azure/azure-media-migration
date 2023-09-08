@@ -22,6 +22,7 @@ namespace AMSMigrate.Transform
         public const string DASH_MANIFEST = ".mpd";
         public const string HLS_MANIFEST = ".m3u8";
         public const string VTT_FILE = ".vtt";
+        public const string CMFT_FILE = ".cmft";
         public const string TRANSCRIPT_SOURCE = "transcriptsrc";
 
         protected readonly TransMuxer _transMuxer;
@@ -214,6 +215,12 @@ namespace AMSMigrate.Transform
             }));
         }
 
+        public virtual void AdjustPackageFiles(string workingDirectory)
+        {
+            // Make it no-op in base class for adjusting package files.
+            // Derived class can override it with its own logic.
+            return;
+        }
 
         private async Task DownloadAsync(string workingDirectory, string file, IList<Track> tracks, CancellationToken cancellationToken)
         {
