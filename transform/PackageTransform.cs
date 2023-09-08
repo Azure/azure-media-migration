@@ -110,6 +110,9 @@ namespace AMSMigrate.Transform
                     await packager.DownloadInputsAsync(workingDirectory, cancellationToken);
                 }
 
+                // Adjust the package files after the input files are all downloaded.
+                packager.AdjustPackageFiles(workingDirectory);
+
                 var outputFiles = packager.Outputs;
                 var (outputContainerName, prefix) = outputPath;
                 var uploadHelper = new UploadHelper(outputContainerName, prefix, _fileUploader);
@@ -136,7 +139,7 @@ namespace AMSMigrate.Transform
                 }
 
                 var manifests = packager.Manifests;
-                var manifestPaths = manifests.Select(f => Path.Combine(outputDirectory, f)).ToArray();
+                var manifestPaths = manifests.Select(f => string.IsNullOrEmpty(f) ? "" : Path.Combine(outputDirectory, f)).ToArray();
                 if (packager.UsePipeForManifests)
                 {
                     var manifestPipes = manifestPaths.Select(file => CreateUpload(file, uploadHelper)).ToList();
@@ -149,7 +152,9 @@ namespace AMSMigrate.Transform
                 }
                 else
                 {
-                    uploadPaths.AddRange(manifestPaths);
+                    var manifestsForUpload = manifestPaths.Where(f => f != "");
+
+                    uploadPaths.AddRange(manifestsForUpload);
                 }
 
                 _logger.LogTrace("Starting static packaging for asset {name}...", assetName);
