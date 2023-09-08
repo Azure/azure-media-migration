@@ -17,7 +17,7 @@ namespace AMSMigrate.Ams
         protected readonly TokenCredential _credentials;
         protected readonly ArmClient _armClient;
 
-        private Dictionary<string, ResourceGroupResource> StorageResourceGroups;
+        private Dictionary<string, ResourceGroupResource> _storageResourceGroups;
 
         public AzureResourceProvider(TokenCredential credential, GlobalOptions options)
         {
@@ -30,7 +30,7 @@ namespace AMSMigrate.Ams
                 options.SubscriptionId,
                 options.ResourceGroup);
             _resourceGroup = _armClient.GetResourceGroupResource(resourceGroupId);
-            StorageResourceGroups = new Dictionary<string, ResourceGroupResource>();
+            _storageResourceGroups = new Dictionary<string, ResourceGroupResource>();
         }
 
         public async Task SetStorageResourceGroupsAsync(MediaServicesAccountResource account, CancellationToken cancellationToken)
@@ -44,11 +44,11 @@ namespace AMSMigrate.Ams
                 {
                     foreach (var storageAccount in storageAccounts)
                     {
-                        string? storageAccountId = storageAccount.Id;
-                        string[] parts;
+                        string? storageAccountId = storageAccount.Id;  
                         ///subscriptions/{subscriptionId}/resourceGroups/{resourceGroupName}/providers/microsoft.storage/storageaccounts/{accountName}
                         if (!string.IsNullOrEmpty(storageAccountId))
                         {
+                            string[] parts;
                             parts = storageAccountId.Split('/');
                             string resourceGroupName = parts[4];
                             string storageAccName = parts[8];
@@ -56,8 +56,8 @@ namespace AMSMigrate.Ams
                             var resourceGroupId = ResourceGroupResource.CreateResourceIdentifier(
                                  subscriptionId,
                                  resourceGroupName);
-                            var _resourceGroup = _armClient.GetResourceGroupResource(resourceGroupId);
-                            StorageResourceGroups.Add(storageAccName, _resourceGroup);
+                            var resourceGroup = _armClient.GetResourceGroupResource(resourceGroupId);
+                            _storageResourceGroups.Add(storageAccName, resourceGroup);
                        }
                     }
                 }
@@ -79,7 +79,7 @@ namespace AMSMigrate.Ams
             CancellationToken cancellationToken)
         {
             string assetStorageAccountName = asset.Data.StorageAccountName;
-            StorageResourceGroups.TryGetValue(asset.Data.StorageAccountName, out var rg);
+            _storageResourceGroups.TryGetValue(asset.Data.StorageAccountName, out var rg);
             var resource = await rg.GetStorageAccountAsync(asset.Data.StorageAccountName, cancellationToken: cancellationToken);
             return GetStorageAccount(resource);
         }
