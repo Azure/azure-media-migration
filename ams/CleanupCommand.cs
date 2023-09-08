@@ -52,6 +52,7 @@ namespace AMSMigrate.Ams
             var resourceFilter = _options.IsCleanUpAccount ? null : GetAssetResourceFilter(_options.ResourceFilter, null, null);
 
             var orderBy = "properties/created";
+            await _resourceProvider.SetStorageResourceGroupsAsync(account, cancellationToken);
             assets = account.GetMediaAssets()
                 .GetAllAsync(resourceFilter, orderby: orderBy, cancellationToken: cancellationToken);
             List<MediaAssetResource>? assetList = await assets.ToListAsync(cancellationToken);
@@ -161,10 +162,8 @@ namespace AMSMigrate.Ams
                 if (!await container.ExistsAsync(cancellationToken))
                 {
                     _logger.LogWarning("Container {name} missing for asset {asset}", container.Name, asset.Data.Name);
-
                     return false;
                 }
-
                 // The asset container exists, try to check the metadata list first.
 
                 if (isForcedelete || (_tracker.GetMigrationStatusAsync(container, cancellationToken).Result.Status == MigrationStatus.Completed))

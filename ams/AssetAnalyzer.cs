@@ -115,6 +115,7 @@ namespace AMSMigrate.Ams
                 reportGenerator = new ReportGenerator(file);
                 reportGenerator.WriteHeader();
             }
+            await _resourceProvider.SetStorageResourceGroupsAsync(account, cancellationToken);
             var assets = account.GetMediaAssets()
                 .GetAllAsync(resourceFilter, cancellationToken: cancellationToken);
             var statistics = new AssetStats();
@@ -139,7 +140,6 @@ namespace AMSMigrate.Ams
             await MigrateInParallel(assets, filteredList, async (asset, cancellationToken) =>
             {
                 var storage = await _resourceProvider.GetStorageAccountAsync(account, asset, cancellationToken);
-
                 var result = await AnalyzeAsync(asset, storage, cancellationToken);
                 var assetType = result.AssetType ?? "unknown";
                 assetTypes.AddOrUpdate(assetType, 1, (key, value) => Interlocked.Increment(ref value));

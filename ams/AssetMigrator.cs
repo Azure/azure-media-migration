@@ -51,8 +51,9 @@ namespace AMSMigrate.Ams
                                                         _options.CreationTimeEnd);
 
             var orderBy = "properties/created";
-            var assets = account.GetMediaAssets()
-                .GetAllAsync(resourceFilter, orderby: orderBy, cancellationToken: cancellationToken);
+          
+            await _resourceProvider.SetStorageResourceGroupsAsync(account, cancellationToken);
+            var assets = account.GetMediaAssets().GetAllAsync(resourceFilter, orderby: orderBy, cancellationToken: cancellationToken);
 
             List<MediaAssetResource>? filteredList = null;
 
@@ -82,9 +83,11 @@ namespace AMSMigrate.Ams
             await MigrateInParallel(assets, filteredList, async (asset, cancellationToken) =>
             {
                 var storage = await _resourceProvider.GetStorageAccountAsync(account, asset, cancellationToken);
+
                 var result = await MigrateAsync(account, storage, asset, cancellationToken);
                 stats.Update(result);
                 await writer.WriteAsync(stats.Total, cancellationToken);
+
             },
             _options.BatchSize,
             cancellationToken);
