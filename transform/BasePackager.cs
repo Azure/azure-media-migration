@@ -169,7 +169,7 @@ namespace AMSMigrate.Transform
             process.Exited += (s, args) =>
             {
                 if (process.ExitCode != 0)
-                    _logger.LogError("Packager {} finished with exit code {code}", command, process.ExitCode);
+                    _logger.LogError("Packager {command} finished with exit code {code}", command, process.ExitCode);
                 onExit(process);
                 process.Dispose();
             };
