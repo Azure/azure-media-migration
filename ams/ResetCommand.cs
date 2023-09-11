@@ -11,7 +11,6 @@ namespace AMSMigrate.Ams
 {
     internal class ResetCommand : BaseMigrator
     {
-        private readonly ILogger _logger;
         private readonly ResetOptions _options;
         private readonly IMigrationTracker<BlobContainerClient, AssetMigrationResult> _tracker;
         internal const string AssetTypeKey = "AssetType";
@@ -25,10 +24,9 @@ namespace AMSMigrate.Ams
             TokenCredential credential,
             IMigrationTracker<BlobContainerClient, AssetMigrationResult> tracker,
             ILogger<ResetCommand> logger)
-         : base(globalOptions, console, credential)
+         : base(globalOptions, console, credential, logger)
         {
             _options = resetOptions;
-            _logger = logger;
             _tracker = tracker;
         }
 

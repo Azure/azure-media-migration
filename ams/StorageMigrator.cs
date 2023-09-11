@@ -13,7 +13,6 @@ namespace AMSMigrate.Ams
 {
     internal class StorageMigrator : BaseMigrator
     {
-        private readonly ILogger _logger;
         private readonly TransformFactory _transformFactory;
         private readonly StorageOptions _storageOptions;
         private readonly IMigrationTracker<BlobContainerClient, AssetMigrationResult> _tracker;
@@ -26,12 +25,11 @@ namespace AMSMigrate.Ams
             TokenCredential credentials,
             TransformFactory transformFactory,
             ILogger<StorageMigrator> logger) :
-            base(options, console, credentials)
+            base(options, console, credentials, logger)
         {
             _storageOptions = storageOptions;
             _tracker = tracker;
             _transformFactory = transformFactory;
-            _logger = logger;
         }
 
         public override async Task MigrateAsync(CancellationToken cancellationToken)

@@ -11,7 +11,6 @@ namespace AMSMigrate.Ams
 {
     internal class CleanupCommand : BaseMigrator
     {
-        private readonly ILogger _logger;
         private readonly CleanupOptions _options;
         private readonly IMigrationTracker<BlobContainerClient, AssetMigrationResult> _tracker;
 
@@ -21,10 +20,9 @@ namespace AMSMigrate.Ams
             TokenCredential credential,
             IMigrationTracker<BlobContainerClient, AssetMigrationResult> tracker,
             ILogger<CleanupCommand> logger)
-            : base(globalOptions, console, credential)
+            : base(globalOptions, console, credential, logger)
         {
             _options = cleanupOptions;
-            _logger = logger;
             _tracker = tracker;
         }
 

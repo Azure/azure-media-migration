@@ -9,7 +9,6 @@ namespace AMSMigrate.Ams
 {
     internal class KeysMigrator : BaseMigrator
     {
-        private readonly ILogger _logger;
         private readonly KeyOptions _keyOptions;
         private readonly ISecretUploader _secretUploader;
         private readonly TemplateMapper _templateMapper;
@@ -22,9 +21,8 @@ namespace AMSMigrate.Ams
             TemplateMapper templateMapper,
             ICloudProvider cloudProvider,
             TokenCredential credential) :
-            base(globalOptions, console, credential)
+            base(globalOptions, console, credential, logger)
         {
-            _logger = logger;
             _keyOptions = keyOptions;
             _templateMapper = templateMapper;
             _secretUploader = cloudProvider.GetSecretProvider(keyOptions);
