@@ -62,11 +62,7 @@ namespace AMSMigrate.Transform
                             videoStream = stream;
                             numVideoStreams++;
                         }
-                    }
-
-                    foreach (var stream in clientManifest.Streams)
-                    {
-                        if (stream.Type == StreamType.Audio)
+                        else if (stream.Type == StreamType.Audio)
                         {
                             audioStream = stream;
                             numAudioStreams++;
