@@ -40,28 +40,16 @@ namespace AMSMigrate.Ams
             if (mediaServiceResource.GetRawResponse().Status == 200)
             {
                 storageAccounts = mediaServiceResource.Value.Data.StorageAccounts;
-                if (storageAccounts != null && storageAccounts.Any())
-                {
-                    foreach (var storageAccount in storageAccounts)
-                    {
-                        string? storageAccountId = storageAccount.Id;  
-                        ///subscriptions/{subscriptionId}/resourceGroups/{resourceGroupName}/providers/microsoft.storage/storageaccounts/{accountName}
-                        if (!string.IsNullOrEmpty(storageAccountId))
-                        {
-                            string[] parts;
-                            parts = storageAccountId.Split('/');
-                            string resourceGroupName = parts[4];
-                            string storageAccName = parts[8];
-                            string subscriptionId = parts[2];
-                            var resourceGroupId = ResourceGroupResource.CreateResourceIdentifier(
-                                 subscriptionId,
-                                 resourceGroupName);
-                            var resourceGroup = _armClient.GetResourceGroupResource(resourceGroupId);
-                            _storageResourceGroups.Add(storageAccName, resourceGroup);
-                       }
-                    }
-                }
 
+                foreach (var storageAccount in storageAccounts)
+                {
+                    var storageAccountId = storageAccount.Id;  
+                    var resourceGroupId = ResourceGroupResource.CreateResourceIdentifier(
+                            storageAccountId.SubscriptionId!,
+                            storageAccountId.ResourceGroupName!);
+                    var resourceGroup = _armClient.GetResourceGroupResource(resourceGroupId);
+                    _storageResourceGroups.Add(storageAccountId.Name, resourceGroup);
+                }
             }
         }
 
