@@ -15,6 +15,9 @@ namespace AMSMigrate.Contracts
 
         public string LogFile => Path.Combine(LogDirectory, _logFile);
         public string ReportFile => Path.Combine(LogDirectory, _reportFile);
+
+        // Disable interactivity on Linux for the hang issue.
+        public bool Interactive { get; set; } = !OperatingSystem.IsLinux();
     }
 
 }

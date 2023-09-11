@@ -3,6 +3,7 @@ using Azure.Core;
 using Azure.Monitor.Query;
 using Azure.Monitor.Query.Models;
 using Azure.ResourceManager.Media;
+using Microsoft.Extensions.Logging;
 using Spectre.Console;
 using System.Threading.Channels;
 
@@ -16,14 +17,17 @@ namespace AMSMigrate.Ams
         protected readonly GlobalOptions _globalOptions;
         protected readonly MetricsQueryClient _metricsQueryClient;
         protected readonly IAnsiConsole _console;
+        protected readonly ILogger _logger;
 
         public BaseMigrator(
             GlobalOptions options,
             IAnsiConsole console,
-            TokenCredential credential)
+            TokenCredential credential,
+            ILogger logger)
         {
             _globalOptions = options;
             _console = console;
+            _logger = logger;
             _resourceProvider = new AzureResourceProvider(credential, options);
             _metricsQueryClient = new MetricsQueryClient(credential);
         }
@@ -119,6 +123,7 @@ namespace AMSMigrate.Ams
                         task.MaxValue = value;
                     }
                     task.Value = value;
+                    _logger.LogDebug("{description}: {current}/{total} {unit}", description, value, totalValue, unit);
                     context.Refresh();
                 }
             });

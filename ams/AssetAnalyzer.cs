@@ -14,7 +14,6 @@ namespace AMSMigrate.Ams
 {
     internal class AssetAnalyzer : BaseMigrator
     {
-        private readonly ILogger _logger;
         private readonly AnalysisOptions _analysisOptions;
         private readonly IMigrationTracker<BlobContainerClient, AssetMigrationResult> _tracker;
 
@@ -25,11 +24,10 @@ namespace AMSMigrate.Ams
             IMigrationTracker<BlobContainerClient, AssetMigrationResult> tracker,
             TokenCredential credential,
             ILogger<AssetAnalyzer> logger)
-            : base(globalOptions, console, credential)
+            : base(globalOptions, console, credential, logger)
         {
             _analysisOptions = analysisOptions;
             _tracker = tracker;
-            _logger = logger;
         }
 
         private async Task<AnalysisResult> AnalyzeAsync(MediaAssetResource asset, BlobServiceClient storage, CancellationToken cancellationToken)

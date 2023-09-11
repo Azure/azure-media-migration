@@ -10,7 +10,6 @@ namespace AMSMigrate.Ams
     /// </summary>
     internal class AccountMigrator : BaseMigrator
     {
-        private readonly ILogger _logger;
         private string _accountName;
 
         public AccountMigrator(
@@ -18,11 +17,10 @@ namespace AMSMigrate.Ams
             string accountName,
             IAnsiConsole console,
             ILogger<AccountMigrator> logger,
-            TokenCredential credential) :
-            base(options, console, credential)
+            TokenCredential credential) : 
+            base(options, console, credential, logger)
         {
             _accountName = accountName;
-            _logger = logger;
         }
 
         public override async Task MigrateAsync(CancellationToken cancellationToken)

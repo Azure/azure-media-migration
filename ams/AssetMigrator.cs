@@ -13,7 +13,6 @@ namespace AMSMigrate.Ams
 {
     internal class AssetMigrator : BaseMigrator
     {
-        private readonly ILogger _logger;
         private readonly TransformFactory _transformFactory;
         private readonly AssetOptions _options;
         private readonly IMigrationTracker<BlobContainerClient, AssetMigrationResult> _tracker;
@@ -26,11 +25,10 @@ namespace AMSMigrate.Ams
             IMigrationTracker<BlobContainerClient, AssetMigrationResult> tracker,
             ILogger<AssetMigrator> logger,
             TransformFactory transformFactory) :
-            base(globalOptions, console, credential)
+            base(globalOptions, console, credential, logger)
         {
             _options = assetOptions;
             _tracker = tracker;
-            _logger = logger;
             _transformFactory = transformFactory;
         }
 
