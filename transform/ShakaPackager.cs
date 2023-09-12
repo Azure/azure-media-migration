@@ -167,8 +167,6 @@ namespace AMSMigrate.Transform
 
             arguments.Add("--temp_dir");
             arguments.Add(_options.WorkingDirectory);
-            arguments.Add("--segment_duration");
-            arguments.Add("2");
             arguments.Add("--mpd_output");
             arguments.Add(dash);
             arguments.Add("--hls_master_playlist_output");
