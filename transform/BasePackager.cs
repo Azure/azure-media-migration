@@ -1,7 +1,6 @@
 using AMSMigrate.Contracts;
 using AMSMigrate.Pipes;
 using Azure.Storage.Blobs.Specialized;
-using FFMpegCore.Pipes;
 using Microsoft.Extensions.Logging;
 using System.Diagnostics;
 
@@ -279,6 +278,11 @@ namespace AMSMigrate.Transform
                     VttConverter.AdjustVTTFileTimeStampWithOffset(_logger, filePath,
                         Path.Combine(workingDirectory, Path.GetFileName(filePath)),
                         offsetInMs);
+                }
+
+                if (file.EndsWith(MEDIA_FILE))
+                {
+                    await _transMuxer.AdjustNegativeTimestampMediaFile(filePath, cancellationToken);
                 }
             }
         }

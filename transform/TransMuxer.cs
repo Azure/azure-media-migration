@@ -294,5 +294,29 @@ namespace AMSMigrate.Transform
         {
             UpdateTrackRunDuration(destination);
         }
+
+        public async Task AdjustNegativeTimestampMediaFile(string source, CancellationToken cancellationToken)
+        {
+            var packetAnalysis = await FFMpegCore.FFProbe.GetPacketsAsync(source);
+            if (packetAnalysis.Packets[0].Pts < 0)
+            {
+                _logger.LogInformation("Remux {file} to avoid negative timestamp.", source);
+                // move source file to ref file
+                var refFilePath = Path.Join(Path.GetDirectoryName(source), Path.GetFileNameWithoutExtension(source) + "_ref.mp4");
+                File.Move(source, refFilePath, true);
+                var destination = source;
+
+                var processor = FFMpegArguments
+                .FromFileInput(refFilePath, false)
+                .OutputToFile(destination, overwrite: true, options =>
+                options
+                .CopyChannel()
+                .ForceFormat("mp4")
+                .WithCustomArgument("-avoid_negative_ts make_zero"));
+                await RunAsync(processor, cancellationToken);
+
+                File.Delete(refFilePath);
+            }
+        }
     }
 }
