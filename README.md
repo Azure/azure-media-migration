@@ -44,7 +44,6 @@ The content is converted to CMAF format with both a DASH and HLS manifest to sup
 * Support for statically encrypting the content while packaging.
 
 ## Open Issues
-* Some MES copy asset might not be supported (contents wiht negative timestamp).
 * Direct migration from an Azure Storage account without using the AMS API is not supported but will be in a future version of this tool.
 
 # Types of Migration
