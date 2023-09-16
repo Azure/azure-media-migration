@@ -15,5 +15,9 @@ namespace AMSMigrate.Transform
         public int Locators { get; internal set; }
 
         public string AssetName { get; set; }
+
+        public Uri? OutputHlsUrl => OutputPath != null ? new Uri(OutputPath!, (ManifestName + ".m3u8")) : null;
+
+        public Uri? OutputDashUrl => OutputPath != null ? new Uri(OutputPath!, (ManifestName + ".mpd")) : null;
     }
 }
