@@ -1,5 +1,4 @@
-﻿
-using AMSMigrate.Contracts;
+﻿using AMSMigrate.Contracts;
 using Azure.Core;
 using Azure.ResourceManager;
 using Azure.ResourceManager.Media;
@@ -43,7 +42,7 @@ namespace AMSMigrate.Ams
 
                 foreach (var storageAccount in storageAccounts)
                 {
-                    var storageAccountId = storageAccount.Id;  
+                    var storageAccountId = storageAccount.Id;
                     var resourceGroupId = ResourceGroupResource.CreateResourceIdentifier(
                             storageAccountId.SubscriptionId!,
                             storageAccountId.ResourceGroupName!);
@@ -59,7 +58,7 @@ namespace AMSMigrate.Ams
         {
             return await _resourceGroup.GetMediaServicesAccountAsync(
                mediaAccountName, cancellationToken);
-       }
+        }
 
         public async Task<BlobServiceClient> GetStorageAccountAsync(
             MediaServicesAccountResource account,

@@ -1,5 +1,4 @@
-﻿
-namespace AMSMigrate.Fmp4
+﻿namespace AMSMigrate.Fmp4
 {
     /// <summary>
     /// This is the object model presentation of each entry in the 'trun' box
@@ -85,7 +84,7 @@ namespace AMSMigrate.Fmp4
                 Dirty = true;
             }
         }
-        
+
         /// <summary>
         /// backing field for SampleFlags property.
         /// </summary>

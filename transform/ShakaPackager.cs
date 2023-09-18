@@ -1,9 +1,6 @@
 ﻿using AMSMigrate.Contracts;
-using AMSMigrate.Fmp4;
-using Azure.ResourceManager.Storage.Models;
 using Microsoft.Extensions.Logging;
 using System.ComponentModel;
-using System.IO;
 using System.Text.RegularExpressions;
 
 namespace AMSMigrate.Transform
@@ -225,7 +222,7 @@ namespace AMSMigrate.Transform
                         if (!string.IsNullOrEmpty(vttSource))
                         {
                             string filePath = Path.Combine(workingDirectory, vttSource!);
-                            long   length = new FileInfo(filePath).Length;
+                            long length = new FileInfo(filePath).Length;
                             string lang = t.SystemLanguage ?? "";
 
                             if (largestCmftVtt.TryGetValue(lang, out var largeCmft))

@@ -1,5 +1,4 @@
-﻿
-using System.Diagnostics;
+﻿using System.Diagnostics;
 using System.Globalization;
 
 namespace AMSMigrate.Fmp4
@@ -14,7 +13,7 @@ namespace AMSMigrate.Fmp4
         /// </summary>
         /// <param name="sequenceNumber">The sequence number of the fragment.</param>
         public mfhdBox(UInt32 sequenceNumber) :
-            base(version:0, flags:0, boxtype:MP4BoxType.mfhd)
+            base(version: 0, flags: 0, boxtype: MP4BoxType.mfhd)
         {
             SequenceNumber = sequenceNumber;
             Size.Value = ComputeSize();
@@ -24,7 +23,7 @@ namespace AMSMigrate.Fmp4
         /// Copy constructor
         /// </summary>
         /// <param name="box">the box to copy from</param>
-        public mfhdBox(Box box):
+        public mfhdBox(Box box) :
             base(box)
         {
             Debug.Assert(box.Type == MP4BoxType.mfhd);

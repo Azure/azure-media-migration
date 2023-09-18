@@ -1,6 +1,4 @@
-﻿
-
-namespace AMSMigrate.Fmp4
+﻿namespace AMSMigrate.Fmp4
 {
     /// <summary>
     /// The data needed to interpret a sample in Fmp4Fragment are scattered across a number of boxes.
@@ -41,8 +39,8 @@ namespace AMSMigrate.Fmp4
             _sdtpEntry = sdtpEntry;
 
             if (sampleData != null)
-            { 
-                _arraySegment = new ArraySegment<byte>(sampleData, offset, (int)Size);                
+            {
+                _arraySegment = new ArraySegment<byte>(sampleData, offset, (int)Size);
             }
         }
 

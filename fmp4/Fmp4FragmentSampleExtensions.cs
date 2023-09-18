@@ -1,5 +1,4 @@
-﻿
-namespace AMSMigrate.Fmp4
+﻿namespace AMSMigrate.Fmp4
 {
     /// <summary>
     /// Extensions for handling Fmp4FragmentSample enumerations.
@@ -97,7 +96,7 @@ namespace AMSMigrate.Fmp4
             {
                 throw new ArgumentNullException(nameof(samples));
             }
-            
+
             if (null == modifyLastSample)
             {
                 throw new ArgumentNullException(nameof(modifyLastSample));

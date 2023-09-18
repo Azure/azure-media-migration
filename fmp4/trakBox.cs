@@ -1,5 +1,4 @@
-﻿
-using System.Diagnostics;
+﻿using System.Diagnostics;
 
 namespace AMSMigrate.Fmp4
 {
@@ -27,7 +26,7 @@ namespace AMSMigrate.Fmp4
             Debug.Assert(box.Type == MP4BoxType.trak);
         }
 
-        
+
         /// <summary>
         /// Returns the Header box for this track.
         /// </summary>

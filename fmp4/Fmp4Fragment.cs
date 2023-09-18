@@ -1,5 +1,4 @@
-﻿
-using System.Diagnostics;
+﻿using System.Diagnostics;
 
 namespace AMSMigrate.Fmp4
 {
@@ -114,7 +113,7 @@ namespace AMSMigrate.Fmp4
             // It may take more than one try to set data offset, because overwriting the
             // previous values may cause a change in box sizes (see UT's - they exercise this).
             int i = 0;
-            for ( ; i < _maxTries; i++)
+            for (; i < _maxTries; i++)
             {
                 // Server/ChannelSink and Dash operate counter to Smooth Spec v6.0
                 // which states that tfhd/base_data_offset is relative to mdat and
@@ -155,7 +154,7 @@ namespace AMSMigrate.Fmp4
             {
                 SetSampleDefaults();
             }
-            
+
             ResetDataOffset();
             Header.WriteTo(writer);
             Data.WriteTo(writer);
@@ -554,7 +553,7 @@ namespace AMSMigrate.Fmp4
                 }
             }
         }
-        
+
         #region equality methods
 
         /// <summary>

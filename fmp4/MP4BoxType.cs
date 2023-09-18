@@ -1,5 +1,4 @@
-﻿
-using System.Globalization;
+﻿using System.Globalization;
 
 namespace AMSMigrate.Fmp4
 {
@@ -46,7 +45,7 @@ namespace AMSMigrate.Fmp4
         //===================================================================
         // Registered Box Objects (Compact Type)
         //===================================================================
-        private static Dictionary<UInt32,Type> _compactType = new Dictionary<UInt32,Type>()
+        private static Dictionary<UInt32, Type> _compactType = new Dictionary<UInt32, Type>()
         {
             { moof, typeof(moofBox) },
             { mfhd, typeof(mfhdBox) },

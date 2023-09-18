@@ -1,6 +1,4 @@
-﻿
-
-namespace AMSMigrate.Fmp4
+﻿namespace AMSMigrate.Fmp4
 {
     /// <summary>
     /// An enumeration to describe whether the sample depends on other samples.
@@ -38,7 +36,7 @@ namespace AMSMigrate.Fmp4
     public enum SampleIsLeading : byte
     {
         Unknown = 0,
-        Leading  = 1,
+        Leading = 1,
         NotLeading = 2,
         LeadingButDecodable = 3
     };
@@ -59,7 +57,7 @@ namespace AMSMigrate.Fmp4
         /// Public Constructor.
         /// </summary>
         /// <param name="dependencyValue"></param>
-        public sdtpEntry(byte dependencyValue) 
+        public sdtpEntry(byte dependencyValue)
         {
             _value = dependencyValue;
         }

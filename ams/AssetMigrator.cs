@@ -51,7 +51,7 @@ namespace AMSMigrate.Ams
                                                         _options.CreationTimeEnd);
 
             var orderBy = "properties/created";
-          
+
             await _resourceProvider.SetStorageResourceGroupsAsync(account, cancellationToken);
             var assets = account.GetMediaAssets().GetAllAsync(resourceFilter, orderby: orderBy, cancellationToken: cancellationToken);
 

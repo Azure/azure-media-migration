@@ -1,6 +1,4 @@
-﻿
-
-using System.Globalization;
+﻿using System.Globalization;
 using System.Text;
 using System.Diagnostics;
 using System.Net;
@@ -69,7 +67,7 @@ namespace AMSMigrate.Fmp4
         /// </summary>
         /// <param name="extendedType">The extended type.</param>
         protected Box(Guid extendedType)
-            :this(MP4BoxType.uuid, extendedType)
+            : this(MP4BoxType.uuid, extendedType)
         {
         }
 
@@ -119,7 +117,7 @@ namespace AMSMigrate.Fmp4
             Type = other.Type;
             ExtendedType = other.ExtendedType;
             Size = other.Size;
-            
+
             Body = other.Body;
             BodyInitialOffset = other.BodyInitialOffset;
             BodyPreBytes = other.BodyPreBytes;
@@ -128,7 +126,7 @@ namespace AMSMigrate.Fmp4
             {
                 //mark begin of deserialization.
                 _deserializing = true;
-                
+
                 ReadBody();
                 ConsumeBody();
 
@@ -392,7 +390,7 @@ namespace AMSMigrate.Fmp4
                 _dirty = value;
 
                 Size.Dirty = value;
-                
+
                 foreach (Box child in _children)
                 {
                     child.Dirty = value;
@@ -411,7 +409,7 @@ namespace AMSMigrate.Fmp4
         /// <summary>
         /// This variable tracks miscellaneous sources of dirtiness from direct members of this class,
         /// </summary>
-        private  bool _dirty;
+        private bool _dirty;
 
         /// <summary>
         /// This variable indicate we are currently deserializing the box. 
@@ -554,7 +552,7 @@ namespace AMSMigrate.Fmp4
         public virtual UInt64 ComputeSize()
         {
             UInt64 size = ComputeLocalSize();
-            
+
             foreach (Box child in _children)
             {
                 size += child.ComputeSize();
@@ -760,7 +758,7 @@ namespace AMSMigrate.Fmp4
             {
                 // Perform a reverse dictionary lookup to find the name of this child box
                 string childBoxName;
-                IEnumerable<KeyValuePair<UInt32,Type>> compactBoxTypes = MP4BoxType.CompactType.Where(entry => entry.Value == typeof(TChildBoxType));
+                IEnumerable<KeyValuePair<UInt32, Type>> compactBoxTypes = MP4BoxType.CompactType.Where(entry => entry.Value == typeof(TChildBoxType));
                 if (1 != compactBoxTypes.Count())
                 {
                     // We don't want to throw an exception, as we are already in the middle of throwing one, so just use class name
@@ -776,7 +774,7 @@ namespace AMSMigrate.Fmp4
                         GetType().Name, childBoxName, numBoxes));
             }
 
-            return (TChildBoxType) boxes.Single();
+            return (TChildBoxType)boxes.Single();
         }
 
         /// <summary>
@@ -886,7 +884,7 @@ namespace AMSMigrate.Fmp4
                 // Same length. Compare the contents of the streams. Ignore different starting points, that is simply state.
                 long thisPosition = Body.BaseStream.Position;
                 long thatPosition = other.Body.BaseStream.Position;
-                
+
                 // Rewind streams
                 Body.BaseStream.Position = 0;
                 other.Body.BaseStream.Position = 0;

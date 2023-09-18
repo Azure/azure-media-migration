@@ -1,5 +1,4 @@
-﻿
-using System.Collections.ObjectModel;
+﻿using System.Collections.ObjectModel;
 using System.Collections.Specialized;
 using System.Diagnostics;
 using System.Globalization;
@@ -16,7 +15,7 @@ namespace AMSMigrate.Fmp4
         /// Default constructor.
         /// </summary>
         public sdtpBox() :
-            base(version:0, flags:0, boxtype:MP4BoxType.sdtp)
+            base(version: 0, flags: 0, boxtype: MP4BoxType.sdtp)
         {
             Size.Value = ComputeSize();
             _entries.CollectionChanged += _dependencies_CollectionChanged;
@@ -26,7 +25,7 @@ namespace AMSMigrate.Fmp4
         /// Deserializing/copy constructor.
         /// </summary>
         /// <param name="box">the box to construct from</param>
-        public sdtpBox(Box box):
+        public sdtpBox(Box box) :
             base(box)
         {
             Debug.Assert(box.Type == MP4BoxType.sdtp);
@@ -169,7 +168,7 @@ namespace AMSMigrate.Fmp4
         {
             return this.Equals(other as sdtpBox);
         }
-        
+
         /// <summary>
         /// compare the box with another sdtpBox
         /// </summary>

@@ -1,5 +1,4 @@
-﻿
-using System.Diagnostics;
+﻿using System.Diagnostics;
 using System.Globalization;
 
 namespace AMSMigrate.Fmp4
@@ -83,7 +82,7 @@ namespace AMSMigrate.Fmp4
 
             try
             {
-                _trackId  = Body.ReadUInt32();
+                _trackId = Body.ReadUInt32();
                 DefaultSampleDescriptionIndex = Body.ReadUInt32();
                 DefaultSampleDuration = Body.ReadUInt32();
                 DefaultSampleSize = Body.ReadUInt32();
@@ -121,7 +120,7 @@ namespace AMSMigrate.Fmp4
 
         protected static new UInt64 ComputeLocalSize()
         {
-            return 
+            return
                 + 4 //track id
                 + 4 //sample description index
                 + 4 //duration
