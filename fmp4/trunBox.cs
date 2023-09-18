@@ -1,5 +1,4 @@
-﻿
-using System.Collections.ObjectModel;
+﻿using System.Collections.ObjectModel;
 using System.Diagnostics;
 using System.Globalization;
 
@@ -15,7 +14,7 @@ namespace AMSMigrate.Fmp4
         /// Default constructor.
         /// </summary>
         public trunBox() :
-            base(version:0, flags:0, boxtype:MP4BoxType.trun)
+            base(version: 0, flags: 0, boxtype: MP4BoxType.trun)
         {
             Size.Value = ComputeSize();
             _entries.CollectionChanged += Entries_CollectionChanged;
@@ -25,12 +24,12 @@ namespace AMSMigrate.Fmp4
         /// De-serializing/copy constructor.
         /// </summary>
         /// <param name="box">the box to construct from</param>
-        public trunBox(Box box):
+        public trunBox(Box box) :
             base(box)
         {
             Debug.Assert(box.Type == MP4BoxType.trun);
 
-            _entries.CollectionChanged +=Entries_CollectionChanged;
+            _entries.CollectionChanged += Entries_CollectionChanged;
         }
 
         /// <summary>
@@ -123,12 +122,12 @@ namespace AMSMigrate.Fmp4
             {
                 entrySize += 4;
             }
-            
+
             if ((flags & TrunFlags.SampleFlagsPresent) == TrunFlags.SampleFlagsPresent)
             {
                 entrySize += 4;
             }
-            
+
             if ((flags & TrunFlags.SampleCompositionOffsetPresent) == TrunFlags.SampleCompositionOffsetPresent)
             {
                 entrySize += 4;
@@ -184,7 +183,7 @@ namespace AMSMigrate.Fmp4
                     {
                         entry.SampleSize = Body.ReadUInt32();
                     }
-                
+
                     if ((flags & TrunFlags.SampleFlagsPresent) == TrunFlags.SampleFlagsPresent)
                     {
                         entry.SampleFlags = Body.ReadUInt32();
@@ -224,7 +223,7 @@ namespace AMSMigrate.Fmp4
             base.WriteToInternal(writer);
 
             writer.WriteInt32(_entries.Count);
-            
+
             if (_dataOffset.HasValue)
             {
                 writer.WriteInt32(_dataOffset.Value);
@@ -237,7 +236,7 @@ namespace AMSMigrate.Fmp4
 
             foreach (trunEntry entry in _entries)
             {
-                entry.WriteTo(writer);    
+                entry.WriteTo(writer);
             }
         }
 
@@ -347,7 +346,7 @@ namespace AMSMigrate.Fmp4
             UInt64 thisSize = 4; //for the sample count. rest all are optional.
             UInt64 entrySize = 0;
 
-            if(_dataOffset.HasValue)
+            if (_dataOffset.HasValue)
             {
                 thisSize += 4;
             }
@@ -476,7 +475,7 @@ namespace AMSMigrate.Fmp4
         {
             return this.Equals(other as trunBox);
         }
-        
+
         /// <summary>
         /// compare this object against another trunBox object.
         /// </summary>
@@ -531,7 +530,7 @@ namespace AMSMigrate.Fmp4
         /// <returns>return true if two boxes are not equal else false.</returns>
         public static bool operator !=(trunBox? lhs, trunBox? rhs)
         {
-            return !(lhs ==rhs);
+            return !(lhs == rhs);
         }
 
         #endregion

@@ -1,5 +1,4 @@
-﻿
-using System.Diagnostics;
+﻿using System.Diagnostics;
 using System.Globalization;
 
 namespace AMSMigrate.Fmp4
@@ -80,7 +79,7 @@ namespace AMSMigrate.Fmp4
         /// <summary>
         /// The optional transformation matrix to be used for the video.
         /// </summary>
-        public Int32[]  Matrix { get ; private set; }
+        public Int32[] Matrix { get; private set; }
 
         /// <summary>
         /// The current track ID.
@@ -189,7 +188,7 @@ namespace AMSMigrate.Fmp4
             writer.WriteUInt16(Volume);
             writer.WriteUInt16(0);
 
-            foreach(Int32 value in Matrix)
+            foreach (Int32 value in Matrix)
             {
                 writer.WriteInt32(value);
             }

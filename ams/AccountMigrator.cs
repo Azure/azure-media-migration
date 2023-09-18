@@ -18,7 +18,7 @@ namespace AMSMigrate.Ams
             string accountName,
             IAnsiConsole console,
             ILogger<AccountMigrator> logger,
-            TokenCredential credential) : 
+            TokenCredential credential) :
             base(options, console, credential)
         {
             _accountName = accountName;

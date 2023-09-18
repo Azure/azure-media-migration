@@ -1,5 +1,4 @@
-﻿
-using System.Diagnostics;
+﻿using System.Diagnostics;
 
 namespace AMSMigrate.Fmp4
 {
@@ -24,7 +23,7 @@ namespace AMSMigrate.Fmp4
         /// Deserializing/copy constructor.
         /// </summary>
         /// <param name="box">the box to construct from</param>
-        public moofBox(Box box):
+        public moofBox(Box box) :
             base(box)
         {
             Debug.Assert(box.Type == MP4BoxType.moof);

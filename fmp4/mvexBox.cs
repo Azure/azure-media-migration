@@ -1,5 +1,4 @@
-﻿
-using System.Diagnostics;
+﻿using System.Diagnostics;
 
 namespace AMSMigrate.Fmp4
 {
@@ -20,7 +19,7 @@ namespace AMSMigrate.Fmp4
         /// Deserializing/copy constructor.
         /// </summary>
         /// <param name="box">the box to construct from</param>
-        public mvexBox(Box box):
+        public mvexBox(Box box) :
             base(box)
         {
             Debug.Assert(box.Type == MP4BoxType.mvex);

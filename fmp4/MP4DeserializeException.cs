@@ -1,5 +1,4 @@
-﻿
-using System.Globalization;
+﻿using System.Globalization;
 using System.Runtime.Serialization;
 
 namespace AMSMigrate.Fmp4
@@ -33,7 +32,7 @@ namespace AMSMigrate.Fmp4
             : base(message, ex)
         {
         }
-        
+
         /// <summary>
         /// Creates an MP4DeserializeException.
         /// 

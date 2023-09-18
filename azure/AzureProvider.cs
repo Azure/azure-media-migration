@@ -11,16 +11,16 @@ namespace AMSMigrate.Azure
 
         public AzureProvider(
             ILoggerFactory loggerFactory,
-            TokenCredential credentials) 
+            TokenCredential credentials)
         {
             _credentials = credentials;
             _loggerFactory = loggerFactory;
         }
 
-        public IFileUploader GetStorageProvider(MigratorOptions migratorOptions) 
+        public IFileUploader GetStorageProvider(MigratorOptions migratorOptions)
             => new AzureStorageUploader(migratorOptions, _credentials, _loggerFactory.CreateLogger<AzureStorageUploader>());
 
-        public ISecretUploader GetSecretProvider(KeyVaultOptions keyOptions) 
+        public ISecretUploader GetSecretProvider(KeyVaultOptions keyOptions)
             => new KeyVaultUploader(keyOptions, _credentials, _loggerFactory.CreateLogger<KeyVaultUploader>());
     }
 }

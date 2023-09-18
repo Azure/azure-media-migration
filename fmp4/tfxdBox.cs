@@ -1,5 +1,4 @@
-﻿
-using System.Globalization;
+﻿using System.Globalization;
 using System.Diagnostics;
 
 namespace AMSMigrate.Fmp4

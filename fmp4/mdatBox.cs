@@ -1,5 +1,4 @@
-﻿
-using System.Diagnostics;
+﻿using System.Diagnostics;
 using System.Security.Cryptography;
 
 namespace AMSMigrate.Fmp4
@@ -214,7 +213,7 @@ namespace AMSMigrate.Fmp4
                 // If we reached this stage, we are not dirty
                 return false;
             }
-            
+
             set
             {
                 base.Dirty = value;

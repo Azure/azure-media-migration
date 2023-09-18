@@ -1,5 +1,4 @@
-﻿
-using System.Diagnostics;
+﻿using System.Diagnostics;
 using System.Globalization;
 
 namespace AMSMigrate.Fmp4
@@ -13,7 +12,7 @@ namespace AMSMigrate.Fmp4
         /// Default constructor 
         /// </summary>
         public mvhdBox() :
-            base(version:0, flags:0, boxtype:MP4BoxType.mvhd)
+            base(version: 0, flags: 0, boxtype: MP4BoxType.mvhd)
         {
             _nextTrackId = UInt32.MaxValue;
             Matrix = new Int32[9];
@@ -23,7 +22,7 @@ namespace AMSMigrate.Fmp4
         /// Copy constructor
         /// </summary>
         /// <param name="box">the box to copy from</param>
-        public mvhdBox(Box box):
+        public mvhdBox(Box box) :
             base(box)
         {
             Debug.Assert(box.Type == MP4BoxType.mvhd);
@@ -117,7 +116,7 @@ namespace AMSMigrate.Fmp4
                 else
                 {
                     throw new MP4DeserializeException(
-                        TypeDescription, 
+                        TypeDescription,
                         -BodyPreBytes,
                         BodyInitialOffset,
                         String.Format(CultureInfo.InvariantCulture, "The version field for an mvhd box must be either 0 or 1. Instead found {0}",
@@ -176,12 +175,12 @@ namespace AMSMigrate.Fmp4
             writer.WriteUInt32(Rate);
             writer.WriteUInt16(Volume);
             writer.WriteUInt16(0);
-            for(int i =0; i < 2; ++i)
+            for (int i = 0; i < 2; ++i)
             {
                 writer.WriteUInt32(0);
             }
 
-            foreach(Int32 value in Matrix)
+            foreach (Int32 value in Matrix)
             {
                 writer.WriteInt32(value);
             }

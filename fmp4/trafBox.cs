@@ -1,5 +1,4 @@
-﻿
-using System.Diagnostics;
+﻿using System.Diagnostics;
 
 namespace AMSMigrate.Fmp4
 {
@@ -21,13 +20,13 @@ namespace AMSMigrate.Fmp4
         /// Copy/Deserializing constructor.
         /// </summary>
         /// <param name="box">the box to copy from</param>
-        public trafBox(Box box):
+        public trafBox(Box box) :
             base(box)
         {
             Debug.Assert(box.Type == MP4BoxType.traf);
         }
 
-        
+
         /// <summary>
         /// Returns the Header box for this track.
         /// </summary>

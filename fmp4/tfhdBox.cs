@@ -1,5 +1,4 @@
-﻿
-using System.Diagnostics;
+﻿using System.Diagnostics;
 using System.Globalization;
 
 namespace AMSMigrate.Fmp4
@@ -14,7 +13,7 @@ namespace AMSMigrate.Fmp4
         /// </summary>
         /// <param name="trackId"></param>
         public tfhdBox(UInt32 trackId) :
-            base(version:0, flags:0, boxtype:MP4BoxType.tfhd)
+            base(version: 0, flags: 0, boxtype: MP4BoxType.tfhd)
         {
             _trackId = trackId;
             Size.Value = ComputeSize();
@@ -25,7 +24,7 @@ namespace AMSMigrate.Fmp4
         /// </summary>
         /// <param name="other">The tfhdBox to copy.</param>
         public tfhdBox(tfhdBox other) :
-            base (other.Version, other.Flags, boxtype: MP4BoxType.tfhd)
+            base(other.Version, other.Flags, boxtype: MP4BoxType.tfhd)
         {
             _trackId = other._trackId;
             _baseOffset = other._baseOffset;
@@ -40,7 +39,7 @@ namespace AMSMigrate.Fmp4
         /// deserializing constructor.
         /// </summary>
         /// <param name="box"></param>
-        public tfhdBox(Box box):
+        public tfhdBox(Box box) :
             base(box)
         {
             Debug.Assert(box.Type == MP4BoxType.tfhd);
@@ -280,7 +279,7 @@ namespace AMSMigrate.Fmp4
             {
                 thisSize += 4;
             }
-            
+
             if (_defaultSampleDuration.HasValue)
             {
                 thisSize += 4;
