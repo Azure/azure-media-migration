@@ -176,4 +176,4 @@ and its associated mimeType attribute in the 'Representation' tag.
 
 For example, if we have one audio stream called audio.mp4, and two video streams called video1.mp4, video2.mp4, we can use the following command line (shown for Windows) to decrypt the content,
 
-    packager-win-x64.exe --enable_raw_key_decryption --keys label=cenc:key=<key>:key_id=<key id> --mpd_output clear.mpd --hls_master_playlist_output clear.m3u8 in=audio.mp4,stream=audio,output=clear_audio.mp4,playlist_name=clear0 in=video1.mp4,stream=video,output=clear_video1.m4,playlist_name=clear1 in=video2.mp4,stream=video,output=clear_video2.mp4,playlist_name=clear2
+    packager-win-x64.exe --enable_raw_key_decryption --keys label=cenc:key=<key>:key_id=<key id> --mpd_output clear.mpd --hls_master_playlist_output clear.m3u8 in=audio.mp4,stream=audio,output=clear_audio.mp4,playlist_name=clear0.m3u8 in=video1.mp4,stream=video,output=clear_video1.m4,playlist_name=clear1.m3u8 in=video2.mp4,stream=video,output=clear_video2.mp4,playlist_name=clear2.m3u8
