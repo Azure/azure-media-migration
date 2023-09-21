@@ -177,3 +177,35 @@ and its associated mimeType attribute in the 'Representation' tag.
 For example, if we have one audio stream called audio.mp4, and two video streams called video1.mp4, video2.mp4, we can use the following command line (shown for Windows) to decrypt the content,
 
     packager-win-x64.exe --enable_raw_key_decryption --keys label=cenc:key=<key>:key_id=<key id> --mpd_output clear.mpd --hls_master_playlist_output clear.m3u8 in=audio.mp4,stream=audio,output=clear_audio.mp4,playlist_name=clear0.m3u8 in=video1.mp4,stream=video,output=clear_video1.m4,playlist_name=clear1.m3u8 in=video2.mp4,stream=video,output=clear_video2.mp4,playlist_name=clear2.m3u8
+
+# Troubleshooting
+
+This section contains some tips that hopefully will be helpful to you in troubleshoot issues during migration.
+At the end of running the 'assets' command to do migration, a summary of the status will be printed on the screen that looks like this:
+
+Asset Summary:
+| Asset Type        | Count |
+| ----------        | ----- |
+| Total             |   *   |
+| Already Migrated  |   *   |
+| Skipped           |   *   |
+| Successful        |   *   |
+| Failed            |   *   |
+
+if you don't see any counts in the 'Skipped' or 'Failed' row, then all the jobs were completed successfully.
+
+If you have nonzero counts in 'Failed', then you can do a couple of things to identify the asset(s) that failed:
+
+1. Look at the log file (the path of which will be printed on the console) to figure out which asset(s) failed.  One good way to identify the status of an asset is to grep this log line in the log file
+
+        Migrated asset: <asset name>, container: <container name>, type: vod-fmp4, status: Completed
+
+    there should be one of this line for each asset which tells you the status of the migration.
+
+2. Run 'analyze' command, which will output an html file (the path of which will be printed on the console).  This will give you a html file that contains a table of all the assets and its migration status.
+
+Once you find the asset that failed, you can look at the migration log file, and try to find all the log lines that corresponds to the asset name / asset container.  As multiple assets are being migrated in batch, the log file might be a bit hard to grok.  So another way to simplify the log is to just run migration on a single 'failed' asset, e.g.
+
+    AMSMigrate.exe assets -s <subscription> -g <resource group of media service> -n <media service account name> -o <output storage account uri> -f "name eq '<asset name>'"
+
+that way you get a cleaner / easier log to look at.
