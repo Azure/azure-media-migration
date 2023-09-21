@@ -150,3 +150,30 @@ The quickest way to run the tool in Azure is use the deployment scripts. See [de
 # Test streaming of migrated content
 One way to test streaming of migrated content is to stream directly from the migrated Azure blob storage.  See [blobStreaming.md](doc/blobStreaming.md) for more instructions.
 
+# AES Encryption
+
+The migration tool can be optionally configured to perform static packaging with clear key encryption.  In this mode, the tool needs access to an Azure Key Vault (with the 'Key Vault Secrets Officer' permission given to the tool).
+
+To enable clear key encryption while migrating, append '--key-vault-uri' parameter to the command line.  An example,
+
+    AMSMigrate.exe assets -s <subscription> -g <resource group of media service> -n <media service account name> -o <output storage account uri> --key-vault-uri https://<your azure key vault name>.vault.azure.net
+
+The tool will generate a new key id and key and store it as secrets in the azure key vault (secret name = key id, secret = key) and encrypt the media contents with the key.  The encrypted outputs can not be viewed directly via its azure blob storage url.  It requires a proxy server to perform manifest rewrite and key delivery.  An example of a proxy server that is capable of supporting viewing of the encrypted content can be found here [PlaybackService.md](tools/PlaybackService/README.md).
+
+Currently the tool does not support decryption of the encrypted content for you.  If you need to recover the encrypted content, you can manually descrypt the content using shaka packager directly ([using raw key](https://shaka-project.github.io/shaka-packager/html/tutorials/raw_key.html)).  An example workflow is to download your asset from storage locally, look at the manifest to identify the key id and retrieve the key from azure key vault, and identify list of media files from manifest and then run shaka packager directly to decrypt.
+
+To locate the key id, you can look at your dash manifest file (.mpd) and locate the following string
+
+    cenc:default_KID="<key id>"
+
+then you can use the 'key id' to look up the key in your azure key vault (you can do it via azure portal or programmatically).
+
+Then you need to identify the list of media streams and its type which you can do by looking the 
+
+    <BaseURL>fileName</BaseURL>
+
+and its associated mimeType attribute in the 'Representation' tag.
+
+For example, if we have one audio stream called audio.mp4, and two video streams called video1.mp4, video2.mp4, we can use the following command line (shown for Windows) to decrypt the content,
+
+    packager-win-x64.exe --enable_raw_key_decryption --keys label=cenc:key=<key>:key_id=<key id> --mpd_output clear.mpd --hls_master_playlist_output clear.m3u8 in=audio.mp4,stream=audio,output=clear_audio.mp4,playlist_name=clear0 in=video1.mp4,stream=video,output=clear_video1.m4,playlist_name=clear1 in=video2.mp4,stream=video,output=clear_video2.mp4,playlist_name=clear2
