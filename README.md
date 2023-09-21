@@ -156,7 +156,7 @@ The migration tool can be optionally configured to perform static packaging with
 
 To enable clear key encryption while migrating, append '--key-vault-uri' parameter to the command line.  An example,
 
-    AMSMigrate.exe assets -s <subscription> -g <resource group of media service> -n <media service account name> -o <output storage account uri> --key-vault-uri https://<your azure key vault name>.vault.azure.net
+    AMSMigrate.exe assets -s <subscription> -g <resource group of media service> -n <media service account name> -o <output storage account uri> -e --key-vault-uri https://<your azure key vault name>.vault.azure.net
 
 The tool will generate a new key id and key and store it as secrets in the azure key vault (secret name = key id, secret = key) and encrypt the media contents with the key.  The encrypted outputs can not be viewed directly via its azure blob storage url.  It requires a proxy server to perform manifest rewrite and key delivery.  An example of a proxy server that is capable of supporting viewing of the encrypted content can be found here [PlaybackService.md](tools/PlaybackService/README.md).
 
