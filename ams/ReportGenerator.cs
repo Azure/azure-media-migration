@@ -46,11 +46,12 @@ namespace AMSMigrate.Ams
     <table>
       <thead>
       <tr>
-        <th style=""width:15%"">Asset Name</t>
+        <th style=""width:10%"">Asset Name</t>
         <th style=""width:5%"">AssetType</th>
-        <th style=""width:8%"">MigrateStatus</th>
-        <th style=""width:36%"">OutputHlsUrl</th>
-        <th style=""width:36%"">OutputDashUrl</th>
+        <th style=""width:10%"">LocatorIds</th>
+        <th style=""width:7%"">MigrateStatus</th>
+        <th style=""width:34%"">OutputHlsUrl</th>
+        <th style=""width:34%"">OutputDashUrl</th>
       </tr>
       </thead>
       <tbody>");
@@ -69,7 +70,7 @@ namespace AMSMigrate.Ams
         {
             lock (this)
             {
-                _writer.Write($"<tr><td>{result.AssetName}</td><td>{result.AssetType}</td><td>{result.Status}</td><td>");
+                _writer.Write($"<tr><td>{result.AssetName}</td><td>{result.AssetType}</td><td>{result.LocatorIds}</td><td>{result.Status}</td><td>");
                 if (result.OutputHlsUrl != null)
                     _writer.Write($"<a href=\"{result.OutputHlsUrl}\">{result.OutputHlsUrl}</a>");
 

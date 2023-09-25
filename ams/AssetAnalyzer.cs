@@ -32,7 +32,7 @@ namespace AMSMigrate.Ams
 
         private async Task<AnalysisResult> AnalyzeAsync(MediaAssetResource asset, BlobServiceClient storage, CancellationToken cancellationToken)
         {
-            var result = new AnalysisResult(asset.Data.Name, MigrationStatus.NotMigrated, 0);
+            var result = new AnalysisResult(asset.Data.Name, MigrationStatus.NotMigrated);
             _logger.LogDebug("Analyzing asset: {asset}, container: {container}", asset.Data.Name, asset.Data.Container);
             try
             {
@@ -42,6 +42,29 @@ namespace AMSMigrate.Ams
                     _logger.LogWarning("Container {name} missing for asset {asset}", container.Name, asset.Data.Name);
                     result.Status = MigrationStatus.Failed;
                     return result;
+                }
+
+                // Get a list of LocatorIds if they exist.
+
+                string locatorIds = "";
+                var locators = asset.GetStreamingLocatorsAsync();
+
+                await foreach (var locator in locators)
+                {
+                    if (locator.StreamingLocatorId != null && locator.StreamingLocatorId != Guid.Empty)
+                    {
+                        if (locatorIds != "")
+                        {
+                            locatorIds += "\n;--------\n";
+                        }
+
+                        locatorIds += locator.StreamingLocatorId.Value.ToString("D");
+                    }                    
+                }
+
+                if (!string.IsNullOrEmpty(locatorIds))
+                {
+                    result.LocatorIds = locatorIds;
                 }
 
                 // The asset container exists, try to check the metadata list first.
