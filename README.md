@@ -160,7 +160,7 @@ To enable clear key encryption while migrating, append '--key-vault-uri' paramet
 
 The tool will generate a new key id and key and store it as secrets in the azure key vault (secret name = key id, secret = key) and encrypt the media contents with the key.  The encrypted outputs can not be viewed directly via its azure blob storage url.  It requires a proxy server to perform manifest rewrite and key delivery.  An example of a proxy server that is capable of supporting viewing of the encrypted content can be found here [PlaybackService.md](tools/PlaybackService/README.md).
 
-Currently the tool does not support decryption of the encrypted content for you.  If you need to recover the encrypted content, you can manually descrypt the content using shaka packager directly ([using raw key](https://shaka-project.github.io/shaka-packager/html/tutorials/raw_key.html)).  An example workflow is to download your asset from storage locally, look at the manifest to identify the key id and retrieve the key from azure key vault, and identify list of media files from manifest and then run shaka packager directly to decrypt.
+Currently the tool does not support decryption of the encrypted content for you.  If you need to recover the encrypted content, you can manually decrypt the content using shaka packager directly ([using raw key](https://shaka-project.github.io/shaka-packager/html/tutorials/raw_key.html)).  An example workflow is to download your asset from storage locally, look at the manifest to identify the key id and retrieve the key from azure key vault, and identify list of media files from manifest and then run shaka packager directly to decrypt.
 
 To locate the key id, you can look at your dash manifest file (.mpd) and locate the following string
 
@@ -180,8 +180,7 @@ For example, if we have one audio stream called audio.mp4, and two video streams
 
 # Troubleshooting
 
-This section contains some tips that hopefully will be helpful to you in troubleshoot issues during migration.
-At the end of running the 'assets' command to do migration, a summary of the status will be printed on the screen that looks like this:
+This section contains some tips that hopefully will be helpful to you in troubleshoot issues during migration.  At the end of running the 'assets' command to do migration, a summary of the status will be printed on the screen that looks like this:
 
 Asset Summary:
 | Asset Type        | Count |
@@ -209,3 +208,14 @@ Once you find the asset that failed, you can look at the migration log file, and
     AMSMigrate.exe assets -s <subscription> -g <resource group of media service> -n <media service account name> -o <output storage account uri> -f "name eq '<asset name>'"
 
 that way you get a cleaner / easier log to look at.
+
+Below are some tip(s) about error(s) that may occurs, (more will be added later on):
+
+- If your migration failed for certain asset, and you see the following log line:
+
+        [09:59:28 WRN] Another tool is working on the container test and output path: aaaa/bbbbb/cccc
+
+  This could mean that either another instance of AMSMigrate is working on the same output container or the output container is in a bad state (possibly due to a previous AMSMigrate process was terminated abruptly or crashed).  The reason is that AMSMigrate is designed to prevent multiple instances from writing to the same output path and it does this by creating a blob called '__migrate' and lock it via acquiring the lease.
+  
+  So in this case, if you look the the output container path, you will find a __migrate blob that is locked via lease which you'll need to break the lease of prior to another run that writes to this location.  So if you know that another tool is not working on this output path, then you will need to break the lease the '__migrate' blob.  This can be done manually using the azure portal or azure storage explorer.  Another approach is to run the same AMSMigrate 'asset' command that writes to this output path but append '--break-output-lease' flag which will automatically break the lease of the __migrate blob for you.
+
