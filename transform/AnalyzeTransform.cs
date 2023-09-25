@@ -9,11 +9,13 @@ namespace AMSMigrate.Transform
             : base(status, outputPath, assetType, manifestName)
         {
             AssetName = assetName;
+
+            LocatorIds = new List<string>();
         }
 
         // A list of Locator Guids of the asset,
         // it can have zero or multiple GUIDs.
-        public string? LocatorIds { get; set; }
+        public List<string> LocatorIds { get; }
 
         public string AssetName { get; set; }
 

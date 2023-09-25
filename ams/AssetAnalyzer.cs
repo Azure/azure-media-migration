@@ -45,26 +45,14 @@ namespace AMSMigrate.Ams
                 }
 
                 // Get a list of LocatorIds if they exist.
-
-                string locatorIds = "";
                 var locators = asset.GetStreamingLocatorsAsync();
 
                 await foreach (var locator in locators)
                 {
                     if (locator.StreamingLocatorId != null && locator.StreamingLocatorId != Guid.Empty)
                     {
-                        if (locatorIds != "")
-                        {
-                            locatorIds += "\n;--------\n";
-                        }
-
-                        locatorIds += locator.StreamingLocatorId.Value.ToString("D");
+                        result.LocatorIds.Add(locator.StreamingLocatorId.Value.ToString("D"));
                     }                    
-                }
-
-                if (!string.IsNullOrEmpty(locatorIds))
-                {
-                    result.LocatorIds = locatorIds;
                 }
 
                 // The asset container exists, try to check the metadata list first.

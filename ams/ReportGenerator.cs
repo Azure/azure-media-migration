@@ -70,7 +70,19 @@ namespace AMSMigrate.Ams
         {
             lock (this)
             {
-                _writer.Write($"<tr><td>{result.AssetName}</td><td>{result.AssetType}</td><td>{result.LocatorIds}</td><td>{result.Status}</td><td>");
+                string locatorIds = "";
+
+                foreach (var locId in result.LocatorIds)
+                {
+                    if (!string.IsNullOrEmpty(locatorIds))
+                    {
+                        locatorIds += ";\n";
+                    }
+
+                    locatorIds += locId;
+                }
+
+                _writer.Write($"<tr><td>{result.AssetName}</td><td>{result.AssetType}</td><td>{locatorIds}</td><td>{result.Status}</td><td>");
                 if (result.OutputHlsUrl != null)
                     _writer.Write($"<a href=\"{result.OutputHlsUrl}\">{result.OutputHlsUrl}</a>");
 
