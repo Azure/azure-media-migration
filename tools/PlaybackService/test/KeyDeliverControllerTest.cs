@@ -31,8 +31,8 @@ public class KeyDeliverControllerTest : TestBase
         using var output = new MemoryStream();
         string? contentType = null;
         long? contentLength = null;
-        httpResponseMock.SetupSet(c => c.ContentType).Callback(c => contentType = c);
-        httpResponseMock.SetupSet(c => c.ContentLength).Callback(c => contentLength = c);
+        httpResponseMock.SetupSet(c => c.ContentType = It.IsAny<string?>()).Callback<string?>(c => contentType = c);
+        httpResponseMock.SetupSet(c => c.ContentLength = It.IsAny<long?>()).Callback<long?>(c => contentLength = c);
         httpResponseMock.Setup(c => c.Body).Returns(output);
 
         // Create controller.

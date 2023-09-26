@@ -113,7 +113,7 @@ public class KeyDeliverController : ControllerBase
                 var key = t.Item2;
                 logger.LogDebug($"Get key for kid {kid} " + (key != null ? "success" : "failed"));
                 return key != null;
-            }).Select(t => new ClearKey() { KeyId = ToDashKeyOrKeyId(t.Item1), Key = ToDashKeyOrKeyId(t.Item2) }).ToArray();
+            }).Select(t => new ClearKey() { KeyId = ToDashKeyOrKeyId(t.Item1), Key = ToDashKeyOrKeyId(t.Item2!) }).ToArray();
 
             // All done.
             var result = new JsonResult(new KeyRequestResponse()
