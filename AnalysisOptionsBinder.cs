@@ -39,17 +39,6 @@ Visit https://learn.microsoft.com/en-us/azure/media-services/latest/filter-order
             Arity = ArgumentArity.ZeroOrOne
         };
 
-        private readonly Option<AnalysisType> _analysisType = new(
-            aliases: new[] { "-t", "--analysis-type" },
-            () => AnalysisType.Report,
-            description: @"The kind of analysis to do.
-Summary - Summary of migration
-Detailed - A detailed classification of assets,
-Report - A migration report")
-        {
-            IsRequired = false
-        };
-
         const int DefaultBatchSize = 5;
         private readonly Option<int> _batchSize = new(
             aliases: new[] { "--batch-size", "-b" },
@@ -65,7 +54,6 @@ Report - A migration report")
             command.AddOption(_creationTimeStart);
             command.AddOption(_creationTimeEnd);
             command.AddOption(_filter);
-            command.AddOption(_analysisType);
             command.AddOption(_batchSize);
             return command;
         }
@@ -77,7 +65,6 @@ Report - A migration report")
                 bindingContext.ParseResult.GetValueForOption(_creationTimeStart),
                 bindingContext.ParseResult.GetValueForOption(_creationTimeEnd),
                 bindingContext.ParseResult.GetValueForOption(_filter),
-                bindingContext.ParseResult.GetValueForOption(_analysisType),
                 bindingContext.ParseResult.GetValueForOption(_batchSize)
             );
         }

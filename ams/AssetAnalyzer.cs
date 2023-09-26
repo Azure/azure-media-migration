@@ -111,19 +111,13 @@ namespace AMSMigrate.Ams
             double totalAssets = await QueryMetricAsync(account.Id.ToString(), "AssetCount", cancellationToken);
             _logger.LogInformation("The total asset count of the media account is {count}.", totalAssets);
 
-            ReportGenerator? reportGenerator = null;
-
             var resourceFilter = GetAssetResourceFilter(_analysisOptions.ResourceFilter,
                                                         _analysisOptions.CreationTimeStart,
                                                         _analysisOptions.CreationTimeEnd);
 
-            if (_analysisOptions.AnalysisType == AnalysisType.Report)
-            {
-                _logger.LogDebug("Writing html report to {file}", _globalOptions.ReportFile);
-                var file = File.OpenWrite(_globalOptions.ReportFile);
-                reportGenerator = new ReportGenerator(file);
-                reportGenerator.WriteHeader();
-            }
+            var reportGenerator = new ReportGenerator(_globalOptions.HtmlReportFile, _globalOptions.JsonReportFile, _logger);
+            reportGenerator.WriteHeader();
+
             await _resourceProvider.SetStorageResourceGroupsAsync(account, cancellationToken);
             var assets = account.GetMediaAssets()
                 .GetAllAsync(resourceFilter, cancellationToken: cancellationToken);
@@ -152,7 +146,7 @@ namespace AMSMigrate.Ams
                 var result = await AnalyzeAsync(asset, storage, cancellationToken);
                 var assetType = result.AssetType ?? "unknown";
                 assetTypes.AddOrUpdate(assetType, 1, (key, value) => Interlocked.Increment(ref value));
-                reportGenerator?.WriteRow(result);
+                reportGenerator.WriteRecord(result);
                 statistics.Update(result);
                 await writer.WriteAsync(statistics.Total, cancellationToken);
             },
@@ -163,17 +157,10 @@ namespace AMSMigrate.Ams
             await progress;
             _logger.LogDebug("Finished analysis of assets for account: {name}. Time taken {elapsed}", _analysisOptions.AccountName, watch.Elapsed);
             WriteSummary(statistics, assetTypes);
-            if (_analysisOptions.AnalysisType == AnalysisType.Detailed)
-            {
-                WriteDetails(assetTypes);
-            }
+            WriteDetails(assetTypes);
 
-            if (_analysisOptions.AnalysisType == AnalysisType.Report)
-            {
-                reportGenerator?.WriteTrailer();
-                reportGenerator?.Dispose();
-                _logger.LogInformation("See file {file} for detailed html report.", _globalOptions.ReportFile);
-            }
+            reportGenerator.WriteTrailer();
+            reportGenerator.Dispose();
         }
 
         private void WriteSummary(AssetStats statistics, IDictionary<string, int> assetTypes)
