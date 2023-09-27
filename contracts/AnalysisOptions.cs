@@ -1,5 +1,4 @@
 ﻿namespace AMSMigrate.Contracts
 {
-
-    public record AnalysisOptions(string AccountName, DateTimeOffset? CreationTimeStart, DateTimeOffset? CreationTimeEnd, string? ResourceFilter, int BatchSize, bool IsStorageAcc =false, string? Prefix = null);
+    public record AnalysisOptions(string AccountName, DateTimeOffset? CreationTimeStart, DateTimeOffset? CreationTimeEnd, string? ResourceFilter, int BatchSize);
 }
