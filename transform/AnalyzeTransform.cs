@@ -5,14 +5,17 @@ namespace AMSMigrate.Transform
 {
     class AnalysisResult : AssetMigrationResult
     {
-        public AnalysisResult(string assetName, MigrationStatus status, int locators, Uri? outputPath = null, string? assetType = null, string? manifestName = null)
+        public AnalysisResult(string assetName, MigrationStatus status, Uri? outputPath = null, string? assetType = null, string? manifestName = null)
             : base(status, outputPath, assetType, manifestName)
         {
             AssetName = assetName;
-            Locators = locators;
+
+            LocatorIds = new List<string>();
         }
 
-        public int Locators { get; internal set; }
+        // A list of Locator Guids of the asset,
+        // it can have zero or multiple GUIDs.
+        public List<string> LocatorIds { get; }
 
         public string AssetName { get; set; }
 

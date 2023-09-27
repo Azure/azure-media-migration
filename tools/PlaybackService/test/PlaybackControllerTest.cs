@@ -26,7 +26,7 @@ public class PlaybackControllerTest : TestBase
         // Hook HttpResponseMock.
         using var output = new MemoryStream();
         string? contentType = null;
-        httpResponseMock.SetupSet(c => c.ContentType).Callback(c => contentType = c);
+        httpResponseMock.SetupSet(c => c.ContentType = It.IsAny<string?>()).Callback<string?>(c => contentType = c);
         httpResponseMock.Setup(c => c.Body).Returns(output);
 
         // Create controller
@@ -67,7 +67,7 @@ public class PlaybackControllerTest : TestBase
         // Hook HttpResponseMock.
         using var output = new MemoryStream();
         string? contentType = null;
-        httpResponseMock.SetupSet(c => c.ContentType).Callback(c => contentType = c);
+        httpResponseMock.SetupSet(c => c.ContentType = It.IsAny<string?>()).Callback<string?>(c => contentType = c);
         httpResponseMock.Setup(c => c.Body).Returns(output);
 
         // Create controller

@@ -35,7 +35,7 @@ namespace AMSMigrate.Ams
                 Interlocked.Increment(ref _streamable);
             }
 
-            if (result.Locators == 0)
+            if (result.LocatorIds.Count == 0)
             {
                 Interlocked.Increment(ref _noLocators);
             }
