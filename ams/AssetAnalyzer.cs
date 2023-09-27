@@ -40,6 +40,7 @@ namespace AMSMigrate.Ams
             BlobContainerClient? container = null;
             AsyncPageable<MediaAssetStreamingLocator>? locators = null;
             MediaAssetStorageEncryptionFormat? format = null;
+            bool isForAmsAccount = false;
             if (item is MediaAssetResource mediaAsset)
             {
                 assetName = mediaAsset.Data.Name;
@@ -47,26 +48,26 @@ namespace AMSMigrate.Ams
                 format = mediaAsset.Data.StorageEncryptionFormat;
                 container = storage.GetContainer(mediaAsset);
                 locators = mediaAsset.GetStreamingLocatorsAsync();
+                isForAmsAccount = true;
             }
             else if (item is BlobContainerItem bcItem)
             {
                 assetName = storage.AccountName;
                 container = storage.GetBlobContainerClient(bcItem.Name);
                 containerName = container.Name;
-                format = MediaAssetStorageEncryptionFormat.None;//todo StorageEncryptionFormat; 
+                format = MediaAssetStorageEncryptionFormat.None;
             }
-            if (assetName == null || container == null)
+            else
             {
-                _logger.LogDebug("Analyzing item or container is null.");
-                throw new ArgumentException();
+                throw new ArgumentException("item type is not supported.");
             }
 
             var result = new AnalysisResult(assetName, MigrationStatus.NotMigrated);
             _logger.LogDebug("Analyzing asset: {asset}, container: {container}", assetName, containerName);
             try
             {
-             
-                if (!await container.ExistsAsync(cancellationToken))
+
+                if (isForAmsAccount && !await container.ExistsAsync(cancellationToken))
                 {
                     _logger.LogWarning("Container {name} missing for asset {asset}", container.Name, assetName);
                     result.Status = MigrationStatus.Failed;
@@ -136,20 +137,66 @@ namespace AMSMigrate.Ams
         {
             var watch = Stopwatch.StartNew();
             _logger.LogInformation("Begin analysis of items for account: {name}", _analysisOptions.AccountName);
-
+            bool isSrorageAcc = false;
+            MediaServicesAccountResource? account = null;
+            try
+            {
+                account = await GetMediaAccountAsync(_analysisOptions.AccountName, cancellationToken);
+            }
+            catch (RequestFailedException ex)
+            {
+                if (ex.ErrorCode != null && ex.ErrorCode.Equals("ResourceNotFound"))
+                {
+                    isSrorageAcc = true;
+                }
+            }
             var reportGenerator = new ReportGenerator(_globalOptions.HtmlReportFile, _globalOptions.JsonReportFile, _logger);
             reportGenerator.WriteHeader();
+            var statistics = new AssetStats();
+            var assetTypes = new ConcurrentDictionary<string, int>();
+            if (isSrorageAcc)
+            {
+                var (storageClient, accountId) = await _resourceProvider.GetStorageAccount(_analysisOptions.AccountName, cancellationToken);
 
-            var resourceFilter = GetAssetResourceFilter(_analysisOptions.ResourceFilter,
+                double totalItems = await GetStorageBlobMetricAsync(accountId, cancellationToken);
+                var containers = storageClient.GetBlobContainersAsync(
+                              prefix: _analysisOptions.ResourceFilter, cancellationToken: cancellationToken);
+                _logger.LogInformation("The total contianers count of the storage account is {count}.", totalItems);
+                List<BlobContainerItem>? filteredList = null;
+
+                if (_analysisOptions.ResourceFilter != null)
+                {
+                    filteredList = await containers.ToListAsync();
+                    totalItems = filteredList.Count;
+                }
+                _logger.LogInformation("The total containers to handle in this run is {count}.", totalItems);
+                var channel = Channel.CreateBounded<double>(1);
+                var progress = ShowProgressAsync("Analyzing Containers", "Assets", totalItems, channel.Reader, cancellationToken);
+                var writer = channel.Writer;
+                await MigrateInParallel(containers, filteredList, async (container, cancellationToken) =>
+                {
+                    //  var storage = await _resourceProvider.GetStorageAccountAsync(account, asset, cancellationToken);
+                    var result = await AnalyzeAsync(container, storageClient, cancellationToken);
+                    var assetType = result.AssetType ?? "unknown";
+                    assetTypes.AddOrUpdate(assetType, 1, (key, value) => Interlocked.Increment(ref value));
+                    reportGenerator?.WriteRecord(result);
+                    statistics.Update(result);
+                    await writer.WriteAsync(statistics.Total, cancellationToken);
+                },
+              _analysisOptions.BatchSize,
+              cancellationToken);
+
+                writer.Complete();
+                await progress;
+                _logger.LogDebug("Finished analysis of containers for account: {name}. Time taken {elapsed}", _analysisOptions.AccountName, watch.Elapsed);
+
+            }
+            else if (account != null)
+            {
+                var resourceFilter = GetAssetResourceFilter(_analysisOptions.ResourceFilter,
                                                         _analysisOptions.CreationTimeStart,
                                                         _analysisOptions.CreationTimeEnd);
 
-            var statistics = new AssetStats();
-            var assetTypes = new ConcurrentDictionary<string, int>();
-            bool isSrorageAcc = false;
-            try
-            {
-                var account = await GetMediaAccountAsync(_analysisOptions.AccountName, cancellationToken);
                 double totalAssets = await QueryMetricAsync(account.Id.ToString(), "AssetCount", cancellationToken);
                 _logger.LogInformation("The total asset count of the media account is {count}.", totalAssets);
 
@@ -191,61 +238,6 @@ namespace AMSMigrate.Ams
                 writer.Complete();
                 await progress;
                 _logger.LogDebug("Finished analysis of assets for account: {name}. Time taken {elapsed}", _analysisOptions.AccountName, watch.Elapsed);
-            }
-            catch (Exception ex)
-            {
-                if (ex.Message.Contains("was not found"))//ex.Data is SomeExceptionType someException && someException.ErrorCode == "ResourceNotFound")
-                {
-                    isSrorageAcc = true;
-                }
-                else
-                {
-                    _logger.LogError("Asset analysis failed with the following error: {0}", ex.Message);
-                }  
-            }
-
-            if (isSrorageAcc)
-            {
-              try{
-                    var (storageClient, accountId) = await _resourceProvider.GetStorageAccount(_analysisOptions.AccountName, cancellationToken);
-
-                    double totalItems = await GetStorageBlobMetricAsync(accountId, cancellationToken);
-                    var containers = storageClient.GetBlobContainersAsync(
-                                  prefix: _analysisOptions.ResourceFilter, cancellationToken: cancellationToken);
-                    _logger.LogInformation("The total contianers count of the storage account is {count}.", totalItems);
-                    List<BlobContainerItem>? filteredList = null;
-
-                    if (_analysisOptions.ResourceFilter != null)
-                    {
-                        filteredList = await containers.ToListAsync();
-                        totalItems = filteredList.Count;
-                    }
-                    _logger.LogInformation("The total containers to handle in this run is {count}.", totalItems);
-                    var channel = Channel.CreateBounded<double>(1);
-                    var progress = ShowProgressAsync("Analyzing Containers", "Assets", totalItems, channel.Reader, cancellationToken);
-                    var writer = channel.Writer;
-                    await MigrateInParallel(containers, filteredList, async (container, cancellationToken) =>
-                    {
-                        //  var storage = await _resourceProvider.GetStorageAccountAsync(account, asset, cancellationToken);
-                        var result = await AnalyzeAsync(container, storageClient, cancellationToken);
-                        var assetType = result.AssetType ?? "unknown";
-                        assetTypes.AddOrUpdate(assetType, 1, (key, value) => Interlocked.Increment(ref value));
-                        reportGenerator?.WriteRecord(result);
-                        statistics.Update(result);
-                        await writer.WriteAsync(statistics.Total, cancellationToken);
-                    },
-                  _analysisOptions.BatchSize,
-                  cancellationToken);
-
-                    writer.Complete();
-                    await progress;
-                    _logger.LogDebug("Finished analysis of containers for account: {name}. Time taken {elapsed}", _analysisOptions.AccountName, watch.Elapsed);
-                }
-
-                catch (Exception ex)
-                {
-                    _logger.LogError("Asset analysis failed with the following error: {0}", ex.Message);
-                }
             }
             WriteSummary(statistics, assetTypes);
             WriteDetails(assetTypes);

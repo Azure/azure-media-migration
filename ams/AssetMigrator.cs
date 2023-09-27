@@ -36,15 +36,7 @@ namespace AMSMigrate.Ams
         {
             var watch = Stopwatch.StartNew();
             MediaServicesAccountResource? account = null;
-            try
-            {
-                account = await GetMediaAccountAsync(_options.AccountName, cancellationToken);
-            }
-            catch (Exception)
-            {
-                _logger.LogError("No valid media account was found.");
-                throw new Exception("No valid media account was found.");
-            }
+            account = await GetMediaAccountAsync(_options.AccountName, cancellationToken); 
             _logger.LogInformation("Begin migration of assets for account: {name}", account.Data.Name);
             var totalAssets = await QueryMetricAsync(
                 account.Id.ToString(),
