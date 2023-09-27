@@ -6,7 +6,13 @@ namespace AMSMigrate
 {
     internal class AnalysisOptionsBinder : BinderBase<AnalysisOptions>
     {
-   
+        private readonly Option<string?> _prefix = new Option<string?>(
+          aliases: new[] { "--prefix", "-p" },
+          description: @"")
+        {
+            Arity = ArgumentArity.ZeroOrOne
+        };
+
         private readonly Option<bool> _isStorageAcc = new Option<bool>(
          aliases: new[] { "--isStorageAcc", "-isSA" },
           () =>false,
@@ -67,6 +73,7 @@ Visit https://learn.microsoft.com/en-us/azure/media-services/latest/filter-order
             command.AddOption(_creationTimeEnd);
             command.AddOption(_filter);
             command.AddOption(_batchSize);
+            command.AddOption(_prefix);
             return command;
         }
 
@@ -78,7 +85,8 @@ Visit https://learn.microsoft.com/en-us/azure/media-services/latest/filter-order
                 bindingContext.ParseResult.GetValueForOption(_creationTimeEnd),
                 bindingContext.ParseResult.GetValueForOption(_filter),
                 bindingContext.ParseResult.GetValueForOption(_batchSize),
-                bindingContext.ParseResult.GetValueForOption(_isStorageAcc)         
+                bindingContext.ParseResult.GetValueForOption(_isStorageAcc),
+                bindingContext.ParseResult.GetValueForOption(_prefix)             
             );
         }
     }

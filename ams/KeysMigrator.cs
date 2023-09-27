@@ -39,7 +39,7 @@ namespace AMSMigrate.Ams
             catch (Exception)
             {
                 _logger.LogError("No valid media account was found.");
-                return;
+                throw new Exception("No valid media account was found.");
             }
 
             var locators = account.GetStreamingLocators().GetAllAsync(_keyOptions.ResourceFilter, cancellationToken: cancellationToken);

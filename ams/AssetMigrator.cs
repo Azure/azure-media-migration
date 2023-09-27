@@ -43,7 +43,7 @@ namespace AMSMigrate.Ams
             catch (Exception)
             {
                 _logger.LogError("No valid media account was found.");
-                return;
+                throw new Exception("No valid media account was found.");
             }
             _logger.LogInformation("Begin migration of assets for account: {name}", account.Data.Name);
             var totalAssets = await QueryMetricAsync(

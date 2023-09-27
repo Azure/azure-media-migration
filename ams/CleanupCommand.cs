@@ -35,8 +35,8 @@ namespace AMSMigrate.Ams
             }
             catch (Exception)
             {
-                _logger.LogError("No valid media account was found."); 
-                return;
+                _logger.LogError("No valid media account was found.");
+                throw new Exception("No valid media account was found.");
             }
             _logger.LogInformation("Begin cleaning up on account: {name}", account.Data.Name);
 

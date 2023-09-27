@@ -39,7 +39,7 @@ namespace AMSMigrate.Ams
             BlobContainerClient? container = null;
             AsyncPageable<MediaAssetStreamingLocator>? locators = null;
             MediaAssetStorageEncryptionFormat? format = null;
-            if (item is MediaAssetResource mediaAsset)
+            if (!_analysisOptions.IsStorageAcc && item is MediaAssetResource mediaAsset)
             {
                 itemName = mediaAsset.Data.Name;
                 containerName = mediaAsset.Data.Container;
@@ -47,7 +47,7 @@ namespace AMSMigrate.Ams
                 container = storage.GetContainer(mediaAsset);
                 locators = mediaAsset.GetStreamingLocatorsAsync();
             }
-            else if (item is BlobContainerItem bcItem)
+            else if (_analysisOptions.IsStorageAcc && item is BlobContainerItem bcItem)
             {
                 itemName = storage.AccountName;
                 container = storage.GetBlobContainerClient(bcItem.Name);
@@ -72,13 +72,15 @@ namespace AMSMigrate.Ams
                     return result;
                 }
 
-
-                await foreach (var locator in locators!)
+                if (locators != null)
                 {
-                    if (locator.StreamingLocatorId != null && locator.StreamingLocatorId != Guid.Empty)
+                    await foreach (var locator in locators!)
                     {
-                        result.LocatorIds.Add(locator.StreamingLocatorId.Value.ToString("D"));
-                    }                    
+                        if (locator.StreamingLocatorId != null && locator.StreamingLocatorId != Guid.Empty)
+                        {
+                            result.LocatorIds.Add(locator.StreamingLocatorId.Value.ToString("D"));
+                        }
+                    }
                 }
 
                 // The asset container exists, try to check the metadata list first.
@@ -132,62 +134,108 @@ namespace AMSMigrate.Ams
         public override async Task MigrateAsync(CancellationToken cancellationToken)
         {
             var watch = Stopwatch.StartNew();
-            _logger.LogInformation("Begin analysis of assets for account: {name}", _analysisOptions.AccountName);
-            var account = await GetMediaAccountAsync(_analysisOptions.AccountName, cancellationToken);
-            double totalAssets = await QueryMetricAsync(account.Id.ToString(), "AssetCount", cancellationToken);
-            _logger.LogInformation("The total asset count of the media account is {count}.", totalAssets);
+            _logger.LogInformation("Begin analysis of items for account: {name}", _analysisOptions.AccountName);
+
+            var reportGenerator = new ReportGenerator(_globalOptions.HtmlReportFile, _globalOptions.JsonReportFile, _logger);
+            reportGenerator.WriteHeader();
 
             var resourceFilter = GetAssetResourceFilter(_analysisOptions.ResourceFilter,
                                                         _analysisOptions.CreationTimeStart,
                                                         _analysisOptions.CreationTimeEnd);
 
-            var reportGenerator = new ReportGenerator(_globalOptions.HtmlReportFile, _globalOptions.JsonReportFile, _logger);
-            reportGenerator.WriteHeader();
-
-            await _resourceProvider.SetStorageResourceGroupsAsync(account, cancellationToken);
-            var assets = account.GetMediaAssets()
-                .GetAllAsync(resourceFilter, cancellationToken: cancellationToken);
             var statistics = new AssetStats();
             var assetTypes = new ConcurrentDictionary<string, int>();
 
-            List<MediaAssetResource>? filteredList = null;
-
-            if (resourceFilter != null)
+            if (_analysisOptions.IsStorageAcc)
             {
-                // When a filter is used, it usually include a small list of assets,
-                // The total count of asset can be extracted in advance without much perf hit.
-                filteredList = await assets.ToListAsync(cancellationToken);
+                var (storageClient, accountId) = await _resourceProvider.GetStorageAccount(_analysisOptions.AccountName, cancellationToken);
 
-                totalAssets = filteredList.Count;
+                double totalItems = await GetStorageBlobMetricAsync(accountId, cancellationToken);
+                var containers = storageClient.GetBlobContainersAsync(
+                              prefix: _analysisOptions.Prefix, cancellationToken: cancellationToken);
+                _logger.LogInformation("The total contianers count of the storage account is {count}.", totalItems);
+                List<BlobContainerItem>? filteredList = null;
+
+                if (_analysisOptions.Prefix != null)
+                {
+                    filteredList = await containers.ToListAsync();
+                    totalItems = filteredList.Count;
+                }
+                _logger.LogInformation("The total containers to handle in this run is {count}.", totalItems);
+                var channel = Channel.CreateBounded<double>(1);
+                var progress = ShowProgressAsync("Analyzing Containers", "Assets", totalItems, channel.Reader, cancellationToken);
+                var writer = channel.Writer;
+                await MigrateInParallel(containers, filteredList, async (container, cancellationToken) =>
+                {
+                    //  var storage = await _resourceProvider.GetStorageAccountAsync(account, asset, cancellationToken);
+                    var result = await AnalyzeAsync(container, storageClient, cancellationToken);
+                    var assetType = result.AssetType ?? "unknown";
+                    assetTypes.AddOrUpdate(assetType, 1, (key, value) => Interlocked.Increment(ref value));
+                    reportGenerator?.WriteRecord(result);
+                    statistics.Update(result);
+                    await writer.WriteAsync(statistics.Total, cancellationToken);
+                },
+              _analysisOptions.BatchSize,
+              cancellationToken);
+
+                writer.Complete();
+                await progress;
+                _logger.LogDebug("Finished analysis of containers for account: {name}. Time taken {elapsed}", _analysisOptions.AccountName, watch.Elapsed);
+            }
+            else
+            {
+                var account = await GetMediaAccountAsync(_analysisOptions.AccountName, cancellationToken);
+                double totalAssets = await QueryMetricAsync(account.Id.ToString(), "AssetCount", cancellationToken);
+                _logger.LogInformation("The total asset count of the media account is {count}.", totalAssets);
+
+                await _resourceProvider.SetStorageResourceGroupsAsync(account, cancellationToken);
+                var assets = account.GetMediaAssets()
+                    .GetAllAsync(resourceFilter, cancellationToken: cancellationToken);
+                statistics = new AssetStats();
+                assetTypes = new ConcurrentDictionary<string, int>();
+
+                List<MediaAssetResource>? filteredList = null;
+
+                if (resourceFilter != null)
+                {
+                    // When a filter is used, it usually include a small list of assets,
+                    // The total count of asset can be extracted in advance without much perf hit.
+                    filteredList = await assets.ToListAsync(cancellationToken);
+
+                    totalAssets = filteredList.Count;
+                }
+
+                _logger.LogInformation("The total assets to handle in this run is {count}.", totalAssets);
+
+                var channel = Channel.CreateBounded<double>(1);
+                var progress = ShowProgressAsync("Analyzing Assets", "Assets", totalAssets, channel.Reader, cancellationToken);
+                var writer = channel.Writer;
+                await MigrateInParallel(assets, filteredList, async (asset, cancellationToken) =>
+                {
+                    var storage = await _resourceProvider.GetStorageAccountAsync(account, asset, cancellationToken);
+                    var result = await AnalyzeAsync(asset, storage, cancellationToken);
+                    var assetType = result.AssetType ?? "unknown";
+                    assetTypes.AddOrUpdate(assetType, 1, (key, value) => Interlocked.Increment(ref value));
+                    reportGenerator.WriteRecord(result);
+                    statistics.Update(result);
+                    await writer.WriteAsync(statistics.Total, cancellationToken);
+                },
+                _analysisOptions.BatchSize,
+                cancellationToken);
+
+                writer.Complete();
+                await progress;
+                _logger.LogDebug("Finished analysis of assets for account: {name}. Time taken {elapsed}", _analysisOptions.AccountName, watch.Elapsed);
             }
 
-            _logger.LogInformation("The total assets to handle in this run is {count}.", totalAssets);
-
-            var channel = Channel.CreateBounded<double>(1);
-            var progress = ShowProgressAsync("Analyzing Assets", "Assets", totalAssets, channel.Reader, cancellationToken);
-            var writer = channel.Writer;
-            await MigrateInParallel(assets, filteredList, async (asset, cancellationToken) =>
-            {
-                var storage = await _resourceProvider.GetStorageAccountAsync(account, asset, cancellationToken);
-                var result = await AnalyzeAsync(asset, storage, cancellationToken);
-                var assetType = result.AssetType ?? "unknown";
-                assetTypes.AddOrUpdate(assetType, 1, (key, value) => Interlocked.Increment(ref value));
-                reportGenerator.WriteRecord(result);
-                statistics.Update(result);
-                await writer.WriteAsync(statistics.Total, cancellationToken);
-            },
-            _analysisOptions.BatchSize,
-            cancellationToken);
-
-            writer.Complete();
-            await progress;
-            _logger.LogDebug("Finished analysis of assets for account: {name}. Time taken {elapsed}", _analysisOptions.AccountName, watch.Elapsed);
             WriteSummary(statistics, assetTypes);
             WriteDetails(assetTypes);
 
             reportGenerator.WriteTrailer();
             reportGenerator.Dispose();
+
         }
+
 
         private void WriteSummary(AssetStats statistics, IDictionary<string, int> assetTypes)
         {
