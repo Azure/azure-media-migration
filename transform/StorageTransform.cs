@@ -107,7 +107,8 @@ namespace AMSMigrate.Transform
             var (container, prefix) = outputPath;
             var blobName = prefix == null ? blob.Name : $"{prefix}{blob.Name}";
             // hack optimization for direct blob copy.
-            if (_fileUploader is AzureStorageUploader uploader)
+            if (_fileUploader is AzureStorageUploader uploader && blob.CanGenerateSasUri)
+
             {
                 await uploader.UploadBlobAsync(container, blobName, blob, aesTransform, cancellationToken);
             }

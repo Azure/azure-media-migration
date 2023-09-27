@@ -98,6 +98,17 @@ if it is not set, use input asset's manifest name.")
             () => DefaultBatchSize,
             description: @"Batch size for parallel processing.");
 
+        private readonly Option<bool> _encryptContent = new(
+            aliases: new[] { "-e", "--encrypt-content" },
+            () => false,
+            description: "Encrypt the content  using CENC"
+            );
+
+        private readonly Option<Uri?> _keyVaultUri = new(
+            aliases: new[] { "--key-vault-uri" },
+            description: "The key vault to store encryption keys."
+            );
+
         const int SegmentDurationInSeconds = 2;
 
         public StorageOptionsBinder()
@@ -141,6 +152,8 @@ if it is not set, use input asset's manifest name.")
             command.AddOption(_workingDirectory);
             command.AddOption(_copyNonStreamable);
             command.AddOption(_batchSize);
+            command.AddOption(_encryptContent);
+            command.AddOption(_keyVaultUri);
             return command;
         }
 
@@ -162,7 +175,9 @@ if it is not set, use input asset's manifest name.")
                 bindingContext.ParseResult.GetValueForOption(_breakOutputLease),
                 bindingContext.ParseResult.GetValueForOption(_keepWorkingFolder),
                 SegmentDurationInSeconds,
-                bindingContext.ParseResult.GetValueForOption(_batchSize)
+                bindingContext.ParseResult.GetValueForOption(_batchSize),
+                bindingContext.ParseResult.GetValueForOption(_encryptContent),
+                bindingContext.ParseResult.GetValueForOption(_keyVaultUri)
             );
         }
 

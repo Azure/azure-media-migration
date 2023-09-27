@@ -14,7 +14,9 @@
         bool BreakOutputLease,
         bool KeepWorkingFolder,
         int SegmentDuration,
-        int BatchSize)
+        int BatchSize,
+        bool _encryptContent,
+        Uri? _keyVaultUri)
         : MigratorOptions(
             AccountName,
             StoragePath,

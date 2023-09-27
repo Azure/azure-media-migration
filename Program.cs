@@ -90,7 +90,7 @@ This command will forcibly revert migrated assets that have failed back to their
                 });
 
             // disable storage migrate option until ready
-            /*
+            
                         var storageOptionsBinder = new StorageOptionsBinder();
                         var storageCommand = storageOptionsBinder.GetCommand("storage", @"Directly migrate the assets from the storage account.
             Doesn't require the Azure media services to be running.
@@ -100,11 +100,10 @@ This command will forcibly revert migrated assets that have failed back to their
                         rootCommand.Add(storageCommand);
                         storageCommand.SetHandler(async context =>
                         {
-                            var globalOptions = globalOptionsBinder.GetValue(context.BindingContext);
-                            var storageOptions = storageOptionsBinder.GetValue(context.BindingContext);
-                            await MigrateStorageAsync(globalOptions, storageOptions, context.GetCancellationToken());
+                           var storageOptions = storageOptionsBinder.GetValue(context.BindingContext);
+                           await MigrateStorageAsync(context, storageOptions, context.GetCancellationToken());
                         });
-            */
+            
 
             // disable key migrate option until ready
             /*

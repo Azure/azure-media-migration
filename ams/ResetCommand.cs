@@ -32,7 +32,16 @@ namespace AMSMigrate.Ams
 
         public override async Task MigrateAsync(CancellationToken cancellationToken)
         {
-            var account = await GetMediaAccountAsync(_options.AccountName, cancellationToken);
+            MediaServicesAccountResource? account = null;
+            try
+            {
+                account = await GetMediaAccountAsync(_options.AccountName, cancellationToken);
+            }
+            catch (Exception)
+            {
+                _logger.LogError("No valid media account was found.");
+                throw new Exception("No valid media account was found.");
+            }
             _logger.LogInformation("Begin reset assets on account: {name}", account.Data.Name);
             await _resourceProvider.SetStorageResourceGroupsAsync(account, cancellationToken);
             AsyncPageable<MediaAssetResource> assets = account.GetMediaAssets()
