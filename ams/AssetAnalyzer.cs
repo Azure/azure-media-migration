@@ -137,7 +137,7 @@ namespace AMSMigrate.Ams
         {
             var watch = Stopwatch.StartNew();
             _logger.LogInformation("Begin analysis of items for account: {name}", _analysisOptions.AccountName);
-            bool isSrorageAcc = false;
+            bool isStorageAcc = false;
             MediaServicesAccountResource? account = null;
             try
             {
@@ -147,21 +147,21 @@ namespace AMSMigrate.Ams
             {
                 if (ex.ErrorCode != null && ex.ErrorCode.Equals("ResourceNotFound"))
                 {
-                    isSrorageAcc = true;
+                    isStorageAcc = true;
                 }
             }
             var reportGenerator = new ReportGenerator(_globalOptions.HtmlReportFile, _globalOptions.JsonReportFile, _logger);
             reportGenerator.WriteHeader();
             var statistics = new AssetStats();
             var assetTypes = new ConcurrentDictionary<string, int>();
-            if (isSrorageAcc)
+            if (isStorageAcc)
             {
                 var (storageClient, accountId) = await _resourceProvider.GetStorageAccount(_analysisOptions.AccountName, cancellationToken);
 
                 double totalItems = await GetStorageBlobMetricAsync(accountId, cancellationToken);
                 var containers = storageClient.GetBlobContainersAsync(
                               prefix: _analysisOptions.ResourceFilter, cancellationToken: cancellationToken);
-                _logger.LogInformation("The total contianers count of the storage account is {count}.", totalItems);
+                _logger.LogInformation("The total containers count of the storage account is {count}.", totalItems);
                 List<BlobContainerItem>? filteredList = null;
 
                 if (_analysisOptions.ResourceFilter != null)

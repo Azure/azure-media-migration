@@ -65,7 +65,7 @@ Visit https://learn.microsoft.com/en-us/azure/media-services/latest/filter-order
                 bindingContext.ParseResult.GetValueForOption(_creationTimeStart),
                 bindingContext.ParseResult.GetValueForOption(_creationTimeEnd),
                 bindingContext.ParseResult.GetValueForOption(_filter),
-                bindingContext.ParseResult.GetValueForOption(_batchSize)     
+                bindingContext.ParseResult.GetValueForOption(_batchSize)
             );
         }
     }

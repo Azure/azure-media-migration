@@ -209,7 +209,7 @@ If you have nonzero counts in 'Failed', then you can do a couple of things to id
 
         https://{StreamingEndpoint_HostName_Or_CDN_Endpoint}:443/{LocatorGuid}/{manifestName}.ism/format(.....)  with optional extension .mpd or .m3u8
   
-     Figure out the {LocatorGuid} and {manifestName} part from the inpit streaming URL.
+     Figure out the {LocatorGuid} and {manifestName} part from the input streaming URL.
 
      Run 'analyze' command, get the HTML file or JSON file for the detail report.
      
@@ -226,7 +226,7 @@ If you have nonzero counts in 'Failed', then you can do a couple of things to id
   
      Please be aware, an input asset might have multiple locators, after the data migration, all these streaming URLs map to the same output streaming URL.
   
-     If the output container doesn't enable public view, an approrpriate SAS token might be required at the end of the streaming URL for a playback or download.
+     If the output container doesn't enable public view, an appropriate SAS token might be required at the end of the streaming URL for a playback or download.
 
    
 Once you find the asset that failed, you can look at the migration log file, and try to find all the log lines that corresponds to the asset name / asset container.  As multiple assets are being migrated in batch, the log file might be a bit hard to grok.  So another way to simplify the log is to just run migration on a single 'failed' asset, e.g.

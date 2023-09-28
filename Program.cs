@@ -89,21 +89,17 @@ This command will forcibly revert migrated assets that have failed back to their
                     await ResetAsync(context, resetOptions, context.GetCancellationToken());
                 });
 
-            // disable storage migrate option until ready
-            
-                        var storageOptionsBinder = new StorageOptionsBinder();
-                        var storageCommand = storageOptionsBinder.GetCommand("storage", @"Directly migrate the assets from the storage account.
-            Doesn't require the Azure media services to be running.
-            Examples:
-            amsmigrate storage -s <subscription id> -g <resource group> -n <source storage account> -o <output storage account> -t path-template
-            ");
-                        rootCommand.Add(storageCommand);
-                        storageCommand.SetHandler(async context =>
-                        {
-                           var storageOptions = storageOptionsBinder.GetValue(context.BindingContext);
-                           await MigrateStorageAsync(context, storageOptions, context.GetCancellationToken());
-                        });
-            
+            var storageOptionsBinder = new StorageOptionsBinder();
+            var storageCommand = storageOptionsBinder.GetCommand("storage", @"Directly migrate the assets from the storage account.
+Doesn't require the Azure media services to be running.
+Examples:
+amsmigrate storage -s <subscription id> -g <resource group> -n <source storage account> -o <output storage account> -t path-template");
+            rootCommand.Add(storageCommand);
+            storageCommand.SetHandler(async context =>
+            {
+                var storageOptions = storageOptionsBinder.GetValue(context.BindingContext);
+                await MigrateStorageAsync(context, storageOptions, context.GetCancellationToken());
+            });
 
             // disable key migrate option until ready
             /*
@@ -190,7 +186,8 @@ This command will forcibly revert migrated assets that have failed back to their
                 .AddSingleton<TemplateMapper>()
                 .AddSingleton<AzureResourceProvider>()
                 .AddSingleton<TransformFactory>()
-                .AddLogging(builder => {
+                .AddLogging(builder =>
+                {
                     builder
                         .SetMinimumLevel(LogLevel.Trace)
                         .AddSerilog(dispose: true);

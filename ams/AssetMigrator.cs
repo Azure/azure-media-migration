@@ -36,7 +36,7 @@ namespace AMSMigrate.Ams
         {
             var watch = Stopwatch.StartNew();
             MediaServicesAccountResource? account = null;
-            account = await GetMediaAccountAsync(_options.AccountName, cancellationToken); 
+            account = await GetMediaAccountAsync(_options.AccountName, cancellationToken);
             _logger.LogInformation("Begin migration of assets for account: {name}", account.Data.Name);
             var totalAssets = await QueryMetricAsync(
                 account.Id.ToString(),
