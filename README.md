@@ -201,8 +201,34 @@ If you have nonzero counts in 'Failed', then you can do a couple of things to id
 
     there should be one of this line for each asset which tells you the status of the migration.
 
-2. Run 'analyze' command, which will output an html file (the path of which will be printed on the console).  This will give you a html file that contains a table of all the assets and its migration status.
+2. Run 'analyze' command, which will output an html file and a json file (the path of which will be printed on the console). You can open the html page in a browser to get a table of all the assets and its migration status, or open the .json file with an appropriate editor (such as Visual Studio Code) to get a better view for the list of assets and their migration status.
 
+3. The tips on how to get new streaming URL of the generated content for an existing streaming URL of an input asset:
+   
+     A typical streaming URL of an input asset has below format:
+
+        https://{StreamingEndpoint_HostName_Or_CDN_Endpoint}:443/{LocatorGuid}/{manifestName}.ism/format(.....)  with optional extension .mpd or .m3u8
+  
+     Figure out the {LocatorGuid} and {manifestName} part from the inpit streaming URL.
+
+     Run 'analyze' command, get the HTML file or JSON file for the detail report.
+     
+     Search the json file or html file for {LocatorGuid}, if it is found, take the matching record.
+     
+     If the record shows "Completed" in MigrationStatus field, take values from below fields (columns in html page):
+  
+          "OutputHlsUrl"  : {new StreamingURL with .m3u8 extension for HLS},
+          "OutputDashUrl" : {new StreamingURL with .mpd extension for DASH}
+
+     The URL in above two fields should share the host name, path and basic file name, only the file extension is different.
+  
+     Double check the basic file name in new URL, it should match with the manifestName from the input streaming URL.
+  
+     Please be aware, an input asset might have multiple locators, after the data migration, all these streaming URLs map to the same output streaming URL.
+  
+     If the output container doesn't enable public view, an approrpriate SAS token might be required at the end of the streaming URL for a playback or download.
+
+   
 Once you find the asset that failed, you can look at the migration log file, and try to find all the log lines that corresponds to the asset name / asset container.  As multiple assets are being migrated in batch, the log file might be a bit hard to grok.  So another way to simplify the log is to just run migration on a single 'failed' asset, e.g.
 
     AMSMigrate.exe assets -s <subscription> -g <resource group of media service> -n <media service account name> -o <output storage account uri> -f "name eq '<asset name>'"
