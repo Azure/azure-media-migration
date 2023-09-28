@@ -31,7 +31,7 @@ namespace AMSMigrate.Ams
             MediaServicesAccountResource? account = null;
             try
             {
-               account = await GetMediaAccountAsync(_options.AccountName, cancellationToken);
+                account = await GetMediaAccountAsync(_options.AccountName, cancellationToken);
             }
             catch (Exception)
             {
