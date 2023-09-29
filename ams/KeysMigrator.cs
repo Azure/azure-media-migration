@@ -31,14 +31,10 @@ namespace AMSMigrate.Ams
         public override async Task MigrateAsync(CancellationToken cancellationToken)
         {
             _logger.LogInformation("Begin migration of keys for account: {name}", _keyOptions.AccountName);
-            MediaServicesAccountResource? account = null;
-            try
+            var (isAMSAcc, account) = await IsAMSAccountAsync(_keyOptions.AccountName, cancellationToken);
+            if (!isAMSAcc || account == null)
             {
-                account = await GetMediaAccountAsync(_keyOptions.AccountName, cancellationToken);
-            }
-            catch (Exception)
-            {
-                _logger.LogError("No valid media account was found.");
+                _logger.LogInformation("No valid media account was found.");
                 throw new Exception("No valid media account was found.");
             }
 

@@ -137,24 +137,12 @@ namespace AMSMigrate.Ams
         {
             var watch = Stopwatch.StartNew();
             _logger.LogInformation("Begin analysis of items for account: {name}", _analysisOptions.AccountName);
-            bool isStorageAcc = false;
-            MediaServicesAccountResource? account = null;
-            try
-            {
-                account = await GetMediaAccountAsync(_analysisOptions.AccountName, cancellationToken);
-            }
-            catch (RequestFailedException ex)
-            {
-                if (ex.ErrorCode != null && ex.ErrorCode.Equals("ResourceNotFound"))
-                {
-                    isStorageAcc = true;
-                }
-            }
+            var (isAMSAcc, account)  = await IsAMSAccountAsync(_analysisOptions.AccountName, cancellationToken);
             var reportGenerator = new ReportGenerator(_globalOptions.HtmlReportFile, _globalOptions.JsonReportFile, _logger);
             reportGenerator.WriteHeader();
             var statistics = new AssetStats();
             var assetTypes = new ConcurrentDictionary<string, int>();
-            if (isStorageAcc)
+            if (!isAMSAcc)
             {
                 var (storageClient, accountId) = await _resourceProvider.GetStorageAccount(_analysisOptions.AccountName, cancellationToken);
 
@@ -191,7 +179,7 @@ namespace AMSMigrate.Ams
                 _logger.LogDebug("Finished analysis of containers for account: {name}. Time taken {elapsed}", _analysisOptions.AccountName, watch.Elapsed);
 
             }
-            else if (account != null)
+            else if(account!=null)
             {
                 var resourceFilter = GetAssetResourceFilter(_analysisOptions.ResourceFilter,
                                                         _analysisOptions.CreationTimeStart,
@@ -238,6 +226,11 @@ namespace AMSMigrate.Ams
                 writer.Complete();
                 await progress;
                 _logger.LogDebug("Finished analysis of assets for account: {name}. Time taken {elapsed}", _analysisOptions.AccountName, watch.Elapsed);
+            }
+            else
+            {
+               _logger.LogInformation("No valid media account was found.");
+                throw new Exception("No valid media account was found.");
             }
             WriteSummary(statistics, assetTypes);
             WriteDetails(assetTypes);

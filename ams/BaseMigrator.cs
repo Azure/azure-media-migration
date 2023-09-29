@@ -1,10 +1,12 @@
 ﻿using AMSMigrate.Contracts;
+using Azure;
 using Azure.Core;
 using Azure.Monitor.Query;
 using Azure.Monitor.Query.Models;
 using Azure.ResourceManager.Media;
 using Microsoft.Extensions.Logging;
 using Spectre.Console;
+using System.Threading;
 using System.Threading.Channels;
 
 namespace AMSMigrate.Ams
@@ -34,11 +36,7 @@ namespace AMSMigrate.Ams
 
         public abstract Task MigrateAsync(CancellationToken cancellationToken);
 
-        protected Task<MediaServicesAccountResource> GetMediaAccountAsync(string mediaAccountName, CancellationToken cancellationToken)
-        {
-            return _resourceProvider.GetMediaAccountAsync(mediaAccountName, cancellationToken); ;
-        }
-
+       
 
         protected async Task MigrateInParallel<T>(
             IAsyncEnumerable<T> values,
@@ -61,6 +59,22 @@ namespace AMSMigrate.Ams
             else
             {
                 await Parallel.ForEachAsync(values, options, processItem);
+            }
+        }
+        protected async Task<(bool, MediaServicesAccountResource?)> IsAMSAccountAsync(string accountName, CancellationToken cancellationToken)
+        {  MediaServicesAccountResource? account = null;
+            try
+            {
+                account = await GetMediaAccountAsync(accountName, cancellationToken);
+                return (true, account);
+            }
+            catch (RequestFailedException ex)
+            {
+                if (ex.ErrorCode != null && ex.ErrorCode.Equals("ResourceNotFound"))
+                {
+                    return (false, account);
+                }
+                return account ==null?(false, account):(true, account);
             }
         }
 
@@ -164,5 +178,10 @@ namespace AMSMigrate.Ams
 
             return resourceFilter;
         }
+     private Task<MediaServicesAccountResource> GetMediaAccountAsync(string mediaAccountName, CancellationToken cancellationToken)
+        {
+            return _resourceProvider.GetMediaAccountAsync(mediaAccountName, cancellationToken); ;
+        }
+
     }
 }

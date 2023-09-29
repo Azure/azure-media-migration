@@ -35,8 +35,12 @@ namespace AMSMigrate.Ams
         public override async Task MigrateAsync(CancellationToken cancellationToken)
         {
             var watch = Stopwatch.StartNew();
-            MediaServicesAccountResource? account = null;
-            account = await GetMediaAccountAsync(_options.AccountName, cancellationToken);
+            var (isAMSAcc, account) = await IsAMSAccountAsync(_options.AccountName, cancellationToken);
+            if (!isAMSAcc || account == null)
+            {
+                _logger.LogInformation("No valid media account was found.");
+                throw new Exception("No valid media account was found.");
+            }
             _logger.LogInformation("Begin migration of assets for account: {name}", account.Data.Name);
             var totalAssets = await QueryMetricAsync(
                 account.Id.ToString(),
