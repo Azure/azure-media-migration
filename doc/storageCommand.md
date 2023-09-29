@@ -1,6 +1,6 @@
 As the default behavior, the program will initially search for an AMS account; if none is located, it will then proceed to seek a storage account for the migration process.
 
-# avaiable comments for migrating assets from Azure blob storage:
+# avaiable commands for migrating assets from Azure blob storage:
 
 1. storage command: AMSMigrate.exe storage -s <subscription> -g <Resource group for the storage account to be migrated> -n <the name of storage account to be migrated> -o <output storage account uri>
 

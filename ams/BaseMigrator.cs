@@ -61,22 +61,25 @@ namespace AMSMigrate.Ams
                 await Parallel.ForEachAsync(values, options, processItem);
             }
         }
-        protected async Task<(bool, MediaServicesAccountResource?)> IsAMSAccountAsync(string accountName, CancellationToken cancellationToken)
-        {  MediaServicesAccountResource? account = null;
-            try
-            {
-                account = await GetMediaAccountAsync(accountName, cancellationToken);
-                return (true, account);
-            }
-            catch (RequestFailedException ex)
-            {
-                if (ex.ErrorCode != null && ex.ErrorCode.Equals("ResourceNotFound"))
-                {
-                    return (false, account);
-                }
-                return account ==null?(false, account):(true, account);
-            }
+         protected async Task<(bool, MediaServicesAccountResource?)> IsAMSAccountAsync(string accountName, CancellationToken cancellationToken)
+    {  
+        MediaServicesAccountResource? amsAccount = null;
+
+        try
+        {
+            amsAccount = await _resourceProvider.GetMediaAccountAsync(accountName, cancellationToken);
         }
+        catch (Exception ex)
+        {
+            if (ex is OutOfMemoryException) throw;  // It is a fatal error.
+
+            // For any other exception, swallow the exception, treat it as not-AMS account, 
+            // The caller then has a chance to treat it as storage account and try it again,
+            // if it is still failed, the caller will throw exception appropriately.
+        }
+
+        return (amsAccount != null, amsAccount);
+    }
 
         protected async Task<double> GetStorageBlobMetricAsync(ResourceIdentifier accountId, CancellationToken cancellationToken)
         {
@@ -177,10 +180,6 @@ namespace AMSMigrate.Ams
             }
 
             return resourceFilter;
-        }
-     private Task<MediaServicesAccountResource> GetMediaAccountAsync(string mediaAccountName, CancellationToken cancellationToken)
-        {
-            return _resourceProvider.GetMediaAccountAsync(mediaAccountName, cancellationToken); ;
         }
 
     }

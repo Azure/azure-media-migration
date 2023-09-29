@@ -36,7 +36,11 @@ namespace AMSMigrate.Ams
             if (!isAMSAcc)
             {
                 var (storageClient, accountId) = await _resourceProvider.GetStorageAccount(_options.AccountName, cancellationToken);
-
+                if (storageClient == null)
+                {
+                    _logger.LogError("No valid media account was found.");
+                    throw new Exception("No valid media account was found.");
+                }
                 _logger.LogInformation("Begin reset storage container: {name}", storageClient.AccountName);
                 double totalItems = await GetStorageBlobMetricAsync(accountId, cancellationToken);
                 var containers = storageClient.GetBlobContainersAsync(
@@ -47,10 +51,12 @@ namespace AMSMigrate.Ams
                 foreach (var container in filteredList)
                 {
                     BlobContainerClient containerClient = storageClient.GetBlobContainerClient(container.Name);
-                    await MigrateTaskAsync(containerClient, resetAssetCount, cancellationToken);
+                    if (await MigrateTaskAsync(containerClient, cancellationToken))
+                        resetAssetCount++;
                 }
+                _logger.LogDebug("{resetAssetCount} out of {totalAssetCount} assets has been reset.", resetAssetCount, filteredList.Count);
             }
-            else if (account != null)
+            else
             {
                 _logger.LogInformation("Begin reset assets on account: {name}", account.Data.Name);
                 await _resourceProvider.SetStorageResourceGroupsAsync(account, cancellationToken);
@@ -68,18 +74,16 @@ namespace AMSMigrate.Ams
                         return;
                     }
 
-                    await MigrateTaskAsync(container, resetAssetCount, cancellationToken);
+                    if (await MigrateTaskAsync(container, cancellationToken))
+                        resetAssetCount++;
                 }
                 _logger.LogDebug("{resetAssetCount} out of {totalAssetCount} assets has been reset.", resetAssetCount, assetList.Count);
             }
-            else
-            {
-                _logger.LogError("No valid media account was found.");
-                throw new Exception("No valid media account was found.");
-            }
+
         }
-        protected async Task MigrateTaskAsync(BlobContainerClient container, int resetAssetCount, CancellationToken cancellationToken)
+        private async Task<bool> MigrateTaskAsync(BlobContainerClient container, CancellationToken cancellationToken)
         {
+            bool isReseted = false;
             if (_options.Category.Equals("all", StringComparison.OrdinalIgnoreCase) || (_tracker.GetMigrationStatusAsync(container, cancellationToken).Result.Status == MigrationStatus.Failed))
             {
                 try
@@ -89,30 +93,51 @@ namespace AMSMigrate.Ams
                     if (properties?.Metadata != null && properties.Metadata.Count == 0)
                     {
                         _logger.LogInformation("Container '{container}' does not have metadata.", container.Name);
+                        
                     }
                     else
                     {   // Clear container metadata
-                        properties?.Metadata?.Remove(MigrateResultKey);
-                        properties?.Metadata?.Remove(AssetTypeKey);
-                        properties?.Metadata?.Remove(OutputPathKey);
-                        properties?.Metadata?.Remove(ManifestNameKey);
-                        var deleteOperation = await container.SetMetadataAsync(properties?.Metadata, cancellationToken: cancellationToken);
-                        if (deleteOperation.GetRawResponse().Status == 200)
+
+                        var isDmtGeneratedContainer = false;
+                        var assetType = "";
+
+                        properties?.Metadata?.TryGetValue(AssetTypeKey, out assetType);
+
+                        if (assetType == AssetMigrationResult.AssetType_DmtGenerated)
                         {
-                            _logger.LogInformation("Metadata in Container '{container}' is deleted successfully.", container.Name);
-                            resetAssetCount++;
+                            // It is a container for the DMT generated content, don't reset it.
+                            isDmtGeneratedContainer = true;
+                            _logger.LogInformation("The container '{container}' is created by migration tool, don't reset this one.", container.Name);
+                            
                         }
-                        else
+                        if (!isDmtGeneratedContainer && !string.IsNullOrEmpty(assetType))
                         {
-                            _logger.LogInformation("Metadata in Container '{container}' does not exist or was not deleted.", container.Name);
+                            properties?.Metadata?.Remove(MigrateResultKey);
+                            properties?.Metadata?.Remove(AssetTypeKey);
+                            properties?.Metadata?.Remove(OutputPathKey);
+                            properties?.Metadata?.Remove(ManifestNameKey);
+                            var deleteOperation = await container.SetMetadataAsync(properties?.Metadata, cancellationToken: cancellationToken);
+                            if (deleteOperation.GetRawResponse().Status == 200)
+                            {
+                                _logger.LogInformation("Metadata in Container '{container}' is deleted successfully.", container.Name);
+                                isReseted = true;
+                            }
+                            else
+                            {
+                                _logger.LogInformation("Metadata in Container '{container}' does not exist or was not deleted.", container.Name);
+                               
+                            }
+
                         }
                     }
                 }
                 catch (Exception ex)
                 {
                     _logger.LogError("An unexpected error occurred: {message}", ex.Message);
+                   
                 }
             }
+                return isReseted;
         }
     }
 }

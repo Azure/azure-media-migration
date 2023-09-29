@@ -145,7 +145,11 @@ namespace AMSMigrate.Ams
             if (!isAMSAcc)
             {
                 var (storageClient, accountId) = await _resourceProvider.GetStorageAccount(_analysisOptions.AccountName, cancellationToken);
-
+                if (storageClient == null)
+                {
+                    _logger.LogError("No valid media account was found.");
+                    throw new Exception("No valid media account was found.");
+                }
                 double totalItems = await GetStorageBlobMetricAsync(accountId, cancellationToken);
                 var containers = storageClient.GetBlobContainersAsync(
                               prefix: _analysisOptions.ResourceFilter, cancellationToken: cancellationToken);
@@ -179,7 +183,7 @@ namespace AMSMigrate.Ams
                 _logger.LogDebug("Finished analysis of containers for account: {name}. Time taken {elapsed}", _analysisOptions.AccountName, watch.Elapsed);
 
             }
-            else if(account!=null)
+            else 
             {
                 var resourceFilter = GetAssetResourceFilter(_analysisOptions.ResourceFilter,
                                                         _analysisOptions.CreationTimeStart,
@@ -227,11 +231,7 @@ namespace AMSMigrate.Ams
                 await progress;
                 _logger.LogDebug("Finished analysis of assets for account: {name}. Time taken {elapsed}", _analysisOptions.AccountName, watch.Elapsed);
             }
-            else
-            {
-               _logger.LogInformation("No valid media account was found.");
-                throw new Exception("No valid media account was found.");
-            }
+       
             WriteSummary(statistics, assetTypes);
             WriteDetails(assetTypes);
 
