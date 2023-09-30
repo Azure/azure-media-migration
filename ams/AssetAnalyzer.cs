@@ -137,27 +137,19 @@ namespace AMSMigrate.Ams
         {
             var watch = Stopwatch.StartNew();
             _logger.LogInformation("Begin analysis of items for account: {name}", _analysisOptions.AccountName);
-            bool isStorageAcc = false;
-            MediaServicesAccountResource? account = null;
-            try
-            {
-                account = await GetMediaAccountAsync(_analysisOptions.AccountName, cancellationToken);
-            }
-            catch (RequestFailedException ex)
-            {
-                if (ex.ErrorCode != null && ex.ErrorCode.Equals("ResourceNotFound"))
-                {
-                    isStorageAcc = true;
-                }
-            }
+            var (isAMSAcc, account)  = await IsAMSAccountAsync(_analysisOptions.AccountName, cancellationToken);
             var reportGenerator = new ReportGenerator(_globalOptions.HtmlReportFile, _globalOptions.JsonReportFile, _logger);
             reportGenerator.WriteHeader();
             var statistics = new AssetStats();
             var assetTypes = new ConcurrentDictionary<string, int>();
-            if (isStorageAcc)
+            if (!isAMSAcc)
             {
                 var (storageClient, accountId) = await _resourceProvider.GetStorageAccount(_analysisOptions.AccountName, cancellationToken);
-
+                if (storageClient == null)
+                {
+                    _logger.LogError("No valid media account was found.");
+                    throw new Exception("No valid media account was found.");
+                }
                 double totalItems = await GetStorageBlobMetricAsync(accountId, cancellationToken);
                 var containers = storageClient.GetBlobContainersAsync(
                               prefix: _analysisOptions.ResourceFilter, cancellationToken: cancellationToken);
@@ -191,7 +183,7 @@ namespace AMSMigrate.Ams
                 _logger.LogDebug("Finished analysis of containers for account: {name}. Time taken {elapsed}", _analysisOptions.AccountName, watch.Elapsed);
 
             }
-            else if (account != null)
+            else 
             {
                 var resourceFilter = GetAssetResourceFilter(_analysisOptions.ResourceFilter,
                                                         _analysisOptions.CreationTimeStart,
@@ -239,6 +231,7 @@ namespace AMSMigrate.Ams
                 await progress;
                 _logger.LogDebug("Finished analysis of assets for account: {name}. Time taken {elapsed}", _analysisOptions.AccountName, watch.Elapsed);
             }
+       
             WriteSummary(statistics, assetTypes);
             WriteDetails(assetTypes);
 

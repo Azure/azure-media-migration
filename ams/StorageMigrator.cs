@@ -50,16 +50,12 @@ namespace AMSMigrate.Ams
 
             if (_storageOptions.Prefix != null)
             {
-                // When a filter is used, it usually include a small list of assets,
-                // The accurate total count of containers can be extracted in advance without much perf hit.
                 filteredList = await containers.ToListAsync();
-
                 totalContainers = filteredList.Count;
             }
 
             _logger.LogInformation("The total input container to handle in this run is {count}.", totalContainers);
 
-            //var progress = CreateProgressAsync("Migrate Containers", totalContainers, channel.Reader, cancellationToken);
             var progress = DisplayChartAsync(
                 "Container Migration",
                 totalContainers,
@@ -69,7 +65,7 @@ namespace AMSMigrate.Ams
             _logger.LogInformation("Finished migration of containers from account: {name}. Time : {time}", storageClient.AccountName, watch.Elapsed);
             await progress;
 
-            //WriteSummary(totalContainers, stats);
+            WriteSummary(totalContainers, stats);
         }
 
         public async Task DisplayChartAsync(

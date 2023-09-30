@@ -1,10 +1,12 @@
 ﻿using AMSMigrate.Contracts;
+using Azure;
 using Azure.Core;
 using Azure.Monitor.Query;
 using Azure.Monitor.Query.Models;
 using Azure.ResourceManager.Media;
 using Microsoft.Extensions.Logging;
 using Spectre.Console;
+using System.Threading;
 using System.Threading.Channels;
 
 namespace AMSMigrate.Ams
@@ -34,11 +36,7 @@ namespace AMSMigrate.Ams
 
         public abstract Task MigrateAsync(CancellationToken cancellationToken);
 
-        protected Task<MediaServicesAccountResource> GetMediaAccountAsync(string mediaAccountName, CancellationToken cancellationToken)
-        {
-            return _resourceProvider.GetMediaAccountAsync(mediaAccountName, cancellationToken); ;
-        }
-
+       
 
         protected async Task MigrateInParallel<T>(
             IAsyncEnumerable<T> values,
@@ -63,6 +61,25 @@ namespace AMSMigrate.Ams
                 await Parallel.ForEachAsync(values, options, processItem);
             }
         }
+         protected async Task<(bool, MediaServicesAccountResource?)> IsAMSAccountAsync(string accountName, CancellationToken cancellationToken)
+    {  
+        MediaServicesAccountResource? amsAccount = null;
+
+        try
+        {
+            amsAccount = await _resourceProvider.GetMediaAccountAsync(accountName, cancellationToken);
+        }
+        catch (Exception ex)
+        {
+            if (ex is OutOfMemoryException) throw;  // It is a fatal error.
+
+            // For any other exception, swallow the exception, treat it as not-AMS account, 
+            // The caller then has a chance to treat it as storage account and try it again,
+            // if it is still failed, the caller will throw exception appropriately.
+        }
+
+        return (amsAccount != null, amsAccount);
+    }
 
         protected async Task<double> GetStorageBlobMetricAsync(ResourceIdentifier accountId, CancellationToken cancellationToken)
         {
@@ -164,5 +181,6 @@ namespace AMSMigrate.Ams
 
             return resourceFilter;
         }
+
     }
 }
