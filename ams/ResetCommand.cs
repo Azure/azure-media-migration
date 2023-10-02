@@ -38,8 +38,8 @@ namespace AMSMigrate.Ams
                 var (storageClient, accountId) = await _resourceProvider.GetStorageAccount(_options.AccountName, cancellationToken);
                 if (storageClient == null)
                 {
-                    _logger.LogError("No valid media account was found.");
-                    throw new Exception("No valid media account was found.");
+                    _logger.LogError("No valid storage account was found.");
+                    throw new Exception("No valid storage account was found.");
                 }
                 _logger.LogInformation("Begin reset storage container: {name}", storageClient.AccountName);
                 double totalItems = await GetStorageBlobMetricAsync(accountId, cancellationToken);
@@ -58,6 +58,11 @@ namespace AMSMigrate.Ams
             }
             else
             {
+                if (account == null)
+                {
+                    _logger.LogError("No valid media account was found.");
+                    throw new Exception("No valid media account was found.");
+                }
                 _logger.LogInformation("Begin reset assets on account: {name}", account.Data.Name);
                 await _resourceProvider.SetStorageResourceGroupsAsync(account, cancellationToken);
                 AsyncPageable<MediaAssetResource> assets = account.GetMediaAssets()
