@@ -36,7 +36,7 @@ namespace AMSMigrate.Ams
 
         public abstract Task MigrateAsync(CancellationToken cancellationToken);
 
-       
+
 
         protected async Task MigrateInParallel<T>(
             IAsyncEnumerable<T> values,
@@ -61,25 +61,25 @@ namespace AMSMigrate.Ams
                 await Parallel.ForEachAsync(values, options, processItem);
             }
         }
-         protected async Task<(bool, MediaServicesAccountResource?)> IsAMSAccountAsync(string accountName, CancellationToken cancellationToken)
-    {  
-        MediaServicesAccountResource? amsAccount = null;
-
-        try
+        protected async Task<(bool, MediaServicesAccountResource?)> IsAMSAccountAsync(string accountName, CancellationToken cancellationToken)
         {
-            amsAccount = await _resourceProvider.GetMediaAccountAsync(accountName, cancellationToken);
-        }
-        catch (Exception ex)
-        {
-            if (ex is OutOfMemoryException) throw;  // It is a fatal error.
+            MediaServicesAccountResource? amsAccount = null;
 
-            // For any other exception, swallow the exception, treat it as not-AMS account, 
-            // The caller then has a chance to treat it as storage account and try it again,
-            // if it is still failed, the caller will throw exception appropriately.
-        }
+            try
+            {
+                amsAccount = await _resourceProvider.GetMediaAccountAsync(accountName, cancellationToken);
+            }
+            catch (Exception ex)
+            {
+                if (ex is OutOfMemoryException) throw;  // It is a fatal error.
 
-        return (amsAccount != null, amsAccount);
-    }
+                // For any other exception, swallow the exception, treat it as not-AMS account, 
+                // The caller then has a chance to treat it as storage account and try it again,
+                // if it is still failed, the caller will throw exception appropriately.
+            }
+
+            return (amsAccount != null, amsAccount);
+        }
 
         protected async Task<double> GetStorageBlobMetricAsync(ResourceIdentifier accountId, CancellationToken cancellationToken)
         {

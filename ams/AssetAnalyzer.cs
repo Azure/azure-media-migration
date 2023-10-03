@@ -137,7 +137,7 @@ namespace AMSMigrate.Ams
         {
             var watch = Stopwatch.StartNew();
             _logger.LogInformation("Begin analysis of items for account: {name}", _analysisOptions.AccountName);
-            var (isAMSAcc, account)  = await IsAMSAccountAsync(_analysisOptions.AccountName, cancellationToken);
+            var (isAMSAcc, account) = await IsAMSAccountAsync(_analysisOptions.AccountName, cancellationToken);
             var reportGenerator = new ReportGenerator(_globalOptions.HtmlReportFile, _globalOptions.JsonReportFile, _logger);
             reportGenerator.WriteHeader();
             var statistics = new AssetStats();
@@ -236,7 +236,7 @@ namespace AMSMigrate.Ams
                 await progress;
                 _logger.LogDebug("Finished analysis of assets for account: {name}. Time taken {elapsed}", _analysisOptions.AccountName, watch.Elapsed);
             }
-       
+
             WriteSummary(statistics, assetTypes);
             WriteDetails(assetTypes);
 

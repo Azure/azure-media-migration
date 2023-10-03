@@ -28,7 +28,7 @@ namespace AMSMigrate.Ams
 
         public override async Task MigrateAsync(CancellationToken cancellationToken)
         {
-            
+
             var (isAMSAcc, account) = await IsAMSAccountAsync(_options.AccountName, cancellationToken);
             if (!isAMSAcc || account == null)
             {

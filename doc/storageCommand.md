@@ -1,20 +1,28 @@
-As the default behavior, the program will initially search for an AMS account; if none is located, it will then proceed to seek a storage account for the migration process.
+# Post AMS shutdown migration
 
-# avaiable commands for migrating assets from Azure blob storage:
+To migrate from storage account, you'll need to use 'storage' command instead of 'assets' command.  An example of the command line is
 
-1. storage command:
-                                                                                        
-        AMSMigrate.exe storage -s <subscription> -g <Resource group for the storage account to be migrated> -n <the name of storage account to be migrated> -o <output storage account uri>
+```
+AMSMigrate.exe storage -s <subscription> -g <Resource group for the storage account to be migrated> -n <the name of storage account to be migrated> -o <output storage account uri>
+```
 
+AES encryption is also supported with storage command,
 
-3. reset command:
-                                                                                           
-        AMSMigrate.exe reset -s <subscription> -g <Resource group for the storage account to be migrated> -n <the name of storage account to be migrated> -o <output storage account uri>
+```
+AMSMigrate.exe storage -s <subscription> -g <resource group of media service> -n <the name of storage account to be migrated> -o <output storage account uri> -e --key-vault-uri https://<your azure key vault name>.vault.azure.net
+```
 
-4. analyze command:
-                                                                                        
-        AMSMigrate.exe analyze -s <subscription> -g <Resource group for the storage account to be migrated> -n <the name of storage account to be migrated>
+The 'reset' and 'analyze' command works as well with storage account,
 
-5. AES Encryption:
+e.g.
 
-        AMSMigrate.exe assets -s <subscription> -g <resource group of media service> -n <the name of storage account to be migrated>  -o <output storage account uri> -e --key-vault-uri https://<your azure key vault name>.vault.azure.net
+```
+AMSMigrate.exe reset -s <subscription> -g <Resource group for the storage account to be migrated> -n <the name of storage account to be migrated>
+```
+and
+
+```
+AMSMigrate.exe analyze -s <subscription> -g <Resource group for the storage account to be migrated> -n <the name of storage account to be migrated>
+```
+
+The 'cleanup' command only works with AMS account, so if you need to do 'cleanup' on a storage container, you'll have to do it manually yourself using Azure storage API / CLI.
