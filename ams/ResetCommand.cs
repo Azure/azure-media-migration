@@ -98,7 +98,7 @@ namespace AMSMigrate.Ams
                     if (properties?.Metadata != null && properties.Metadata.Count == 0)
                     {
                         _logger.LogInformation("Container '{container}' does not have metadata.", container.Name);
-                        
+
                     }
                     else
                     {   // Clear container metadata
@@ -113,7 +113,7 @@ namespace AMSMigrate.Ams
                             // It is a container for the DMT generated content, don't reset it.
                             isDmtGeneratedContainer = true;
                             _logger.LogInformation("The container '{container}' is created by migration tool, don't reset this one.", container.Name);
-                            
+
                         }
                         if (!isDmtGeneratedContainer && !string.IsNullOrEmpty(assetType))
                         {
@@ -130,7 +130,7 @@ namespace AMSMigrate.Ams
                             else
                             {
                                 _logger.LogInformation("Metadata in Container '{container}' does not exist or was not deleted.", container.Name);
-                               
+
                             }
 
                         }
@@ -139,10 +139,10 @@ namespace AMSMigrate.Ams
                 catch (Exception ex)
                 {
                     _logger.LogError("An unexpected error occurred: {message}", ex.Message);
-                   
+
                 }
             }
-                return isReseted;
+            return isReseted;
         }
     }
 }

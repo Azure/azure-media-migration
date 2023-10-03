@@ -43,9 +43,6 @@ The content is converted to CMAF format with both a DASH and HLS manifest to sup
 * Marks migrated assets and provides HTML summary on analyze
 * Support for statically encrypting the content while packaging.
 
-## Open Issues
-* Direct migration from an Azure Storage account without using the AMS API is not supported but will be in a future version of this tool.
-
 # Types of Migration
 The tool supports various types of migration depending on the asset format and the command line options.
 * For non-streamable assets, It can simply upload the files to the new storage account.
@@ -245,7 +242,9 @@ Below are some tip(s) about error(s) that may occurs, (more will be added later 
   
   So in this case, if you look the the output container path, you will find a __migrate blob that is locked via lease which you'll need to break the lease of prior to another run that writes to this location.  So if you know that another tool is not working on this output path, then you will need to break the lease the '__migrate' blob.  This can be done manually using the azure portal or azure storage explorer.  Another approach is to run the same AMSMigrate 'asset' command that writes to this output path but append '--break-output-lease' flag which will automatically break the lease of the __migrate blob for you.
 
-# Post-migration
-Following AMS retirement, you can proceed with asset migration from a storage account using the "storage" command. For additional information, please see [storageCommand.md](doc/storageCommand.md) document.
+# Post AMS shutdown migration
+After AMS shutdown, you can not migrate from your AMS account any longer as it doesn't exist anymore.  If you have any unmigrated contents, then the tool provides an alternative (but somewhat limited in functionality, e.g. no decryption support) way for you to migrate directly from the storage container where your asset is located.  However, we recommed that you finish your migration prior to AMS shutdown.
+
+To migrate from directly storage account, you need to identify the storage container yourself and then you can follow the instruction in the [direct storage migration](doc/storageCommand.md) document.
 
 
