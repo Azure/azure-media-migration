@@ -40,9 +40,6 @@ namespace AMSMigrate.Ams
             double totalContainers = await GetStorageBlobMetricAsync(accountId, cancellationToken);
             _logger.LogInformation("The total count of containers of the storage account is {count}.", totalContainers);
 
-            var channel = Channel.CreateBounded<AssetStats>(1);
-            var writer = channel.Writer;
-
             var containers = storageClient.GetBlobContainersAsync(
                                prefix: _storageOptions.Prefix, cancellationToken: cancellationToken);
 
@@ -56,52 +53,14 @@ namespace AMSMigrate.Ams
 
             _logger.LogInformation("The total input container to handle in this run is {count}.", totalContainers);
 
-            var progress = DisplayChartAsync(
-                "Container Migration",
-                totalContainers,
-                channel.Reader);
+            var status = Channel.CreateBounded<double>(1);
+            var progress = ShowProgressAsync("Asset Migration", "Assets", totalContainers, status.Reader, cancellationToken);
 
-            var stats = await MigrateAsync(storageClient, containers, filteredList, writer, cancellationToken);
+            var stats = await MigrateAsync(storageClient, containers, filteredList, status.Writer, cancellationToken);
             _logger.LogInformation("Finished migration of containers from account: {name}. Time : {time}", storageClient.AccountName, watch.Elapsed);
             await progress;
 
             WriteSummary(totalContainers, stats);
-        }
-
-        public async Task DisplayChartAsync(
-            string description,
-            double maxValue,
-            ChannelReader<AssetStats> stats)
-        {
-            var chart = new BarChart()
-                .Width(60)
-                .WithMaxValue(maxValue)
-                .Label($"{description} ({maxValue})");
-            await _console.Live(chart)
-                .AutoClear(false)
-                .StartAsync(async context =>
-                {
-                    chart.AddItems(GetItems(new AssetStats()));
-                    await foreach (var value in stats.ReadAllAsync())
-                    {
-                        BarChartItem[] items = GetItems(value);
-                        chart.Data.Clear();
-                        chart.AddItems(items);
-                        context.Refresh();
-                    }
-                });
-        }
-
-        private static BarChartItem[] GetItems(AssetStats value)
-        {
-            return new[]
-            {
-                new BarChartItem("Assets", value.Total),
-                new BarChartItem("AlreadyMigrated", value.Migrated, Color.Green),
-                new BarChartItem("Skipped", value.Skipped, Color.Grey),
-                new BarChartItem("Successful", value.Successful, Color.Green),
-                new BarChartItem("Failed", value.Failed, Color.Red)
-            };
         }
 
         private async Task<MigrationResult> MigrateAsync(
@@ -109,100 +68,114 @@ namespace AMSMigrate.Ams
             BlobContainerItem container,
             CancellationToken cancellationToken)
         {
-            var containerClient = storageClient.GetBlobContainerClient(container.Name);
+            AssetMigrationResult result = new AssetMigrationResult(MigrationStatus.NotMigrated);
+            _logger.LogInformation("Migrating asset: (container {container}) ...", container.Name);
 
-            // Get the initial migration status from the container level's metadata list.
-            var result = await _tracker.GetMigrationStatusAsync(containerClient, cancellationToken);
-
-            // Check if already migrated.
-            if (_storageOptions.SkipMigrated)
+            try
             {
-                if (result.Status == MigrationStatus.Completed)
+
+                var containerClient = storageClient.GetBlobContainerClient(container.Name);
+
+                // Get the initial migration status from the container level's metadata list.
+                result = await _tracker.GetMigrationStatusAsync(containerClient, cancellationToken);
+
+                // Check if already migrated.
+                if (_storageOptions.SkipMigrated)
                 {
-                    _logger.LogDebug("Container: {name} has already been migrated.", container.Name);
-                    result.Status = MigrationStatus.AlreadyMigrated;
+                    if (result.Status == MigrationStatus.Completed)
+                    {
+                        _logger.LogDebug("Container: {name} has already been migrated.", container.Name);
+                        result.Status = MigrationStatus.AlreadyMigrated;
+                        return result;
+                    }
+                }
+
+                if (result.AssetType == AssetMigrationResult.AssetType_DmtGenerated)
+                {
+                    _logger.LogDebug("Container: {name} holds the migrated data.", container.Name);
+                    result.Status = MigrationStatus.Skipped;
                     return result;
                 }
-            }
 
-            if (result.AssetType == AssetMigrationResult.AssetType_DmtGenerated)
-            {
-                _logger.LogDebug("Container: {name} holds the migrated data.", container.Name);
-                result.Status = MigrationStatus.Skipped;
-                return result;
-            }
+                var assetDetails = await containerClient.GetDetailsAsync(_logger, cancellationToken, _storageOptions.OutputManifest);
 
-            var assetDetails = await containerClient.GetDetailsAsync(_logger, cancellationToken, _storageOptions.OutputManifest);
-
-            // AssetType and ManifestName are not supposed to change for a specific input asset,
-            // Set AssetType and manifest from the input container before doing the actual transforming.
-            if (assetDetails.Manifest != null)
-            {
-                result.AssetType = assetDetails.Manifest.Format;
-                result.ManifestName = _storageOptions.OutputManifest ?? assetDetails.Manifest.FileName?.Replace(".ism", "");
-            }
-            else
-            {
-                result.AssetType = AssetMigrationResult.AssetType_NonIsm;
-            }
-
-            if (result.IsSupportedAsset())
-            {
-                var uploader = _transformFactory.GetUploader(_storageOptions);
-                var (Container, Path) = _transformFactory.TemplateMapper.ExpandPathTemplate(
-                                                    assetDetails.Container,
-                                                    _storageOptions.PathTemplate);
-
-                var canUpload = await uploader.CanUploadAsync(
-                                                    Container,
-                                                    Path,
-                                                    cancellationToken);
-                if (canUpload)
+                // AssetType and ManifestName are not supposed to change for a specific input asset,
+                // Set AssetType and manifest from the input container before doing the actual transforming.
+                if (assetDetails.Manifest != null)
                 {
-                    try
+                    result.AssetType = assetDetails.Manifest.Format;
+                    result.ManifestName = _storageOptions.OutputManifest ?? assetDetails.Manifest.FileName?.Replace(".ism", "");
+                }
+                else
+                {
+                    result.AssetType = AssetMigrationResult.AssetType_NonIsm;
+                }
+
+                if (result.IsSupportedAsset())
+                {
+                    var uploader = _transformFactory.GetUploader(_storageOptions);
+                    var (Container, Path) = _transformFactory.TemplateMapper.ExpandPathTemplate(
+                                                        assetDetails.Container,
+                                                        _storageOptions.PathTemplate);
+
+                    var canUpload = await uploader.CanUploadAsync(
+                                                        Container,
+                                                        Path,
+                                                        cancellationToken);
+                    if (canUpload)
                     {
-                        var transforms = _transformFactory.GetTransforms(_globalOptions, _storageOptions);
-
-                        foreach (var transform in transforms)
+                        try
                         {
-                            var transformResult = await transform.RunAsync(assetDetails, cancellationToken);
+                            var transforms = _transformFactory.GetTransforms(_globalOptions, _storageOptions);
 
-                            result.Status = transformResult.Status;
-                            result.OutputPath = transformResult.OutputPath;
-
-                            if (result.Status != MigrationStatus.Skipped)
+                            foreach (var transform in transforms)
                             {
-                                break;
+                                var transformResult = await transform.RunAsync(assetDetails, cancellationToken);
+
+                                result.Status = transformResult.Status;
+                                result.OutputPath = transformResult.OutputPath;
+
+                                if (result.Status != MigrationStatus.Skipped)
+                                {
+                                    break;
+                                }
                             }
                         }
+                        finally
+                        {
+                            await uploader.UploadCleanupAsync(Container, Path, cancellationToken);
+                        }
                     }
-                    finally
+                    else
                     {
-                        await uploader.UploadCleanupAsync(Container, Path, cancellationToken);
+                        //
+                        // Another instance of the tool is working on the output container,
+                        //
+                        result.Status = MigrationStatus.Skipped;
+
+                        _logger.LogWarning("Another instance of tool is working on the container {container} and output path: {output}",
+                                           Container,
+                                           Path);
                     }
                 }
                 else
                 {
-                    //
-                    // Another instance of the tool is working on the output container,
-                    //
+                    // The asset type is not supported in this milestone,
+                    // Mark the status as Skipped for caller to do the statistics.
                     result.Status = MigrationStatus.Skipped;
 
-                    _logger.LogWarning("Another instance of tool is working on the container {container} and output path: {output}",
-                                       Container,
-                                       Path);
+                    _logger.LogWarning("Skipping container {name} because it is not in a supported format!!!", container.Name);
                 }
+
+                await _tracker.UpdateMigrationStatus(containerClient, result, cancellationToken);
             }
-            else
+            catch (Exception ex)
             {
-                // The asset type is not supported in this milestone,
-                // Mark the status as Skipped for caller to do the statistics.
-                result.Status = MigrationStatus.Skipped;
-
-                _logger.LogWarning("Skipping container {name} because it is not in a supported format!!!", container.Name);
+                _logger.LogError(ex, "Failed to migrate asset {name}.", container.Name);
+                result.Status = MigrationStatus.Failed;
+                _logger.LogDebug("Migrated asset: container: {container}, type: {type}, status: {status}", container.Name, result.AssetType, result.Status);
+                return result;
             }
-
-            await _tracker.UpdateMigrationStatus(containerClient, result, cancellationToken);
 
             return result;
         }
@@ -211,7 +184,7 @@ namespace AMSMigrate.Ams
             BlobServiceClient storageClient,
             AsyncPageable<BlobContainerItem> containers,
             List<BlobContainerItem>? filteredList,
-            ChannelWriter<AssetStats> writer,
+            ChannelWriter<double> writer,
             CancellationToken cancellationToken)
         {
             var stats = new AssetStats();
@@ -219,7 +192,7 @@ namespace AMSMigrate.Ams
             {
                 var result = await MigrateAsync(storageClient, container, cancellationToken);
                 stats.Update(result);
-                await writer.WriteAsync(stats, cancellationToken);
+                await writer.WriteAsync(stats.Total, cancellationToken);
             },
             _storageOptions.BatchSize,
             cancellationToken);
