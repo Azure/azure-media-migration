@@ -425,21 +425,20 @@ public class PlaybackController : ControllerBase
             throw new Exception($"Can't download the blob {blob.Uri}");
         }
 
-        // Write the response.
-        if (range != null)
-        {
-            var readedLength = range.Value.Length ?? contentLength - range.Value.Offset;
-            Response.ContentLength = readedLength;
+        // Copy the http status code and response headers.
+        var blobServerResponse = blobStreamResponse.GetRawResponse();
+        Response.StatusCode = blobServerResponse.Status;
 
-            var contentRange = $"{range.Value.Offset}-{readedLength + range.Value.Offset - 1}/{contentLength}";
-            logger.LogDebug($"Add header Content-Range: {contentRange}");
-            Response.Headers.Add("Content-Range", contentRange);
-        }
-        else
+        // For security, we only expose the following headers:
+        foreach (var allowHeader in new[] { "Content-Length", "Content-Type", "Date", "Accept-Ranges", "Content-MD5", "ETag", "Last-Modified" })
         {
-            Response.ContentLength = contentLength;
+            if (blobServerResponse.Headers.TryGetValue(allowHeader, out var header))
+            {
+                Response.Headers.TryAdd(allowHeader, header);
+            }
         }
 
+        // Copy the body.
         await blobStreamResponse.Value.Content.CopyToAsync(Response.Body).ConfigureAwait(false);
 
         // All done.
