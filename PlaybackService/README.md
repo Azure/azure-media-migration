@@ -3,7 +3,7 @@ Azure Media Services Playback Proxy & ClearKey Delivery Server
 
 ## Overview
 
-This server is an addon service to [Azure Media Services Migration Tool](https://github.com/Azure/azure-media-migration).  Azure Media Services Migration tool supports statically encrypting (ClearKey DRM) the content while packaging and upload to an azure blob storage container that has no public access permissions by default.  In order for user to be able to view the encrypted content, we provide this sample server that demonstrates the following tasks needed for playback:
+This server is an addon service to [Azure Media Services Migration Tool](../migrationTool/README.md).  Azure Media Services Migration tool supports statically encrypting (ClearKey DRM) the content while packaging and upload to an azure blob storage container that has no public access permissions by default.  In order for user to be able to view the encrypted content, we provide this sample server that demonstrates the following tasks needed for playback:
 - Authorize the request for media fragments from players.
 - Read the encrypted media fragments out from the private storage account, and return back to players.
 - Respond to the DRM key requests from players.
