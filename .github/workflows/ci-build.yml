@@ -68,16 +68,16 @@ jobs:
 
       - name: Build and publish
         run: |
-          dotnet publish -c Release tools/PlaybackService
+          dotnet publish -c Release PlaybackService
 
       - name: Test
         run: |
-          dotnet test -c Release --no-build tools/PlaybackService
+          dotnet test -c Release --no-build PlaybackService
 
       - name: Build Container Image
         uses: docker/build-push-action@v4
         with:
-          context: tools/PlaybackService/src/
+          context: PlaybackService/src/
           tags: amstestpublic.azurecr.io/azure-media-migration/playback-service:${{ github.sha }}, amstestpublic.azurecr.io/azure-media-migration/playback-service:latest
 
       - name: Log in to the Container registry
@@ -106,6 +106,6 @@ jobs:
         with:
           namespace: amstest
           manifests: |
-            tools/PlaybackService/deployment/playbackservice.yaml
+            PlaybackService/deployment/playbackservice.yaml
           images: |
             amstestpublic.azurecr.io/azure-media-migration/playback-service:${{ github.sha }}
