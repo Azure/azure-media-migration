@@ -63,6 +63,14 @@ You'll need to have the following permissions:
 - The identity that runs this migration tool should be added to the ['Storage Blob Data Contributor'](https://learn.microsoft.com/en-us/azure/role-based-access-control/built-in-roles#storage-blob-data-contributor) role for the source and destination storage accounts.
 - The identity used to migrate must have the role ['Key Vault Secrets Officer'](https://learn.microsoft.com/en-us/azure/key-vault/general/rbac-guide?tabs=azure-cli#azure-built-in-roles-for-key-vault-data-plane-operations) on the key vault used to store the keys. If the key vault is not using Azure RBAC then you will have to create an Access policy giving secrets management permission to the identity used.
 
+
+- In case, if you are using Service Principal, please make sure that the Service Prinicipal:-
+
+    - Should have 'Contributor' role on the Azure Media Services account being migrated. 
+    - Should have ['Storage Blob Data Contributor'](https://learn.microsoft.com/en-us/azure/role-based-access-control/built-in-roles#storage-blob-data-contributor) for the source and the destination storage accounts. 
+
+  Once the permissions are given, you need to create / regenerate the client credentials (client ID and client secret). Please refer this document for more: ['Register an app in the Microsoft Identity Platform'](https://learn.microsoft.com/en-us/entra/identity-platform/quickstart-register-app#add-credentials)
+
 # Prerequisite dependencies
 
 The following are the tools that we require the user to install on the machine that is running the migration tool
@@ -246,5 +254,3 @@ Below are some tip(s) about error(s) that may occurs, (more will be added later 
 After AMS shutdown, you can not migrate from your AMS account any longer as it doesn't exist anymore.  If you have any unmigrated contents, then the tool provides an alternative (but somewhat limited in functionality, e.g. no decryption support) way for you to migrate directly from the storage container where your asset is located.  However, we recommed that you finish your migration prior to AMS shutdown.
 
 To migrate from directly storage account, you need to identify the storage container yourself and then you can follow the instruction in the [direct storage migration](doc/storageCommand.md) document.
-
-
