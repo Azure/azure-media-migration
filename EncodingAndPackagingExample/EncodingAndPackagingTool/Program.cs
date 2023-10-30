@@ -5,6 +5,9 @@ using Azure.Identity;
 
 namespace EncodingAndPackagingTool;
 
+///<Summary>
+/// Azure Media Services Encoding and Packaging tool
+///</Summary>
 public class Program
 {
     /// <summary>
@@ -12,11 +15,11 @@ public class Program
     /// </summary>
     /// <param name="input">The azure blob uri for the input mp4 file</param>
     /// <param name="output">The azure blob container uri for the output files</param>
-    /// <param name="loglevel">The log level for logging</param>
+    /// <param name="logLevel">The log level for logging</param>
     public static async Task<int> Main(
         Uri? input,
         Uri? output,
-        LogLevel loglevel = LogLevel.Information)
+        LogLevel logLevel = LogLevel.Information)
     {
         if (input == null)
         {
