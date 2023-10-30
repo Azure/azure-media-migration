@@ -64,7 +64,7 @@ You'll need to have the following permissions:
 - The identity used to migrate must have the role ['Key Vault Secrets Officer'](https://learn.microsoft.com/en-us/azure/key-vault/general/rbac-guide?tabs=azure-cli#azure-built-in-roles-for-key-vault-data-plane-operations) on the key vault used to store the keys. If the key vault is not using Azure RBAC then you will have to create an Access policy giving secrets management permission to the identity used.
 
 
-- In case, if you are using Service Principal, please make sure that the Service Prinicipal:-
+- In case, if you are using Service Principal, please make sure that the Service Principal:-
 
     - Should have 'Contributor' role on the Azure Media Services account being migrated. 
     - Should have ['Storage Blob Data Contributor'](https://learn.microsoft.com/en-us/azure/role-based-access-control/built-in-roles#storage-blob-data-contributor) for the source and the destination storage accounts. 
@@ -251,6 +251,6 @@ Below are some tip(s) about error(s) that may occurs, (more will be added later 
   So in this case, if you look the the output container path, you will find a __migrate blob that is locked via lease which you'll need to break the lease of prior to another run that writes to this location.  So if you know that another tool is not working on this output path, then you will need to break the lease the '__migrate' blob.  This can be done manually using the azure portal or azure storage explorer.  Another approach is to run the same AMSMigrate 'asset' command that writes to this output path but append '--break-output-lease' flag which will automatically break the lease of the __migrate blob for you.
 
 # Post AMS shutdown migration
-After AMS shutdown, you can not migrate from your AMS account any longer as it doesn't exist anymore.  If you have any unmigrated contents, then the tool provides an alternative (but somewhat limited in functionality, e.g. no decryption support) way for you to migrate directly from the storage container where your asset is located.  However, we recommed that you finish your migration prior to AMS shutdown.
+After AMS shutdown, you can not migrate from your AMS account any longer as it doesn't exist anymore.  If you have any un-migrated contents, then the tool provides an alternative (but somewhat limited in functionality, e.g. no decryption support) way for you to migrate directly from the storage container where your asset is located.  However, we recommend that you finish your migration prior to AMS shutdown.
 
 To migrate from directly storage account, you need to identify the storage container yourself and then you can follow the instruction in the [direct storage migration](doc/storageCommand.md) document.
