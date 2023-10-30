@@ -54,7 +54,7 @@ internal class EncodingAndPackagingTool
             using (var inputStream = await blob.OpenReadAsync(new BlobOpenReadOptions(allowModifications: false), cancellationToken).ConfigureAwait(false))
                 await inputStream.CopyToAsync(inputFileStream).ConfigureAwait(false);
 
-            // Run ffprobe to analystics this file.
+            // Run ffprobe to analyze this file.
             var ffprobeAnalyse = await FFProbe.AnalyseAsync(inputFile, ffOptions: null, cancellationToken);
 
             // Prepare output folder
