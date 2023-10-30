@@ -88,7 +88,7 @@ namespace AMSMigrate.Ams
         }
         private async Task<bool> MigrateTaskAsync(BlobContainerClient container, CancellationToken cancellationToken)
         {
-            bool isReseted = false;
+            bool isReset = false;
             if (_options.Category.Equals("all", StringComparison.OrdinalIgnoreCase) || (_tracker.GetMigrationStatusAsync(container, cancellationToken).Result.Status == MigrationStatus.Failed))
             {
                 try
@@ -125,7 +125,7 @@ namespace AMSMigrate.Ams
                             if (deleteOperation.GetRawResponse().Status == 200)
                             {
                                 _logger.LogInformation("Metadata in Container '{container}' is deleted successfully.", container.Name);
-                                isReseted = true;
+                                isReset = true;
                             }
                             else
                             {
@@ -142,7 +142,7 @@ namespace AMSMigrate.Ams
 
                 }
             }
-            return isReseted;
+            return isReset;
         }
     }
 }
