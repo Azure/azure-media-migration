@@ -1,0 +1,13 @@
+<Project Sdk="Microsoft.NET.Sdk">
+    <PropertyGroup>
+        <AssemblyName>EncodingAndPackagingTool.Core</AssemblyName>
+        <RootNamespace>EncodingAndPackagingTool</RootNamespace>
+        <TargetFramework>net7.0</TargetFramework>
+        <Nullable>enable</Nullable>
+    </PropertyGroup>
+    <ItemGroup>
+      <PackageReference Include="Azure.Storage.Blobs" Version="12.18.0" />
+      <PackageReference Include="FFMpegCore" Version="5.1.0" />
+      <PackageReference Include="Microsoft.Extensions.Logging.Abstractions" Version="7.0.1" />
+    </ItemGroup>
+</Project>
