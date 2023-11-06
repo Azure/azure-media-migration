@@ -8,12 +8,11 @@
     </PropertyGroup>
     <ItemGroup>
       <PackageReference Include="Azure.Identity" Version="1.10.3" />
-      <PackageReference Include="Azure.Storage.Blobs" Version="12.18.0" />
-      <PackageReference Include="FFMpegCore" Version="5.1.0" />
-      <PackageReference Include="Microsoft.Extensions.Logging" Version="7.0.0" />
-      <PackageReference Include="Microsoft.Extensions.Logging.Abstractions" Version="7.0.1" />
       <PackageReference Include="Microsoft.Extensions.Logging.Console" Version="7.0.0" />
       <PackageReference Include="System.CommandLine" Version="2.0.0-beta4.22272.1" />
       <PackageReference Include="System.CommandLine.DragonFruit" Version="0.4.0-alpha.22272.1" />
+    </ItemGroup>
+    <ItemGroup>
+      <ProjectReference Include="..\EncodingAndPackagingTool.Core\EncodingAndPackagingTool.Core.csproj" />
     </ItemGroup>
 </Project>

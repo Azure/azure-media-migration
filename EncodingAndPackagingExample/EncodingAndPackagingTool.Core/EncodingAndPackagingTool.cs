@@ -12,7 +12,7 @@ using System.Threading.Tasks;
 
 namespace EncodingAndPackagingTool;
 
-internal class EncodingAndPackagingTool
+public class EncodingAndPackagingTool
 {
     private readonly ILogger _logger;
     private readonly TokenCredential _azureCredential;
