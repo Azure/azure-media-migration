@@ -15,18 +15,36 @@ namespace EncodingAndPackagingTool;
 public class EncodingAndPackagingTool
 {
     private readonly ILogger _logger;
-    private readonly TokenCredential _azureCredential;
+    private readonly TokenCredential? _azureCredential;
+    private readonly string? _connectionString;
 
     public EncodingAndPackagingTool(ILogger<EncodingAndPackagingTool> logger, TokenCredential azureCredential)
     {
+        if (_azureCredential == null)
+        {
+            throw new ArgumentNullException(nameof(azureCredential));
+        }
+
         _logger = logger;
         _azureCredential = azureCredential;
+    }
+
+    public EncodingAndPackagingTool(ILogger<EncodingAndPackagingTool> logger, string connectionString)
+    {
+        if (string.IsNullOrEmpty(connectionString))
+        {
+            throw new ArgumentException(nameof(connectionString));
+        }
+
+        _logger = logger;
+        _connectionString = connectionString;
     }
 
     public async Task EncodeAndPackageAsync(Uri mp4BlobUri, Uri outputStorageUri, CancellationToken cancellationToken = default)
     {
         var logger = _logger;
         var azureCredential = _azureCredential;
+        var connectionString = _connectionString;
 
         // Prepare a tmp path.
         var tmpPath = Path.Combine(Path.GetTempPath(), $"{DateTime.Now.ToString("yyyyMMMdddhhssmm")}-{Guid.NewGuid()}");
@@ -38,7 +56,16 @@ public class EncodingAndPackagingTool
             Directory.CreateDirectory(tmpPath);
 
             // Get the blob client.
-            var blob = new BlobClient(mp4BlobUri, azureCredential);
+            BlobClient blob;
+            if (_azureCredential != null)
+            {
+                blob = new BlobClient(mp4BlobUri, azureCredential);
+            }
+            else
+            {
+                var tmpBlobClient = new BlobClient(mp4BlobUri);
+                blob = new BlobClient(_connectionString, tmpBlobClient.BlobContainerName, tmpBlobClient.Name);
+            }
 
             // Get the extension from the blob name.
             var ext = Path.GetExtension(blob.Name);
@@ -97,7 +124,16 @@ public class EncodingAndPackagingTool
             await ffmpegCommand.Configure(config => config.WorkingDirectory = outputDir).ProcessAsynchronously().ConfigureAwait(false);
 
             // Get output blob container
-            var blobContainer = new BlobContainerClient(outputStorageUri, azureCredential);
+            BlobContainerClient blobContainer;
+            if (azureCredential != null)
+            {
+                blobContainer = new BlobContainerClient(outputStorageUri, azureCredential);
+            }
+            else
+            {
+                var blobTmpContainer = new BlobContainerClient(outputStorageUri);
+                blobContainer = new BlobContainerClient(connectionString, blobTmpContainer.Name);
+            }
 
             // Upload.
             await Task.WhenAll(Directory.GetFiles(outputDir).Select(async file =>
@@ -111,7 +147,7 @@ public class EncodingAndPackagingTool
         }
         finally
         {
-            if (Path.Exists(tmpPath))
+            if (Directory.Exists(tmpPath))
             {
                 Directory.Delete(tmpPath, recursive: true);
             }

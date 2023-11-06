@@ -1,0 +1,30 @@
+<Project Sdk="Microsoft.NET.Sdk">
+    <PropertyGroup>
+        <AssemblyName>EncodingAndPackagingTool.AzureFunction</AssemblyName>
+        <RootNamespace>EncodingAndPackagingTool</RootNamespace>
+        <TargetFramework>net6.0</TargetFramework>
+        <AzureFunctionsVersion>v4</AzureFunctionsVersion>
+        <Nullable>enable</Nullable>
+        <OutputType>Exe</OutputType>
+        <DockerfileContext>..</DockerfileContext>
+    </PropertyGroup>
+    <ItemGroup>
+      <PackageReference Include="Azure.Identity" Version="1.10.3" />
+      <PackageReference Include="Microsoft.Azure.Functions.Worker" Version="1.19.0" />
+      <PackageReference Include="Microsoft.Azure.Functions.Worker.Extensions.Storage" Version="4.0.4" />
+      <PackageReference Include="Microsoft.Azure.Functions.Worker.Sdk" Version="1.15.1" />
+      <PackageReference Include="Microsoft.VisualStudio.Azure.Containers.Tools.Targets" Version="1.19.5" />
+    </ItemGroup>
+    <ItemGroup>
+      <None Update="host.json">
+        <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+      </None>
+      <None Update="local.settings.json">
+        <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+        <CopyToPublishDirectory>Never</CopyToPublishDirectory>
+      </None>
+    </ItemGroup>
+    <ItemGroup>
+      <ProjectReference Include="..\EncodingAndPackagingTool.Core\EncodingAndPackagingTool.Core.csproj" />
+    </ItemGroup>
+</Project>

@@ -118,3 +118,33 @@ jobs:
             PlaybackService/deployment/playbackservice.yaml
           images: |
             amstestpublic.azurecr.io/azure-media-migration/playback-service:${{ github.sha }}
+
+
+  build-encoding-and-packaging-example:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      packages: write
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v2
+
+      - name: Setup DotNet Environment
+        uses: actions/setup-dotnet@v3
+        with:
+          dotnet-version: 6.0.x
+
+      - name: Build and publish
+        run: |
+          dotnet publish -c Release EncodingAndPackagingExample
+
+      - name: Test
+        run: |
+          dotnet test -c Release --no-build EncodingAndPackagingExample
+
+      - name: Build Container Image
+        uses: docker/build-push-action@v4
+        with:
+          context: EncodingAndPackagingExample
+          file: EncodingAndPackagingExample/EncodingAndPackagingTool.AzureFunction/Dockerfile
+          tags: amstestpublic.azurecr.io/azure-media-migration/encoding-and-packaging-example:${{ github.sha }}, amstestpublic.azurecr.io/azure-media-migration/encoding-and-packaging-example:latest
