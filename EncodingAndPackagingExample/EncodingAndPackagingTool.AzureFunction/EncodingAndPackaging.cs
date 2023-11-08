@@ -36,7 +36,7 @@ namespace EncodingAndPackagingTool
             }
             catch (Exception ex)
             {
-                _logger.LogError(ex, "EncodAndPackage failed.");
+                _logger.LogError(ex, "EncodeAndPackage failed.");
             }
         }
 
