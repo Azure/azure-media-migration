@@ -128,7 +128,7 @@ namespace AMSMigrate.Transform
             {
                 if (!string.IsNullOrEmpty(manifests[i]))
                 {
-                    var source = t.Parameters.SingleOrDefault(p => p.Name == TRANSCRIPT_SOURCE)?.Value ?? t.Source;
+                    var source = t.Parameters?.SingleOrDefault(p => p.Name == TRANSCRIPT_SOURCE)?.Value ?? t.Source;
                     var ext = t.IsMultiFile ? (t is TextTrack ? VTT_FILE : MEDIA_FILE) : string.Empty;
                     var file = $"{source}{ext}";
                     var index = Inputs.IndexOf(file);
