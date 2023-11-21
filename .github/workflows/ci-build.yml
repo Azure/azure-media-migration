@@ -103,21 +103,21 @@ jobs:
           docker push amstestpublic.azurecr.io/azure-media-migration/playback-service:${{ github.sha }}
           docker push amstestpublic.azurecr.io/azure-media-migration/playback-service:latest
 
-      - name: Login Kubernets
-        uses: azure/k8s-set-context@v1
-        if: ${{ github.event_name == 'push' }}
-        with:
-          kubeconfig: '${{ secrets.AMSTEST_EASTUS_KUBECONFIG }}'
+      # - name: Login Kubernets
+      #   uses: azure/k8s-set-context@v1
+      #   if: ${{ github.event_name == 'push' }}
+      #   with:
+      #     kubeconfig: '${{ secrets.AMSTEST_EASTUS_KUBECONFIG }}'
 
-      - name: Deploy
-        uses: Azure/k8s-deploy@v4
-        if: ${{ github.event_name == 'push' }}
-        with:
-          namespace: amstest
-          manifests: |
-            PlaybackService/deployment/playbackservice.yaml
-          images: |
-            amstestpublic.azurecr.io/azure-media-migration/playback-service:${{ github.sha }}
+      # - name: Deploy
+      #   uses: Azure/k8s-deploy@v4
+      #   if: ${{ github.event_name == 'push' }}
+      #   with:
+      #     namespace: amstest
+      #     manifests: |
+      #       PlaybackService/deployment/playbackservice.yaml
+      #     images: |
+      #       amstestpublic.azurecr.io/azure-media-migration/playback-service:${{ github.sha }}
 
 
   build-encoding-and-packaging-example:
