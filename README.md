@@ -30,3 +30,4 @@ If you encounter any issues or bugs that you'd like to report, please feel free 
 
 - [Azure Media Migration Tool](migrationTool/README.md)
 - [Azure Media Services Playback Proxy & ClearKey Delivery Server](PlaybackService/README.md)
+- [Encoding and Packaging Sample](EncodingAndPackagingExample/README.md)
