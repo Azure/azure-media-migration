@@ -9,6 +9,8 @@ Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "EncodingAndPackagingTool.Cl
 EndProject
 Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "EncodingAndPackagingTool.AzureFunction", "EncodingAndPackagingTool.AzureFunction\EncodingAndPackagingTool.AzureFunction.csproj", "{8D4079CC-067D-401F-B4A7-DAAD0A34A3FE}"
 EndProject
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "EncodingAndPackagingTool.Test", "EncodingAndPackagingTool.Test\EncodingAndPackagingTool.Test.csproj", "{A80B57CB-880C-437F-8351-40582DB08CAA}"
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Any CPU = Debug|Any CPU
@@ -27,6 +29,10 @@ Global
 		{8D4079CC-067D-401F-B4A7-DAAD0A34A3FE}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{8D4079CC-067D-401F-B4A7-DAAD0A34A3FE}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{8D4079CC-067D-401F-B4A7-DAAD0A34A3FE}.Release|Any CPU.Build.0 = Release|Any CPU
+		{A80B57CB-880C-437F-8351-40582DB08CAA}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{A80B57CB-880C-437F-8351-40582DB08CAA}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{A80B57CB-880C-437F-8351-40582DB08CAA}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{A80B57CB-880C-437F-8351-40582DB08CAA}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE

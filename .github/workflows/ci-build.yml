@@ -122,17 +122,16 @@ jobs:
 
   build-encoding-and-packaging-example:
     runs-on: ubuntu-latest
-    permissions:
-      contents: read
-      packages: write
+    container: xieyubo/azure-media-migration-test-docker:20231128
     steps:
       - name: Checkout
         uses: actions/checkout@v2
-
-      - name: Setup DotNet Environment
-        uses: actions/setup-dotnet@v3
         with:
-          dotnet-version: 6.0.x
+          lfs: true
+
+      - name: Run Azurite
+        run: |
+          azurite --silent --location /tmp --blobHost 0.0.0.0 --queueHost 0.0.0.0 --tableHost 0.0.0.0 --cert /cert/127.0.0.1.crt --key /cert/127.0.0.1.key --oauth basic &
 
       - name: Build and publish
         run: |
@@ -140,11 +139,11 @@ jobs:
 
       - name: Test
         run: |
-          dotnet test -c Release --no-build EncodingAndPackagingExample
+          AZURE_CLIENT_ID=${{ secrets.AZURE_CLIENT_ID }} AZURE_TENANT_ID=${{ secrets.AZURE_TENANT_ID }} AZURE_CLIENT_SECRET=${{ secrets.AZURE_CLIENT_SECRET }} TEST_DATA=`pwd`/test-data dotnet test -c Release --no-build EncodingAndPackagingExample
 
-      - name: Build Container Image
-        uses: docker/build-push-action@v4
-        with:
-          context: EncodingAndPackagingExample
-          file: EncodingAndPackagingExample/EncodingAndPackagingTool.AzureFunction/Dockerfile
-          tags: amstestpublic.azurecr.io/azure-media-migration/encoding-and-packaging-example:${{ github.sha }}, amstestpublic.azurecr.io/azure-media-migration/encoding-and-packaging-example:latest
+      # - name: Build Container Image
+      #   uses: docker/build-push-action@v4
+      #   with:
+      #     context: EncodingAndPackagingExample
+      #     file: EncodingAndPackagingExample/EncodingAndPackagingTool.AzureFunction/Dockerfile
+      #     tags: amstestpublic.azurecr.io/azure-media-migration/encoding-and-packaging-example:${{ github.sha }}, amstestpublic.azurecr.io/azure-media-migration/encoding-and-packaging-example:latest
