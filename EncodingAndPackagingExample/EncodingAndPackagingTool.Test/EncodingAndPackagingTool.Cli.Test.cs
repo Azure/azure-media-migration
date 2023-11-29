@@ -15,17 +15,17 @@ public class EncodingAndPackagingTool
     private static string _storageServiceUri;
     private static string _inputContainerUri;
     private static string _testDataPath;
-    private static DefaultAzureCredential _azureCrendentail;
+    private static DefaultAzureCredential _azureCredential;
 
     static EncodingAndPackagingTool()
     {
         _storageServiceUri = "https://127.0.0.1:10000/devstoreaccount1";
         _inputContainerUri = $"{_storageServiceUri}/encodingandpackagingtooltest";
         _testDataPath = Environment.GetEnvironmentVariable("TEST_DATA") ?? throw new Exception("TEST_DATA environment variable is missing.");
-        _azureCrendentail = new DefaultAzureCredential();
+        _azureCredential = new DefaultAzureCredential();
 
         // Upload test video clip.
-        var container = new BlobContainerClient(new Uri(_inputContainerUri), _azureCrendentail);
+        var container = new BlobContainerClient(new Uri(_inputContainerUri), _azureCredential);
         container.CreateIfNotExists();
 
         Task.WhenAll(Directory.GetFiles(_testDataPath).Select(async file =>
@@ -54,7 +54,7 @@ public class EncodingAndPackagingTool
 
         // Verify dash related files.
         // We should have the output mpd file.
-        var blob = new BlobClient(new Uri($"{outputContainerUri}/bunny.640x480.15fps.mpd"), _azureCrendentail);
+        var blob = new BlobClient(new Uri($"{outputContainerUri}/bunny.640x480.15fps.mpd"), _azureCredential);
         using (var stream = await blob.OpenReadAsync())
         {
             Assert.True(stream.Length > 2000);
@@ -63,7 +63,7 @@ public class EncodingAndPackagingTool
         // We should have 13 chunk files for stream 0
         for (var i = 1; i <= 13; ++i)
         {
-            blob = new BlobClient(new Uri($"{outputContainerUri}/chunk-stream0-{i.ToString("00000")}.m4s"), _azureCrendentail);
+            blob = new BlobClient(new Uri($"{outputContainerUri}/chunk-stream0-{i.ToString("00000")}.m4s"), _azureCredential);
             using (var stream = await blob.OpenReadAsync())
             {
                 Assert.True(stream.Length > 2000);
@@ -73,7 +73,7 @@ public class EncodingAndPackagingTool
         // We should have 24 chunk files for stream 1
         for (var i = 1; i <= 24; ++i)
         {
-            blob = new BlobClient(new Uri($"{outputContainerUri}/chunk-stream1-{i.ToString("00000")}.m4s"), _azureCrendentail);
+            blob = new BlobClient(new Uri($"{outputContainerUri}/chunk-stream1-{i.ToString("00000")}.m4s"), _azureCredential);
             using (var stream = await blob.OpenReadAsync())
             {
                 Assert.True(stream.Length > 2000);
@@ -83,7 +83,7 @@ public class EncodingAndPackagingTool
         // We should have 13 chunk files for stream 2
         for (var i = 1; i <= 13; ++i)
         {
-            blob = new BlobClient(new Uri($"{outputContainerUri}/chunk-stream2-{i.ToString("00000")}.m4s"), _azureCrendentail);
+            blob = new BlobClient(new Uri($"{outputContainerUri}/chunk-stream2-{i.ToString("00000")}.m4s"), _azureCredential);
             using (var stream = await blob.OpenReadAsync())
             {
                 Assert.True(stream.Length > 2000);
@@ -93,7 +93,7 @@ public class EncodingAndPackagingTool
         // We should have 13 chunk files for stream 3
         for (var i = 1; i <= 13; ++i)
         {
-            blob = new BlobClient(new Uri($"{outputContainerUri}/chunk-stream3-{i.ToString("00000")}.m4s"), _azureCrendentail);
+            blob = new BlobClient(new Uri($"{outputContainerUri}/chunk-stream3-{i.ToString("00000")}.m4s"), _azureCredential);
             using (var stream = await blob.OpenReadAsync())
             {
                 Assert.True(stream.Length > 2000);
@@ -103,7 +103,7 @@ public class EncodingAndPackagingTool
         // We should have 4 init chunk files.
         for (var i = 0; i < 4; ++i)
         {
-            blob = new BlobClient(new Uri($"{outputContainerUri}/init-stream{i}.m4s"), _azureCrendentail);
+            blob = new BlobClient(new Uri($"{outputContainerUri}/init-stream{i}.m4s"), _azureCredential);
             using (var stream = await blob.OpenReadAsync())
             {
                 Assert.True(stream.Length > 500);
@@ -112,7 +112,7 @@ public class EncodingAndPackagingTool
 
         // Verify hls related files.
         // We should have the output master hls file.
-        blob = new BlobClient(new Uri($"{outputContainerUri}/bunny.640x480.15fps.m3u8"), _azureCrendentail);
+        blob = new BlobClient(new Uri($"{outputContainerUri}/bunny.640x480.15fps.m3u8"), _azureCredential);
         using (var stream = await blob.OpenReadAsync())
         {
             Assert.True(stream.Length > 400);
@@ -121,7 +121,7 @@ public class EncodingAndPackagingTool
         // We should have 4 hls playlist file.
         for (var i = 0; i < 4; ++i)
         {
-            blob = new BlobClient(new Uri($"{outputContainerUri}/media_{i}.m3u8"), _azureCrendentail);
+            blob = new BlobClient(new Uri($"{outputContainerUri}/media_{i}.m3u8"), _azureCredential);
             using (var stream = await blob.OpenReadAsync())
             {
                 Assert.True(stream.Length > 1000);
@@ -129,7 +129,7 @@ public class EncodingAndPackagingTool
         }
 
         // Delete the container if success.
-        var container = new BlobContainerClient(new Uri(outputContainerUri), _azureCrendentail);
+        var container = new BlobContainerClient(new Uri(outputContainerUri), _azureCredential);
         await container.DeleteAsync();
     }
 }
