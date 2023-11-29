@@ -20,7 +20,7 @@ public class EncodingAndPackagingTool
 
     public EncodingAndPackagingTool(ILogger<EncodingAndPackagingTool> logger, TokenCredential azureCredential)
     {
-        if (_azureCredential == null)
+        if (azureCredential == null)
         {
             throw new ArgumentNullException(nameof(azureCredential));
         }
@@ -47,7 +47,7 @@ public class EncodingAndPackagingTool
         var connectionString = _connectionString;
 
         // Prepare a tmp path.
-        var tmpPath = Path.Combine(Path.GetTempPath(), $"{DateTime.Now.ToString("yyyyMMMdddhhssmm")}-{Guid.NewGuid()}");
+        var tmpPath = Path.Combine(Path.GetTempPath(), $"{DateTime.UtcNow.ToString("yyyyMMddhhmmss")}-{Guid.NewGuid()}");
         logger.LogInformation($"Create tmp path: {tmpPath}");
 
         try
@@ -75,7 +75,7 @@ public class EncodingAndPackagingTool
             }
 
             // Download the blob to a local tmp folder
-            var inputFile = Path.Combine(tmpPath, $"{blob.Name}");
+            var inputFile = Path.Combine(tmpPath, $"{Path.GetFileName(blob.Name)}");
             logger.LogInformation($"Download blob {blob.Name} to {inputFile}");
             using (var inputFileStream = System.IO.File.OpenWrite(inputFile))
             using (var inputStream = await blob.OpenReadAsync(new BlobOpenReadOptions(allowModifications: false), cancellationToken).ConfigureAwait(false))
@@ -134,6 +134,7 @@ public class EncodingAndPackagingTool
                 var blobTmpContainer = new BlobContainerClient(outputStorageUri);
                 blobContainer = new BlobContainerClient(connectionString, blobTmpContainer.Name);
             }
+            await blobContainer.CreateIfNotExistsAsync().ConfigureAwait(false);
 
             // Upload.
             await Task.WhenAll(Directory.GetFiles(outputDir).Select(async file =>
