@@ -90,6 +90,7 @@ public class EncodingAndPackagingTool
 
             // Prepare ffmpeg command lines.
             var mpdFile = $"{Path.GetFileNameWithoutExtension(inputFile)}.mpd";
+            var hlsFile = $"{Path.GetFileNameWithoutExtension(inputFile)}.m3u8";
             FFMpegArgumentProcessor ffmpegCommand;
 
             if (ffprobeAnalyse.VideoStreams != null)
@@ -105,9 +106,13 @@ public class EncodingAndPackagingTool
                         .WithCustomArgument("-s:v:1 1280x720")
                         .WithCustomArgument("-s:v:2 1920x1080")
                         .WithCustomArgument("-adaptation_sets \"id=0,streams=v id=1,streams=a\"")
+                        /* HLS related settings, comments out if you don't need generate hls playlist */
+                        .WithCustomArgument("-hls_playlist 1")
+                        .WithCustomArgument($"-hls_master_name {hlsFile}")
+                        /* HLS settings done */
                         .ForceFormat("dash"));
             }
-            else
+            else 
             {
                 // For audio only stream.
                 ffmpegCommand = FFMpegArguments
@@ -115,6 +120,10 @@ public class EncodingAndPackagingTool
                    .OutputToFile(mpdFile, overwrite: true, args => args
                        .WithAudioCodec(AudioCodec.Aac)
                        .WithCustomArgument("-adaptation_sets \"id=0,streams=a\"")
+                       /* HLS related settings, comments out if you don't need generate hls playlist */
+                       .WithCustomArgument("-hls_playlist 1")
+                       .WithCustomArgument($"-hls_master_name {hlsFile}")
+                       /* HLS settings done */
                        .ForceFormat("dash"));
             }
 

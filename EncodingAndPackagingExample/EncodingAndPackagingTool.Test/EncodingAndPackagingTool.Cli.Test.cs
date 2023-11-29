@@ -52,6 +52,7 @@ public class EncodingAndPackagingTool
         await process.WaitForExitAsync();
         Assert.Equal(0, process.ExitCode);
 
+        // Verify dash related files.
         // We should have the output mpd file.
         var blob = new BlobClient(new Uri($"{outputContainerUri}/bunny.640x480.15fps.mpd"), _azureCrendentail);
         using (var stream = await blob.OpenReadAsync())
@@ -106,6 +107,24 @@ public class EncodingAndPackagingTool
             using (var stream = await blob.OpenReadAsync())
             {
                 Assert.True(stream.Length > 500);
+            }
+        }
+
+        // Verify hls related files.
+        // We should have the output master hls file.
+        blob = new BlobClient(new Uri($"{outputContainerUri}/bunny.640x480.15fps.m3u8"), _azureCrendentail);
+        using (var stream = await blob.OpenReadAsync())
+        {
+            Assert.True(stream.Length > 400);
+        }
+
+        // We should have 4 hls playlist file.
+        for (var i = 0; i < 4; ++i)
+        {
+            blob = new BlobClient(new Uri($"{outputContainerUri}/media_{i}.m3u8"), _azureCrendentail);
+            using (var stream = await blob.OpenReadAsync())
+            {
+                Assert.True(stream.Length > 1000);
             }
         }
 
