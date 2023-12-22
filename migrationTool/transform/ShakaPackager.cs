@@ -139,7 +139,7 @@ namespace AMSMigrate.Transform
                     var stream = t.Type.ToString().ToLowerInvariant();
                     var language = string.IsNullOrEmpty(t.SystemLanguage) || t.SystemLanguage == "und" ? string.Empty : $",language={t.SystemLanguage},";
                     var role = t is TextTrack ? $",dash_role={values[text_tracks++ % values.Length].ToString().ToLowerInvariant()}" : string.Empty;
-                    return $"stream={stream},in={inputFile},out={outputs[i]},playlist_name={manifests[i]}{language}{drm_label}{role}";
+                    return $"stream={t.TrackID - 1},in={inputFile},out={outputs[i]},playlist_name={manifests[i]}{language}{drm_label}{role}";
                 }
                 else
                 {
