@@ -6,17 +6,20 @@ RUN apt-get update && apt-get install -y ffmpeg libsecret-1-dev
 
 FROM mcr.microsoft.com/dotnet/sdk:6.0 AS build
 WORKDIR /src
-COPY ["AMSMigrate.csproj", "."]
-RUN dotnet restore "./AMSMigrate.csproj"
-COPY . .
-WORKDIR "/src/."
-RUN dotnet build "AMSMigrate.csproj" -c Release -o /app/build
+COPY ["./migrationTool/AMSMigrate.csproj", "./migrationTool/"]
+COPY ["./MigrateAsset/MigrateAsset.csproj", "./MigrateAsset/"]
+RUN dotnet restore "./migrationTool/AMSMigrate.csproj"
+RUN dotnet restore "./MigrateAsset/MigrateAsset.csproj"
+COPY ./migrationTool/* ./migrationTool/
+COPY ./MigrateAsset/* ./MigrateAsset/
+WORKDIR /src/migrationTool
+RUN dotnet build -c Release -o /app/build
 
 FROM build AS publish
-RUN dotnet publish "AMSMigrate.csproj" -c Release -o /app/publish /p:UseAppHost=false
+RUN dotnet publish -c Release -o /app/publish /p:UseAppHost=false
 
 FROM base AS final
 WORKDIR /app
 COPY --from=publish /app/publish .
 RUN chmod +x /app/packager-linux-x64
-ENTRYPOINT ["dotnet", "AMSMigrate.dll"]
+ENTRYPOINT ["dotnet", "MigrateAsset.dll"]

@@ -3,7 +3,12 @@ Microsoft Visual Studio Solution File, Format Version 12.00
 # Visual Studio Version 17
 VisualStudioVersion = 17.5.33530.505
 MinimumVisualStudioVersion = 10.0.40219.1
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "AMSMigrate", "AMSMigrate.csproj", "{05737309-7159-41B2-847D-ADB2B8F9719A}"
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "AMSMigrate", "AMSMigrate.csproj", "{05737309-7159-41B2-847D-ADB2B8F9719A}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "MigrateAsset", "..\MigrateAsset\MigrateAsset.csproj", "{789D2399-EC18-49B7-80BC-504A12734EE8}"
+	ProjectSection(ProjectDependencies) = postProject
+		{05737309-7159-41B2-847D-ADB2B8F9719A} = {05737309-7159-41B2-847D-ADB2B8F9719A}
+	EndProjectSection
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
@@ -15,6 +20,10 @@ Global
 		{05737309-7159-41B2-847D-ADB2B8F9719A}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{05737309-7159-41B2-847D-ADB2B8F9719A}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{05737309-7159-41B2-847D-ADB2B8F9719A}.Release|Any CPU.Build.0 = Release|Any CPU
+		{789D2399-EC18-49B7-80BC-504A12734EE8}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{789D2399-EC18-49B7-80BC-504A12734EE8}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{789D2399-EC18-49B7-80BC-504A12734EE8}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{789D2399-EC18-49B7-80BC-504A12734EE8}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE

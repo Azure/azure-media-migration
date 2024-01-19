@@ -1,9 +1,10 @@
 services:
   migrate:
-    image: pandoraacr.azurecr.io/ams-migration-tool:0.0.1
-    build:
-      context: ./migrationTool
+    image: pandoraacr.azurecr.io/ams-migration-asset:0.0.1
+    build: .
     environment:
       - AZURE_CLIENT_ID
       - AZURE_TENANT_ID
       - AZURE_CLIENT_SECRET
+      - SERVICEBUS_FQDN
+      - SERVICEBUS_QUEUE
