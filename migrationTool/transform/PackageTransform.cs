@@ -37,7 +37,8 @@ namespace AMSMigrate.Transform
             }
             return details.Manifest.Format.StartsWith("mp4")
                 || details.Manifest.Format.Equals("fmp4")
-                || (details.Manifest.Format == "vod-fmp4");
+                || (details.Manifest.Format == "vod-fmp4")
+                || (details.Manifest.Format == "vod-cmaf");
         }
 
         static string EscapeName(string name)

@@ -50,7 +50,8 @@ namespace AMSMigrate.Ams
             return (AssetType != null && (AssetType == AssetType_NonIsm
                 || AssetType == "fmp4"
                 || AssetType.StartsWith("mp4")
-                || (AssetType == "vod-fmp4")));
+                || (AssetType == "vod-fmp4")
+                || (AssetType == "vod-cmaf")));
         }
 
         public AssetMigrationResult(MigrationStatus status = MigrationStatus.NotMigrated, Uri? outputPath = null, string? assetType = null, string? manifestName = null) : base(status)

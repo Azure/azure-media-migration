@@ -229,3 +229,5 @@ packager-linux-x64
 packager-win-x64.exe
 packager-osx-x64
 
+# custom
+.env

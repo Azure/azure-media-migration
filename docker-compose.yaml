@@ -1,0 +1,9 @@
+services:
+  migrate:
+    image: pandoraacr.azurecr.io/ams-migration-tool:0.0.1
+    build:
+      context: ./migrationTool
+    environment:
+      - AZURE_CLIENT_ID
+      - AZURE_TENANT_ID
+      - AZURE_CLIENT_SECRET
