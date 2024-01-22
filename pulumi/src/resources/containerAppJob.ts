@@ -100,13 +100,19 @@ export class ContainerAppJob {
     this.roleAssignmentQueue = new authorization.RoleAssignment("receivemessagesfromqueue", {
       scope: servicebus.queue.id,
       roleDefinitionId: `/subscriptions/${Constants.SubscriptionId}/providers/Microsoft.Authorization/roleDefinitions/4f6d3b9b-027b-4f4c-9142-0e5a2a2247e0`,
-      principalId: this.jobManagedIdentity.clientId
+      principalId: this.jobManagedIdentity.principalId,
+      principalType: "ServicePrincipal",
+    }, {
+      dependsOn: [
+        servicebus.queue,
+      ]
     });
 
     this.roleAssignmentRegistry = new authorization.RoleAssignment("jobcontainer", {
       scope: containerRegistry.id,
       roleDefinitionId: `/subscriptions/${Constants.SubscriptionId}/providers/Microsoft.Authorization/roleDefinitions/7f951dda-4ed3-4680-a7ca-43fe172d538d`,
-      principalId: this.jobManagedIdentity.clientId
+      principalId: this.jobManagedIdentity.principalId,
+      principalType: "ServicePrincipal",
     });
   }
 }
