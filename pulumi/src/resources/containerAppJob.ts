@@ -82,7 +82,7 @@ export class ContainerAppJob {
 
     this.roleAssignment = new authorization.RoleAssignment("receivemessagesfromqueue", {
       scope: servicebus.queue.id,
-      roleDefinitionId: "/providers/Microsoft.Authorization/roleDefinitions/19e7f393-937e-4f77-808e-94535e297925",
+      roleDefinitionId: "/providers/Microsoft.Authorization/roleDefinitions/4f6d3b9b-027b-4f4c-9142-0e5a2a2247e0",
       principalId: this.job.identity.apply(i => i!.principalId)
     });
   }
