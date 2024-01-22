@@ -1,12 +1,10 @@
 import * as pulumi from "@pulumi/pulumi";
-import { config } from "./config";
 
 const stack = pulumi.getStack();
 const projectName = pulumi.getProject();
 
 /**
- * Create resource name in the format:
- * `<stack>-<project_name>-<suffix>`
+ * Create resource name in the format: `<stack>-<project_name>-<suffix>`
  */
 export const resourceName = (suffix: string) => `${stack}-${projectName}-${suffix}`;
 

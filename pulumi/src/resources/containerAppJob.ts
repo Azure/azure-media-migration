@@ -1,15 +1,18 @@
+import * as pulumi from "@pulumi/pulumi";
 import * as app from "@pulumi/azure-native/app/v20230801preview";
-import { authorization } from "@pulumi/azure-native";
-import * as Environment from "../lib/env_vars";
+import { authorization, managedidentity, containerregistry } from "@pulumi/azure-native";
+import * as Constants from "../lib/constants";
 import { resourceName } from "../lib/utils";
 import { Servicebus } from "./servicebus";
 
 export class ContainerAppJob {
   public environment: app.ManagedEnvironment;
   public job: app.Job;
-  private roleAssignment: authorization.RoleAssignment;
+  private jobManagedIdentity: managedidentity.UserAssignedIdentity;
+  private roleAssignmentQueue: authorization.RoleAssignment;
+  private roleAssignmentRegistry: authorization.RoleAssignment;
 
-  constructor(resourceGroupName: string, servicebus: Servicebus) {
+  constructor(resourceGroupName: string, servicebus: Servicebus, containerRegistry: pulumi.Output<containerregistry.GetRegistryResult>) {
     this.environment = new app.ManagedEnvironment("main", {
       resourceGroupName,
       environmentName: resourceName("cae"),
@@ -21,10 +24,16 @@ export class ContainerAppJob {
       ]
     });
 
+    this.jobManagedIdentity = new managedidentity.UserAssignedIdentity("job", {
+      resourceGroupName,
+      resourceName: resourceName("job-id")
+    });
+
     this.job = new app.Job("job", {
       resourceGroupName,
       jobName: resourceName("ca-job"),
       environmentId: this.environment.id,
+      workloadProfileName: "Consumption",
       configuration: {
         eventTriggerConfig: {
           parallelism: 1,
@@ -42,26 +51,31 @@ export class ContainerAppJob {
               name: "servicebuscalingrule",
               type: "azure-servicebus",
               auth: [{
-                secretRef: "connection-string-secret"
+                secretRef: "connection-string-secret",
+                triggerParameter: "connection"
               }]
             }],
           },
         },
         replicaRetryLimit: 1,
-        replicaTimeout: 1800,
+        replicaTimeout: 900, // 1800
         triggerType: "Event",
         secrets: [{
           name: "connection-string-secret",
           value: servicebus.getPrimaryConnectionString()
+        }],
+        registries: [{
+          server: Constants.ContainerRegistryServer,
+          identity: this.jobManagedIdentity.id,
         }]
       },
       template: {
         containers: [{
-          image: `${Environment.ContainerRegistry}/${Environment.ContainerAppJobImageName}:${Environment.ContainerAppJobImageTag}`,
-          name: Environment.ContainerAppJobImageName,
+          image: `${Constants.ContainerRegistryServer}/${Constants.ContainerAppJobImageName}:${Constants.ContainerAppJobImageTag}`,
+          name: Constants.ContainerAppJobImageName,
           resources: {
-            cpu: 1,
-            memory: "2Gb"
+            cpu: 0.5,
+            memory: "1024Mb"
           },
           env: [
             {
@@ -76,14 +90,23 @@ export class ContainerAppJob {
         }],
       },
       identity: {
-        type: "SystemAssigned"
-      }
+        type: "UserAssigned",
+        userAssignedIdentities: [
+          this.jobManagedIdentity.id,
+        ]
+      },
     });
 
-    this.roleAssignment = new authorization.RoleAssignment("receivemessagesfromqueue", {
+    this.roleAssignmentQueue = new authorization.RoleAssignment("receivemessagesfromqueue", {
       scope: servicebus.queue.id,
-      roleDefinitionId: "/providers/Microsoft.Authorization/roleDefinitions/4f6d3b9b-027b-4f4c-9142-0e5a2a2247e0",
-      principalId: this.job.identity.apply(i => i!.principalId)
+      roleDefinitionId: `/subscriptions/${Constants.SubscriptionId}/providers/Microsoft.Authorization/roleDefinitions/4f6d3b9b-027b-4f4c-9142-0e5a2a2247e0`,
+      principalId: this.jobManagedIdentity.principalId
+    });
+
+    this.roleAssignmentRegistry = new authorization.RoleAssignment("jobimage", {
+      scope: containerRegistry.id,
+      roleDefinitionId: `/subscriptions/${Constants.SubscriptionId}/providers/Microsoft.Authorization/roleDefinitions/7f951dda-4ed3-4680-a7ca-43fe172d538d`,
+      principalId: this.jobManagedIdentity.principalId
     });
   }
 }

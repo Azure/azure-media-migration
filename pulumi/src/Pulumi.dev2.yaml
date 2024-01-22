@@ -1,0 +1,4 @@
+encryptionsalt: v1:1hNJQ9UFPLQ=:v1:jb5mICin57OZm+Cq:UCROB9fjioTyayJ0aO37iA4aZIFn2Q==
+config:
+  ams-migration:resourceGroup: pandora-ams-migration
+  azure-native:location: eastus

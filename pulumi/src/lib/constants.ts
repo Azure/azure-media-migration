@@ -5,7 +5,11 @@ const getEnv = (name: string): string => {
   return value;
 }
 
-export const ContainerRegistry = getEnv("CONTAINER_REGISTRY");
+export const SubscriptionId = getEnv("SUBSCRIPTION_ID");
+
+export const ContainerRegistryName = getEnv("CONTAINER_REGISTRY");
+
+export const ContainerRegistryServer = `${ContainerRegistryName}.azurecr.io`;
 
 export const ContainerAppJobImageName = getEnv("CONTAINER_APP_JOB_IMAGE_NAME");
 
