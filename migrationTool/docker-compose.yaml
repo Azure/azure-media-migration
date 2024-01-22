@@ -1,6 +1,6 @@
 services:
   migrate:
-    image: pandoraacr.azurecr.io/ams-migration-asset:0.0.1
+    image: ${CONTAINER_REGISTRY:-pandoraacr.azurecr.io}/ams-migration-asset:${IMAGE_TAG:-latest}
     build: .
     environment:
       - AZURE_CLIENT_ID
