@@ -1,6 +1,12 @@
-import { servicebusNamespace, servicebusQueue } from "./resources/servicebus";
-import { job as containerAppJob } from "./resources/containerAppJob";
+import { ContainerAppJob } from "./resources/containerAppJob";
+import { resourceGroupName } from "./lib/config";
+import { Servicebus } from "./resources/servicebus";
+import * as azure_native from "@pulumi/azure-native";
 
-export const servicebusName = servicebusNamespace.name;
-export const servicebusQueueName = servicebusQueue.name;
-export const containerAppJobName = containerAppJob.name;
+const servicebus = new Servicebus(resourceGroupName);
+
+const containerAppJob = new ContainerAppJob(resourceGroupName, servicebus);
+
+export const servicebusNamespaceName = servicebus.namespace.name;
+export const servicebusQueueName = servicebus.queue.name;
+export const containerAppJobName = containerAppJob.job.name;

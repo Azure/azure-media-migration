@@ -7,7 +7,8 @@ ServiceBusClient client;
 ServiceBusReceiver receiver;
 
 // "<NAMESPACE-NAME>.servicebus.windows.net"
-string serviceBusFqdn = Environment.GetEnvironmentVariable("SERVICEBUS_FQDN") ?? string.Empty;
+string serviceBusNamespace = Environment.GetEnvironmentVariable("SERVICEBUS_NAMESPACE") ?? string.Empty;
+string serviceBusFqdn = $"{serviceBusNamespace}.servicebus.windows.net";
 
 // <QUEUE-NAME>
 string serviceBusQueue = Environment.GetEnvironmentVariable("SERVICEBUS_QUEUE") ?? string.Empty;
