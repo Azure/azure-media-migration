@@ -21,7 +21,7 @@ export class ContainerAppJob {
           name: "Consumption",
           workloadProfileType: "Consumption",
         }
-      ]
+      ],
     });
 
     this.jobManagedIdentity = new managedidentity.UserAssignedIdentity("job", {
@@ -35,6 +35,7 @@ export class ContainerAppJob {
       environmentId: this.environment.id,
       workloadProfileName: "Consumption",
       configuration: {
+        triggerType: "Event",
         eventTriggerConfig: {
           parallelism: 1,
           replicaCompletionCount: 1,
@@ -46,20 +47,19 @@ export class ContainerAppJob {
               metadata: {
                 queueName: servicebus.queue.name,
                 namespace: servicebus.namespace.name,
-                messageCount: 1
+                messageCount: "1"
               },
               name: "servicebuscalingrule",
               type: "azure-servicebus",
               auth: [{
                 secretRef: "connection-string-secret",
                 triggerParameter: "connection"
-              }]
+              }],
             }],
           },
         },
         replicaRetryLimit: 1,
         replicaTimeout: 900, // 1800
-        triggerType: "Event",
         secrets: [{
           name: "connection-string-secret",
           value: servicebus.getPrimaryConnectionString()
@@ -67,7 +67,7 @@ export class ContainerAppJob {
         registries: [{
           server: Constants.ContainerRegistryServer,
           identity: this.jobManagedIdentity.id,
-        }]
+        }],
       },
       template: {
         containers: [{
@@ -75,7 +75,7 @@ export class ContainerAppJob {
           name: Constants.ContainerAppJobImageName,
           resources: {
             cpu: 0.5,
-            memory: "1024Mb"
+            memory: "1Gi"
           },
           env: [
             {
@@ -86,6 +86,10 @@ export class ContainerAppJob {
               name: "SERVICEBUS_QUEUE",
               value: servicebus.queue.name
             },
+            {
+              name: "AZURE_CLIENT_ID",
+              value: this.jobManagedIdentity.clientId
+            },
           ],
         }],
       },
@@ -93,7 +97,7 @@ export class ContainerAppJob {
         type: "UserAssigned",
         userAssignedIdentities: [
           this.jobManagedIdentity.id,
-        ]
+        ],
       },
     });
 
@@ -102,10 +106,6 @@ export class ContainerAppJob {
       roleDefinitionId: `/subscriptions/${Constants.SubscriptionId}/providers/Microsoft.Authorization/roleDefinitions/4f6d3b9b-027b-4f4c-9142-0e5a2a2247e0`,
       principalId: this.jobManagedIdentity.principalId,
       principalType: "ServicePrincipal",
-    }, {
-      dependsOn: [
-        servicebus.queue,
-      ]
     });
 
     this.roleAssignmentRegistry = new authorization.RoleAssignment("jobcontainer", {
