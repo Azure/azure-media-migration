@@ -1,0 +1,13 @@
+services:
+  pulumi:
+    container_name: pulumi
+    image: pulumi/pulumi-nodejs:3.102.0
+    working_dir: /src
+    volumes:
+      - ./src:/src
+      - ./.pulumi:/pulumi_home
+    env_file:
+      - .env
+    environment:
+      - PULUMI_HOME=/pulumi_home
+    entrypoint: pulumi
