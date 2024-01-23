@@ -1,5 +1,6 @@
 import * as pulumi from "@pulumi/pulumi";
 import * as app from "@pulumi/azure-native/app/v20230801preview";
+import * as operationalinsights from "@pulumi/azure-native/operationalinsights/v20230901";
 import { authorization, managedidentity, containerregistry } from "@pulumi/azure-native";
 import * as Constants from "../lib/constants";
 import { resourceName } from "../lib/utils";
@@ -12,7 +13,12 @@ export class ContainerAppJob {
   private roleAssignmentQueue: authorization.RoleAssignment;
   private roleAssignmentRegistry: authorization.RoleAssignment;
 
-  constructor(resourceGroupName: string, servicebus: Servicebus, containerRegistry: pulumi.Output<containerregistry.GetRegistryResult>) {
+  constructor(
+    resourceGroupName: string,
+    servicebus: Servicebus,
+    containerRegistry: pulumi.Output<containerregistry.GetRegistryResult>,
+    logAnalyticsWorkspace: operationalinsights.Workspace,
+  ) {
     this.environment = new app.ManagedEnvironment("main", {
       resourceGroupName,
       environmentName: resourceName("cae"),
@@ -22,6 +28,13 @@ export class ContainerAppJob {
           workloadProfileType: "Consumption",
         }
       ],
+      appLogsConfiguration: {
+        destination: "log-analytics",
+        logAnalyticsConfiguration: {
+          customerId: logAnalyticsWorkspace.customerId,
+          sharedKey: "null",
+        }
+      }
     });
 
     this.jobManagedIdentity = new managedidentity.UserAssignedIdentity("job", {
