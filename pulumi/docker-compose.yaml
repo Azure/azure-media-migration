@@ -1,7 +1,7 @@
 services:
   pulumi:
     container_name: pulumi
-    image: pulumi/pulumi-nodejs:3.101.1
+    image: pulumi/pulumi-nodejs:3.102.0
     working_dir: /src
     volumes:
       - ./src:/src
