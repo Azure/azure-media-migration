@@ -22,6 +22,8 @@ client = new ServiceBusClient(serviceBusFqdn,
 
 receiver = client.CreateReceiver(serviceBusQueue, new ServiceBusReceiverOptions());
 
+Console.WriteLine("START");
+
 try
 {
     var message = await receiver.ReceiveMessageAsync();
@@ -40,9 +42,17 @@ try
         "-f", filter
     };
 
+    Console.WriteLine("CALL MIGRATOR");
+
     var output = await AMSMigrate.Program.Main(arguments);
 
+    Console.WriteLine("COMPLETE MESSAGE");
+
     await receiver.CompleteMessageAsync(message);
+}
+catch (Exception ex)
+{
+    Console.WriteLine($"ERROR: {ex.Message}", ex);
 }
 finally
 {

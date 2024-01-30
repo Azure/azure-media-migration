@@ -7,6 +7,7 @@ import { ContainerAppJob } from "./resources/containerAppJob";
 const containerRegistry = new ContainerRegistry(resourceGroupName);
 
 const logAnalyticsWorkspace = new LogAnalyticsWorkspace(resourceGroupName);
+const logAnalyticsWorkspaceSharedKey = logAnalyticsWorkspace.getPrimarySharedKey(resourceGroupName);
 
 const servicebus = new Servicebus(resourceGroupName);
 
@@ -14,7 +15,8 @@ const containerAppJob = new ContainerAppJob(
   resourceGroupName,
   servicebus,
   containerRegistry.containerRegistry,
-  logAnalyticsWorkspace.workspace
+  logAnalyticsWorkspace.workspace,
+  logAnalyticsWorkspaceSharedKey,
 );
 
 export const servicebusNamespaceName = servicebus.namespace.name;
