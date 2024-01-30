@@ -1,6 +1,6 @@
 import * as pulumi from "@pulumi/pulumi";
 import * as app from "@pulumi/azure-native/app/v20230801preview";
-import * as operationalinsights from "@pulumi/azure-native/operationalinsights/v20230901";
+import * as operationalinsights from "@pulumi/azure-native/operationalinsights";
 import { authorization, managedidentity, containerregistry } from "@pulumi/azure-native";
 import * as Constants from "../lib/constants";
 import { resourceName } from "../lib/utils";
@@ -18,6 +18,7 @@ export class ContainerAppJob {
     servicebus: Servicebus,
     containerRegistry: pulumi.Output<containerregistry.GetRegistryResult>,
     logAnalyticsWorkspace: operationalinsights.Workspace,
+    logAnalyticsWorkspaceSharedKey: pulumi.Output<string>,
   ) {
     this.environment = new app.ManagedEnvironment("main", {
       resourceGroupName,
@@ -32,7 +33,7 @@ export class ContainerAppJob {
         destination: "log-analytics",
         logAnalyticsConfiguration: {
           customerId: logAnalyticsWorkspace.customerId,
-          sharedKey: "null",
+          sharedKey: logAnalyticsWorkspaceSharedKey,
         }
       }
     });
@@ -44,7 +45,7 @@ export class ContainerAppJob {
 
     this.job = new app.Job("job", {
       resourceGroupName,
-      jobName: resourceName("ca-job"),
+      jobName: resourceName("ca-job-2"),
       environmentId: this.environment.id,
       workloadProfileName: "Consumption",
       configuration: {
