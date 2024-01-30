@@ -7,7 +7,7 @@ export class LogAnalyticsWorkspace {
   // public primarySharedKey: string | undefined;
 
   constructor(resourceGroupName: string) {
-    const workspaceName = resourceName("workspace-log-2");
+    const workspaceName = resourceName("workspace-log");
 
     this.workspace = new operationalinsights.Workspace("main", {
       resourceGroupName,

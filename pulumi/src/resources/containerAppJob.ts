@@ -45,7 +45,7 @@ export class ContainerAppJob {
 
     this.job = new app.Job("job", {
       resourceGroupName,
-      jobName: resourceName("ca-job-2"),
+      jobName: resourceName("ca-job"),
       environmentId: this.environment.id,
       workloadProfileName: "Consumption",
       configuration: {
