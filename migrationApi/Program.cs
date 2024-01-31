@@ -1,3 +1,6 @@
+using Azure.Identity;
+using Azure.Messaging.ServiceBus;
+using migrationApi.Services;
 
 namespace migrationApi
 {
@@ -13,6 +16,22 @@ namespace migrationApi
             // Learn more about configuring Swagger/OpenAPI at https://aka.ms/aspnetcore/swashbuckle
             builder.Services.AddEndpointsApiExplorer();
             builder.Services.AddSwaggerGen();
+
+            builder.Services.AddCors(p => p.AddPolicy("corsapp", builder =>
+            {
+                builder.WithOrigins("*").AllowAnyMethod().AllowAnyHeader();
+            }));
+
+            builder.Services.AddSingleton(serviceProvider =>
+            {
+                var configuration = serviceProvider.GetRequiredService<IConfiguration>();
+                return new ServiceBusClient(configuration.GetValue<string>("SERVICE_BUS_NAMESPACE"), new DefaultAzureCredential(), new ServiceBusClientOptions
+                {
+                    TransportType = ServiceBusTransportType.AmqpWebSockets
+                });
+            });
+
+            builder.Services.AddScoped<ServiceBusService>();
 
             var app = builder.Build();
 
