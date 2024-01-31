@@ -7,6 +7,7 @@ using Azure.Storage.Blobs;
 using Azure.Storage.Blobs.Models;
 using Azure.Storage.Blobs.Specialized;
 using Microsoft.Extensions.Logging;
+using Serilog.Core;
 
 namespace AMSMigrate.Transform
 {
@@ -213,6 +214,19 @@ namespace AMSMigrate.Transform
             }
 
             return await container.GetDetailsAsync(logger, cancellationToken, outputManifestname, asset.Data.Name, includeClientManifest, decryptInfo);
+        }
+
+        public static async Task<AssetDetails> GetDetailsAsyncFromContainer(
+            this BlobContainerClient container,
+            ILogger logger,
+            string assetName, 
+            CancellationToken cancellationToken, 
+            string? outputManifestname, 
+            bool includeClientManifest = true)
+        {
+            StorageEncryptedAssetDecryptionInfo? decryptInfo = null;
+
+            return await container.GetDetailsAsync(logger, cancellationToken, outputManifestname, assetName, includeClientManifest, decryptInfo);
         }
 
         public static async Task<AssetDetails> GetDetailsAsync(

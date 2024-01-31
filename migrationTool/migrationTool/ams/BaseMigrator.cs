@@ -18,23 +18,22 @@ namespace AMSMigrate.Ams
         protected readonly AzureResourceProvider _resourceProvider;
         protected readonly GlobalOptions _globalOptions;
         protected readonly MetricsQueryClient _metricsQueryClient;
-        protected readonly IAnsiConsole _console;
         protected readonly ILogger _logger;
 
         public BaseMigrator(
             GlobalOptions options,
-            IAnsiConsole console,
             TokenCredential credential,
             ILogger logger)
         {
             _globalOptions = options;
-            _console = console;
             _logger = logger;
             _resourceProvider = new AzureResourceProvider(credential, options);
             _metricsQueryClient = new MetricsQueryClient(credential);
         }
 
         public abstract Task MigrateAsync(CancellationToken cancellationToken);
+
+        //public abstract Task MigrateAsync(string sourceStorageAccountName, string targetStorageAccountName, string containerName, string assetName, CancellationToken cancellationToken);
 
 
 
@@ -108,42 +107,6 @@ namespace AMSMigrate.Ams
             var series = metric.TimeSeries[metric.TimeSeries.Count - 1];
             var totalAssets = series.Values.LastOrDefault(v => v.Average != null)?.Average ?? 0.0;
             return totalAssets;
-        }
-
-        protected async Task ShowProgressAsync(
-            string description,
-            string unit,
-            double totalValue,
-            ChannelReader<double> reader,
-            CancellationToken cancellationToken)
-        {
-            await _console
-            .Progress()
-            .AutoRefresh(true)
-            .AutoClear(true)
-            .HideCompleted(true)
-            .Columns(
-                new TaskDescriptionColumn(),
-                new ProgressBarColumn(),
-                new StatusColumn(unit),
-                new PercentageColumn(),
-                new ElapsedTimeColumn(),
-                new SpinnerColumn())
-            .StartAsync(async context =>
-            {
-                var task = context.AddTask(description, maxValue: totalValue);
-                context.Refresh();
-                await foreach (var value in reader.ReadAllAsync(cancellationToken))
-                {
-                    if (value > task.MaxValue)
-                    {
-                        task.MaxValue = value;
-                    }
-                    task.Value = value;
-                    _logger.LogDebug("{description}: {current}/{total} {unit}", description, value, totalValue, unit);
-                    context.Refresh();
-                }
-            });
         }
 
         protected string? GetAssetResourceFilter(string? filterOption, DateTimeOffset? creationTimeStart, DateTimeOffset? creationTimeEnd)

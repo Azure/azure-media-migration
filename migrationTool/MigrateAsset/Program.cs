@@ -1,6 +1,10 @@
-﻿using Azure.Identity;
+﻿using AMSMigrate.Contracts;
+using Azure.Identity;
 using Azure.Messaging.ServiceBus;
+using Microsoft.Extensions.DependencyInjection;
 using MigrateAsset.models;
+using System.CommandLine.Invocation;
+using System.CommandLine.Parsing;
 using System.Text.Json;
 
 ServiceBusClient client;
@@ -27,20 +31,15 @@ try
     var message = await receiver.ReceiveMessageAsync();
     var content = JsonSerializer.Deserialize<MigrateAssetMessage>(message.Body.ToString());
 
-    var targetStorageAccount = $"https://{content?.TargetStorageAccountName}.blob.core.windows.net";
-    var filter = $"name eq '{content?.AssetName}'";
+    var subscriptionId = content?.SubscriptionId;
+    var resourceGroup = content?.ResourceGroup;
+    var sourceStorageAccountName = content?.SourceStorageAccountName;
+    var targetStorageAccountName = content?.TargetStorageAccountName;
+    var assetName = content?.AssetName;
 
-    var arguments = new string[]
-    {
-        "assets",
-        "-s", content?.SubscriptionId,
-        "-g", content?.ResourceGroup,
-        "-n", content?.MediaServiceName,
-        "-o", targetStorageAccount,
-        "-f", filter
-    };
+    await AMSMigrate.ContainerMigrator.MigrateAsset(subscriptionId!, resourceGroup!, sourceStorageAccountName!, targetStorageAccountName!, assetName!);
 
-    var output = await AMSMigrate.Program.Main(arguments);
+    //var output = await AMSMigrate.Program.Main(arguments);
 
     await receiver.CompleteMessageAsync(message);
 }
