@@ -1,6 +1,6 @@
-﻿using Azure.Identity;
-using Azure.Messaging.ServiceBus;
-using Microsoft.Extensions.Configuration;
+﻿using Azure.Messaging.ServiceBus;
+using migrationApi.Models;
+using System.Text.Json;
 
 namespace migrationApi.Services
 {
@@ -15,34 +15,24 @@ namespace migrationApi.Services
             _configuration = configuration;
         }
 
-        public async Task QueueMessage()
+        public async Task QueueMessage(MigrationRequest migrationRequest)
         {
-            // the sender used to publish messages to the queue
-            ServiceBusSender sender;
-
-            // number of messages to be sent to the queue
-            const int numOfMessages = 3;
-
-            sender = _serviceBusClient.CreateSender(_configuration.GetValue<string>("SERVICE_BUS_QUEUE_NAME"));
+            var sender = _serviceBusClient.CreateSender(_configuration.GetValue<string>("SERVICE_BUS_QUEUE_NAME"));
 
             // create a batch 
             using ServiceBusMessageBatch messageBatch = await sender.CreateMessageBatchAsync();
 
-            for (int i = 1; i <= numOfMessages; i++)
+            if (!messageBatch.TryAddMessage(new ServiceBusMessage(JsonSerializer.Serialize(migrationRequest))))
             {
-                // try adding a message to the batch
-                if (!messageBatch.TryAddMessage(new ServiceBusMessage($"Message {i}")))
-                {
-                    // if it is too large for the batch
-                    throw new Exception($"The message {i} is too large to fit in the batch.");
-                }
+                // if it is too large for the batch
+                throw new Exception($"The message is too large to fit in the batch.");
             }
 
             try
             {
                 // Use the producer client to send the batch of messages to the Service Bus queue
                 await sender.SendMessagesAsync(messageBatch);
-                Console.WriteLine($"A batch of {numOfMessages} messages has been published to the queue.");
+                Console.WriteLine($"A batch of messages has been published to the queue.");
             }
             finally
             {

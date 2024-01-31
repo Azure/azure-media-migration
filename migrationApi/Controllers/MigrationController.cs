@@ -1,5 +1,6 @@
 ﻿using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
+using migrationApi.Models;
 using migrationApi.Services;
 
 namespace migrationApi.Controllers
@@ -15,10 +16,12 @@ namespace migrationApi.Controllers
             _serviceBusService = serviceBusService;
         }
 
-        [HttpGet(Name = "MigrateAsset")]
-        public async Task MigrateAsset()
+        [HttpPost(Name = "MigrateAsset")]
+        public async Task<IActionResult> MigrateAsset(MigrationRequest migrationRequest)
         {
-            
+            await _serviceBusService.QueueMessage(migrationRequest);
+
+            return Ok(migrationRequest);
         }
     }
 }

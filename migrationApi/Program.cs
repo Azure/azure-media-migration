@@ -46,6 +46,7 @@ namespace migrationApi
 
             app.UseAuthorization();
 
+            app.UseCors("corsapp");
 
             app.MapControllers();
 
