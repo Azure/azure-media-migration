@@ -26,6 +26,8 @@ client = new ServiceBusClient(serviceBusFqdn,
 
 receiver = client.CreateReceiver(serviceBusQueue, new ServiceBusReceiverOptions());
 
+Console.WriteLine("START");
+
 try
 {
     var message = await receiver.ReceiveMessageAsync();
@@ -37,11 +39,17 @@ try
     var targetStorageAccountName = content?.TargetStorageAccountName;
     var assetName = content?.AssetName;
 
+    Console.WriteLine("CALL MIGRATOR");
+
     await AMSMigrate.ContainerMigrator.MigrateAsset(subscriptionId!, resourceGroup!, sourceStorageAccountName!, targetStorageAccountName!, assetName!);
 
-    //var output = await AMSMigrate.Program.Main(arguments);
-
+    Console.WriteLine("COMPLETE MESSAGE");
+    
     await receiver.CompleteMessageAsync(message);
+}
+catch (Exception ex)
+{
+    Console.WriteLine($"ERROR: {ex.Message}", ex);
 }
 finally
 {
