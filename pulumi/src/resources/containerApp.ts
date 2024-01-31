@@ -1,6 +1,6 @@
 import * as pulumi from "@pulumi/pulumi";
 import * as azure_native from "@pulumi/azure-native";
-import * as app from "@pulumi/azure-native/app/v20230801preview";
+import * as app from "@pulumi/azure-native/app";
 import * as operationalinsights from "@pulumi/azure-native/operationalinsights";
 import { authorization, managedidentity, containerregistry } from "@pulumi/azure-native";
 import * as Constants from "../lib/constants";
@@ -9,8 +9,8 @@ import { Servicebus } from "./servicebus";
 
 export class ContainerApp {
   public environment: app.ManagedEnvironment;
-  public job: app.Job;
-  private jobManagedIdentity: managedidentity.UserAssignedIdentity;
+  public containerApp: app.ContainerApp;
+  private apiManagedIdentity: managedidentity.UserAssignedIdentity;
   private roleAssignmentQueue: authorization.RoleAssignment;
   private roleAssignmentRegistry: authorization.RoleAssignment;
 
@@ -21,15 +21,9 @@ export class ContainerApp {
     logAnalyticsWorkspace: operationalinsights.Workspace,
     logAnalyticsWorkspaceSharedKey: pulumi.Output<string>,
   ) {
-    this.environment = new app.ManagedEnvironment("main", {
+    this.environment = new app.ManagedEnvironment("api-main", {
       resourceGroupName,
-      environmentName: resourceName("cae"),
-      workloadProfiles: [
-        {
-          name: "Consumption",
-          workloadProfileType: "Consumption",
-        }
-      ],
+      environmentName: resourceName("api-e"),
       appLogsConfiguration: {
         destination: "log-analytics",
         logAnalyticsConfiguration: {
@@ -39,58 +33,23 @@ export class ContainerApp {
       }
     });
 
-    this.jobManagedIdentity = new managedidentity.UserAssignedIdentity("job", {
+    this.apiManagedIdentity = new managedidentity.UserAssignedIdentity("api-identity", {
       resourceGroupName,
-      resourceName: resourceName("job-id")
+      resourceName: resourceName("api-id")
     });
 
-    this.job = new app.Job("job", {
-      resourceGroupName,
-      jobName: resourceName("ca-job"),
+    this.containerApp = new app.ContainerApp("api-containerApp", {
+      containerAppName: resourceName("api"),
       environmentId: this.environment.id,
-      workloadProfileName: "Consumption",
-      configuration: {
-        triggerType: "Event",
-        eventTriggerConfig: {
-          parallelism: 1,
-          replicaCompletionCount: 1,
-          scale: {
-            maxExecutions: 5,
-            minExecutions: 0,
-            pollingInterval: 60,
-            rules: [{
-              metadata: {
-                queueName: servicebus.queue.name,
-                namespace: servicebus.namespace.name,
-                messageCount: "1"
-              },
-              name: "servicebuscalingrule",
-              type: "azure-servicebus",
-              auth: [{
-                secretRef: "connection-string-secret",
-                triggerParameter: "connection"
-              }],
-            }],
-          },
-        },
-        replicaRetryLimit: 1,
-        replicaTimeout: 900, // 1800
-        secrets: [{
-          name: "connection-string-secret",
-          value: servicebus.getPrimaryConnectionString()
-        }],
-        registries: [{
-          server: Constants.ContainerRegistryServer,
-          identity: this.jobManagedIdentity.id,
-        }],
-      },
+      location: "East US",
+      resourceGroupName: resourceGroupName,
       template: {
         containers: [{
-          image: `${Constants.ContainerRegistryServer}/${Constants.ContainerAppJobImageName}:${Constants.ContainerAppJobImageTag}`,
-          name: Constants.ContainerAppJobImageName,
+          image: `${Constants.ContainerRegistryServer}/${Constants.ContainerAppApiImageName}:${Constants.ContainerAppApiImageTag}`,
+          name: Constants.ContainerAppApiImageName,
           resources: {
             cpu: 0.5,
-            memory: "1Gi"
+            memory: "1Gi",
           },
           env: [
             {
@@ -101,32 +60,42 @@ export class ContainerApp {
               name: "SERVICEBUS_QUEUE",
               value: servicebus.queue.name
             },
-            {
-              name: "AZURE_CLIENT_ID",
-              value: this.jobManagedIdentity.clientId
-            },
           ],
         }],
+        scale: {
+          maxReplicas: 5,
+          minReplicas: 1,
+          rules: [{
+            custom: {
+              metadata: {
+                concurrentRequests: "50",
+              },
+              type: "http",
+            },
+            name: "httpscalingrule",
+          }],
+        },
       },
+      workloadProfileType: "GeneralPurpose",
       identity: {
         type: "UserAssigned",
         userAssignedIdentities: [
-          this.jobManagedIdentity.id,
+          this.apiManagedIdentity.id,
         ],
-      },
+      }
     });
 
-    this.roleAssignmentQueue = new authorization.RoleAssignment("receivemessagesfromqueue", {
+    this.roleAssignmentQueue = new authorization.RoleAssignment("sendmessagestoqueue", {
       scope: servicebus.queue.id,
-      roleDefinitionId: `/subscriptions/${Constants.SubscriptionId}/providers/Microsoft.Authorization/roleDefinitions/4f6d3b9b-027b-4f4c-9142-0e5a2a2247e0`,
-      principalId: this.jobManagedIdentity.principalId,
+      roleDefinitionId: `/subscriptions/${Constants.SubscriptionId}/providers/Microsoft.Authorization/roleDefinitions/69a216fc-b8fb-44d8-bc22-1f3c2cd27a39`,
+      principalId: this.apiManagedIdentity.principalId,
       principalType: "ServicePrincipal",
     });
 
-    this.roleAssignmentRegistry = new authorization.RoleAssignment("jobcontainer", {
+    this.roleAssignmentRegistry = new authorization.RoleAssignment("apicontainerapp", {
       scope: containerRegistry.id,
       roleDefinitionId: `/subscriptions/${Constants.SubscriptionId}/providers/Microsoft.Authorization/roleDefinitions/7f951dda-4ed3-4680-a7ca-43fe172d538d`,
-      principalId: this.jobManagedIdentity.principalId,
+      principalId: this.apiManagedIdentity.principalId,
       principalType: "ServicePrincipal",
     });
   }

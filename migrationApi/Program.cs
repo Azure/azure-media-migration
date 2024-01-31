@@ -25,7 +25,7 @@ namespace migrationApi
             builder.Services.AddSingleton(serviceProvider =>
             {
                 var configuration = serviceProvider.GetRequiredService<IConfiguration>();
-                return new ServiceBusClient(configuration.GetValue<string>("SERVICE_BUS_NAMESPACE"), new DefaultAzureCredential(), new ServiceBusClientOptions
+                return new ServiceBusClient(configuration.GetValue<string>("SERVICEBUS_NAMESPACE"), new DefaultAzureCredential(), new ServiceBusClientOptions
                 {
                     TransportType = ServiceBusTransportType.AmqpWebSockets
                 });

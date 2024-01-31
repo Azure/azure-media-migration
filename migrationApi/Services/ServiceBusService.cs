@@ -17,7 +17,7 @@ namespace migrationApi.Services
 
         public async Task QueueMessage(MigrationRequest migrationRequest)
         {
-            var sender = _serviceBusClient.CreateSender(_configuration.GetValue<string>("SERVICE_BUS_QUEUE_NAME"));
+            var sender = _serviceBusClient.CreateSender(_configuration.GetValue<string>("SERVICEBUS_QUEUE"));
 
             // create a batch 
             using ServiceBusMessageBatch messageBatch = await sender.CreateMessageBatchAsync();
