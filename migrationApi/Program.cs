@@ -10,6 +10,8 @@ namespace migrationApi
         {
             var builder = WebApplication.CreateBuilder(args);
 
+            builder.Configuration.AddEnvironmentVariables();
+
             // Add services to the container.
 
             builder.Services.AddControllers();
@@ -25,7 +27,8 @@ namespace migrationApi
             builder.Services.AddSingleton(serviceProvider =>
             {
                 var configuration = serviceProvider.GetRequiredService<IConfiguration>();
-                return new ServiceBusClient(configuration.GetValue<string>("SERVICEBUS_NAMESPACE"), new DefaultAzureCredential(), new ServiceBusClientOptions
+                var serviceBusNamespace = $"{configuration.GetValue<string>("SERVICEBUS_NAMESPACE")}.servicebus.windows.net";
+                return new ServiceBusClient(serviceBusNamespace, new DefaultAzureCredential(), new ServiceBusClientOptions
                 {
                     TransportType = ServiceBusTransportType.AmqpWebSockets
                 });

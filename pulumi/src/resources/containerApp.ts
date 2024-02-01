@@ -60,6 +60,10 @@ export class ContainerApp {
               name: "SERVICEBUS_QUEUE",
               value: servicebus.queue.name
             },
+            {
+              name: "AZURE_CLIENT_ID",
+              value: this.apiManagedIdentity.clientId
+            },
           ],
         }],
         scale: {

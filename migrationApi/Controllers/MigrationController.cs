@@ -5,7 +5,7 @@ using migrationApi.Services;
 
 namespace migrationApi.Controllers
 {
-    [Route("api/[controller]")]
+    [Route("api/[controller]/[action]")]
     [ApiController]
     public class MigrationController : ControllerBase
     {
@@ -19,9 +19,18 @@ namespace migrationApi.Controllers
         [HttpPost(Name = "MigrateAsset")]
         public async Task<IActionResult> MigrateAsset(MigrationRequest migrationRequest)
         {
-            await _serviceBusService.QueueMessage(migrationRequest);
+            try
+            {
+                await _serviceBusService.QueueMessage(migrationRequest);
 
-            return Ok(migrationRequest);
+                return Ok();
+            }
+            catch (Exception ex)
+            {
+                Console.WriteLine(ex.Message);
+                Console.WriteLine(ex.ToString());
+                return BadRequest(ex.Message);
+            }
         }
     }
 }
