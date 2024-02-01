@@ -40,12 +40,6 @@ try
     var targetStorageAccountName = content?.TargetStorageAccountName;
     var assetName = content?.AssetName;
 
-    //var subscriptionId = "8b2d9c90-1d70-496f-a77a-f3433eb32999";
-    //var resourceGroup = "sloth-rg";
-    //var sourceStorageAccountName = "slothmedia";
-    //var targetStorageAccountName = "amsmigrationtarget";
-    //var assetName = "asset-f935fe12-02b5-45f7-a861-b1419a397f16";
-
     Console.WriteLine($"CALL MIGRATOR - message: {body}" );
 
     var result = await AMSMigrate.ContainerMigrator.MigrateAsset(subscriptionId!, resourceGroup!, sourceStorageAccountName!, targetStorageAccountName!, assetName!);
