@@ -76,6 +76,20 @@ export class ContainerApp {
           }],
         },
       },
+      configuration: {
+        ingress: {
+          external: true,
+          targetPort: 8080,
+          traffic: [{
+              weight: 100,
+              latestRevision: true
+          }],
+        },
+        registries: [{
+          server: Constants.ContainerRegistryServer,
+          identity: this.apiManagedIdentity.id,
+        }],
+      },
       workloadProfileType: "GeneralPurpose",
       identity: {
         type: "UserAssigned",
