@@ -17,7 +17,7 @@ namespace migrationApi.Controllers
             _serviceBusService = serviceBusService;
         }
 
-        [HttpPost(Name = "ListAssets")]
+        [HttpPost(Name = "MigrateAsset")]
         public async Task<IActionResult> ListAssets(MigrationRequest migrationRequest)
         {
             var mediaService = new AmsService(new DefaultAzureCredential(), migrationRequest.SubscriptionId, migrationRequest.ResourceGroup);
@@ -38,7 +38,7 @@ namespace migrationApi.Controllers
 
                 await _serviceBusService.QueueMessage(JsonSerializer.Serialize(message));
 
-                return Ok(assets);
+                return Ok(asset);
             }
             else
             {
