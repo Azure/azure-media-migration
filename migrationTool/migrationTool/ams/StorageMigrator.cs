@@ -20,24 +20,24 @@ namespace AMSMigrate.Ams
         public StorageMigrator(
             GlobalOptions options,
             StorageOptions storageOptions,
-            IAnsiConsole console,
             IMigrationTracker<BlobContainerClient, AssetMigrationResult> tracker,
             TokenCredential credentials,
             TransformFactory transformFactory,
             ILogger<StorageMigrator> logger) :
-            base(options, console, credentials, logger)
+            base(options, credentials, logger)
         {
             _storageOptions = storageOptions;
             _tracker = tracker;
             _transformFactory = transformFactory;
         }
 
-        public override async Task MigrateAsync(CancellationToken cancellationToken)
+        public override async Task<AssetMigrationResult> MigrateAsync(CancellationToken cancellationToken)
         {
             var watch = Stopwatch.StartNew();
             var (storageClient, accountId) = await _resourceProvider.GetStorageAccount(_storageOptions.AccountName, cancellationToken);
             _logger.LogInformation("Begin migration of containers from account: {name}", storageClient.AccountName);
-            double totalContainers = await GetStorageBlobMetricAsync(accountId, cancellationToken);
+            //double totalContainers = await GetStorageBlobMetricAsync(accountId, cancellationToken);
+            var totalContainers = 0;
             _logger.LogInformation("The total count of containers of the storage account is {count}.", totalContainers);
 
             var containers = storageClient.GetBlobContainersAsync(
@@ -54,16 +54,15 @@ namespace AMSMigrate.Ams
             _logger.LogInformation("The total input container to handle in this run is {count}.", totalContainers);
 
             var status = Channel.CreateBounded<double>(1);
-            var progress = ShowProgressAsync("Asset Migration", "Assets", totalContainers, status.Reader, cancellationToken);
 
-            var stats = await MigrateAsync(storageClient, containers, filteredList, status.Writer, cancellationToken);
+            var (stats, result) = await MigrateAsync(storageClient, containers, filteredList, status.Writer, cancellationToken);
             _logger.LogInformation("Finished migration of containers from account: {name}. Time : {time}", storageClient.AccountName, watch.Elapsed);
-            await progress;
 
-            WriteSummary(totalContainers, stats);
+            return result;
+
         }
 
-        private async Task<MigrationResult> MigrateAsync(
+        private async Task<AssetMigrationResult> MigrateAsync(
             BlobServiceClient storageClient,
             BlobContainerItem container,
             CancellationToken cancellationToken)
@@ -180,7 +179,7 @@ namespace AMSMigrate.Ams
             return result;
         }
 
-        private async Task<AssetStats> MigrateAsync(
+        private async Task<(AssetStats, AssetMigrationResult)> MigrateAsync(
             BlobServiceClient storageClient,
             AsyncPageable<BlobContainerItem> containers,
             List<BlobContainerItem>? filteredList,
@@ -188,9 +187,10 @@ namespace AMSMigrate.Ams
             CancellationToken cancellationToken)
         {
             var stats = new AssetStats();
+            AssetMigrationResult result = new AssetMigrationResult(MigrationStatus.NotMigrated);
             await MigrateInParallel(containers, filteredList, async (container, cancellationToken) =>
             {
-                var result = await MigrateAsync(storageClient, container, cancellationToken);
+                result = await MigrateAsync(storageClient, container, cancellationToken);
                 stats.Update(result);
                 await writer.WriteAsync(stats.Total, cancellationToken);
             },
@@ -198,22 +198,7 @@ namespace AMSMigrate.Ams
             cancellationToken);
 
             writer.Complete();
-            return stats;
-        }
-
-        private void WriteSummary(double total, AssetStats stats)
-        {
-            var table = new Table()
-                .AddColumn("Container Type")
-                .AddColumn("Count")
-                .AddRow("Total", $"{total}")
-                .AddRow("Assets", $"{stats.Total}")
-                .AddRow("[green]Already Migrated[/]", $"[green]{stats.Migrated}[/]")
-                .AddRow("[gray]Skipped[/]", $"[gray]{stats.Skipped}[/]")
-                .AddRow("[green]Successful[/]", $"[green]{stats.Successful}[/]")
-                .AddRow("[red]Failed[/]", $"[red]{stats.Failed}[/]");
-
-            _console.Write(table);
+            return (stats, result);
         }
     }
 }

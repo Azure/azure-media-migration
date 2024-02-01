@@ -5,7 +5,9 @@ using Azure.Core;
 using Azure.ResourceManager.Media;
 using Azure.Storage.Blobs;
 using Microsoft.Extensions.Logging;
+using Microsoft.Identity.Client.Extensions.Msal;
 using Spectre.Console;
+using System.ComponentModel;
 using System.Diagnostics;
 using System.Threading.Channels;
 
@@ -25,7 +27,7 @@ namespace AMSMigrate.Ams
             IMigrationTracker<BlobContainerClient, AssetMigrationResult> tracker,
             ILogger<AssetMigrator> logger,
             TransformFactory transformFactory) :
-            base(globalOptions, console, credential, logger)
+            base(globalOptions, credential, logger)
         {
             _options = assetOptions;
             _tracker = tracker;
@@ -72,12 +74,9 @@ namespace AMSMigrate.Ams
             _logger.LogInformation("The total assets to handle in this run is {count}.", totalAssets);
 
             var status = Channel.CreateBounded<double>(1);
-            var progress = ShowProgressAsync("Asset Migration", "Assets", totalAssets, status.Reader, cancellationToken);
 
             var stats = await MigrateAsync(account, assets, filteredList, status.Writer, cancellationToken);
             _logger.LogInformation("Finished migration of assets for account: {name}. Time taken: {time}", account.Data.Name, watch.Elapsed);
-            await progress;
-            WriteSummary(stats);
         }
 
         private async Task<AssetStats> MigrateAsync(MediaServicesAccountResource account, AsyncPageable<MediaAssetResource> assets, List<MediaAssetResource>? filteredList, ChannelWriter<double> writer, CancellationToken cancellationToken)
@@ -97,20 +96,6 @@ namespace AMSMigrate.Ams
 
             writer.Complete();
             return stats;
-        }
-
-        private void WriteSummary(AssetStats stats)
-        {
-            var table = new Table()
-                .AddColumn("Asset Type")
-                .AddColumn("Count")
-                .AddRow("Total", $"{stats.Total}")
-                .AddRow("[green]Already Migrated[/]", $"[green]{stats.Migrated}[/]")
-                .AddRow("[gray]Skipped[/]", $"[gray]{stats.Skipped}[/]")
-                .AddRow("[green]Successful[/]", $"[green]{stats.Successful}[/]")
-                .AddRow("[red]Failed[/]", $"[red]{stats.Failed}[/]");
-
-            _console.Write(table);
         }
 
         public async Task<MigrationResult> MigrateAsync(

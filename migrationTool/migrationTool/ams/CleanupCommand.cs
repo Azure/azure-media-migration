@@ -20,7 +20,7 @@ namespace AMSMigrate.Ams
             TokenCredential credential,
             IMigrationTracker<BlobContainerClient, AssetMigrationResult> tracker,
             ILogger<CleanupCommand> logger)
-            : base(globalOptions, console, credential, logger)
+            : base(globalOptions, credential, logger)
         {
             _options = cleanupOptions;
             _tracker = tracker;
@@ -66,38 +66,16 @@ namespace AMSMigrate.Ams
                 var result = await CleanUpAssetAsync(_options.IsCleanUpAccount || _options.IsForceCleanUpAsset, account, asset, cancellationToken);
                 stats.Add(asset.Data.Name, result);
             }
-            WriteSummary(stats, false);
 
             if (_options.IsCleanUpAccount)
             {
                 Dictionary<string, bool> accStats = new Dictionary<string, bool>();
                 var result = await CleanUpAccountAsync(account, cancellationToken);
                 accStats.Add(account.Data.Name, result);
-                WriteSummary(accStats, true);
             }
 
         }
 
-        private void WriteSummary(IDictionary<string, bool> stats, bool isDeletingAccount)
-        {
-            var table = new Table();
-            if (isDeletingAccount)
-            {
-                table.AddColumn("Account");
-            }
-            else
-            {
-                table.AddColumn("Asset");
-            }
-            table.AddColumn("IsDeleted");
-            foreach (var (key, value) in stats)
-            {
-                var status = value ? $"[green]{value}[/]" : $"[red]{value}[/]";
-                table.AddRow($"[green]{key}[/]", status);
-            }
-
-            _console.Write(table);
-        }
         private async Task<bool> CleanUpAccountAsync(MediaServicesAccountResource account, CancellationToken cancellationToken)
         {
             try

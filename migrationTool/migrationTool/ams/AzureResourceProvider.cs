@@ -60,6 +60,13 @@ namespace AMSMigrate.Ams
                mediaAccountName, cancellationToken);
         }
 
+        public async Task<BlobServiceClient> GetStoraAccountByNameAsync(string storageName, CancellationToken cancellationToken)
+        {
+            _storageResourceGroups.TryGetValue(storageName, out var rg);
+            var resource = await rg.GetStorageAccountAsync(storageName, cancellationToken: cancellationToken);
+            return GetStorageAccount(resource);
+        }
+
         public async Task<BlobServiceClient> GetStorageAccountAsync(
             MediaServicesAccountResource account,
             MediaAssetResource asset,

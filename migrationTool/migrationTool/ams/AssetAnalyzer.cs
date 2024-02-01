@@ -27,7 +27,7 @@ namespace AMSMigrate.Ams
             IMigrationTracker<BlobContainerClient, AssetMigrationResult> tracker,
             TokenCredential credential,
             ILogger<AssetAnalyzer> logger)
-            : base(globalOptions, console, credential, logger)
+            : base(globalOptions, credential, logger)
         {
             _analysisOptions = analysisOptions;
             _tracker = tracker;
@@ -163,7 +163,6 @@ namespace AMSMigrate.Ams
                 }
                 _logger.LogInformation("The total containers to handle in this run is {count}.", totalItems);
                 var channel = Channel.CreateBounded<double>(1);
-                var progress = ShowProgressAsync("Analyzing Containers", "Assets", totalItems, channel.Reader, cancellationToken);
                 var writer = channel.Writer;
                 await MigrateInParallel(containers, filteredList, async (container, cancellationToken) =>
                 {
@@ -179,7 +178,6 @@ namespace AMSMigrate.Ams
               cancellationToken);
 
                 writer.Complete();
-                await progress;
                 _logger.LogDebug("Finished analysis of containers for account: {name}. Time taken {elapsed}", _analysisOptions.AccountName, watch.Elapsed);
 
             }
@@ -217,7 +215,6 @@ namespace AMSMigrate.Ams
                 _logger.LogInformation("The total assets to handle in this run is {count}.", totalAssets);
 
                 var channel = Channel.CreateBounded<double>(1);
-                var progress = ShowProgressAsync("Analyzing Assets", "Assets", totalAssets, channel.Reader, cancellationToken);
                 var writer = channel.Writer;
                 await MigrateInParallel(assets, filteredList, async (asset, cancellationToken) =>
                 {
@@ -233,47 +230,12 @@ namespace AMSMigrate.Ams
                 cancellationToken);
 
                 writer.Complete();
-                await progress;
                 _logger.LogDebug("Finished analysis of assets for account: {name}. Time taken {elapsed}", _analysisOptions.AccountName, watch.Elapsed);
             }
-
-            WriteSummary(statistics, assetTypes);
-            WriteDetails(assetTypes);
 
             reportGenerator.WriteTrailer();
             reportGenerator.Dispose();
 
-        }
-
-
-        private void WriteSummary(AssetStats statistics, IDictionary<string, int> assetTypes)
-        {
-            var table = new Table()
-                .Title("[yellow]Asset Summary[/]")
-                .HideHeaders()
-                .AddColumn(string.Empty)
-                .AddColumn(string.Empty)
-                .AddRow("[yellow]Total[/]", $"{statistics.Total}")
-                .AddRow("[darkgreen]Streamable[/]", $"{statistics.Streamable}")
-                .AddRow("[green]Migrated[/]", $"{statistics.Migrated + statistics.Successful}")
-                .AddRow("[red]Failed[/]", $"{statistics.Failed}")
-                .AddRow("[darkorange]Skipped[/]", $"{statistics.Skipped}")
-                .AddRow("[grey]No locators[/]", $"{statistics.NoLocators}");
-            _console.Write(table);
-        }
-
-        private void WriteDetails(IDictionary<string, int> assetTypes)
-        {
-            var formats = new Table()
-                .Title("[yellow]Asset Formats[/]")
-                .HideHeaders()
-                .AddColumn("Format")
-                .AddColumn("Count");
-            foreach (var (key, value) in assetTypes)
-            {
-                formats.AddRow($"[green]{key}[/]", $"[grey]{value}[/]");
-            }
-            _console.Write(formats);
         }
     }
 }
