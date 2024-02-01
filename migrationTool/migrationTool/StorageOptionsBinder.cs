@@ -27,7 +27,7 @@ For Azure specify the storage account name or the URL <https://accountname.blob.
 
         private readonly Option<string?> _pathTemplate = new(
             aliases: new[] { "--path-template", "-t" },
-            () => "${ContainerName}/",
+            () => "${ContainerName}",
             description: @"Path template to determine the final path in the storage where files are uploaded.
 Can use ${ContainerName}, 
 e.g., ${ContainerName} will upload to a container named 'ams-migration-output' with path beginning with the input container name.")

@@ -22,7 +22,7 @@ namespace AMSMigrate
     {
         
 
-        public static async Task MigrateAsset(
+        public static async Task<AssetMigrationResult> MigrateAsset(
             string subscriptionId, 
             string resourceGroup,
             string sourceStorageAccountName, 
@@ -41,7 +41,9 @@ namespace AMSMigrate
             var migrationHandler = new MigrationHandler(tracker, credentials, transformFactory, logger);
 
             //await migrationHandler.Migrate("slothmedia", "amsmigrationtarget", "asset-f935fe12-02b5-45f7-a861-b1419a397f16");
-            await migrationHandler.Migrate(subscriptionId, resourceGroup, sourceStorageAccountName, targetStorageAccountName, containerName);
+            var result = await migrationHandler.Migrate(subscriptionId, resourceGroup, sourceStorageAccountName, targetStorageAccountName, containerName);
+
+            return result;
         }
 
         private static IServiceCollection ConfigureServices()

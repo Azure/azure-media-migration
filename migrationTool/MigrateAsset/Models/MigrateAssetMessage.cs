@@ -11,9 +11,6 @@ namespace MigrateAsset.models
         public string ResourceGroup { get; set; } = string.Empty;
 
         [JsonRequired]
-        public string MediaServiceName { get; set; } = string.Empty;
-
-        [JsonRequired]
         public string SourceStorageAccountName { get; set; } = string.Empty;
 
         [JsonRequired]

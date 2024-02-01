@@ -31,12 +31,13 @@ namespace AMSMigrate.Ams
             _transformFactory = transformFactory;
         }
 
-        public override async Task MigrateAsync(CancellationToken cancellationToken)
+        public override async Task<AssetMigrationResult> MigrateAsync(CancellationToken cancellationToken)
         {
             var watch = Stopwatch.StartNew();
             var (storageClient, accountId) = await _resourceProvider.GetStorageAccount(_storageOptions.AccountName, cancellationToken);
             _logger.LogInformation("Begin migration of containers from account: {name}", storageClient.AccountName);
-            double totalContainers = await GetStorageBlobMetricAsync(accountId, cancellationToken);
+            //double totalContainers = await GetStorageBlobMetricAsync(accountId, cancellationToken);
+            var totalContainers = 0;
             _logger.LogInformation("The total count of containers of the storage account is {count}.", totalContainers);
 
             var containers = storageClient.GetBlobContainersAsync(
@@ -54,11 +55,14 @@ namespace AMSMigrate.Ams
 
             var status = Channel.CreateBounded<double>(1);
 
-            var stats = await MigrateAsync(storageClient, containers, filteredList, status.Writer, cancellationToken);
+            var (stats, result) = await MigrateAsync(storageClient, containers, filteredList, status.Writer, cancellationToken);
             _logger.LogInformation("Finished migration of containers from account: {name}. Time : {time}", storageClient.AccountName, watch.Elapsed);
+
+            return result;
+
         }
 
-        private async Task<MigrationResult> MigrateAsync(
+        private async Task<AssetMigrationResult> MigrateAsync(
             BlobServiceClient storageClient,
             BlobContainerItem container,
             CancellationToken cancellationToken)
@@ -175,7 +179,7 @@ namespace AMSMigrate.Ams
             return result;
         }
 
-        private async Task<AssetStats> MigrateAsync(
+        private async Task<(AssetStats, AssetMigrationResult)> MigrateAsync(
             BlobServiceClient storageClient,
             AsyncPageable<BlobContainerItem> containers,
             List<BlobContainerItem>? filteredList,
@@ -183,9 +187,10 @@ namespace AMSMigrate.Ams
             CancellationToken cancellationToken)
         {
             var stats = new AssetStats();
+            AssetMigrationResult result = new AssetMigrationResult(MigrationStatus.NotMigrated);
             await MigrateInParallel(containers, filteredList, async (container, cancellationToken) =>
             {
-                var result = await MigrateAsync(storageClient, container, cancellationToken);
+                result = await MigrateAsync(storageClient, container, cancellationToken);
                 stats.Update(result);
                 await writer.WriteAsync(stats.Total, cancellationToken);
             },
@@ -193,7 +198,7 @@ namespace AMSMigrate.Ams
             cancellationToken);
 
             writer.Complete();
-            return stats;
+            return (stats, result);
         }
     }
 }

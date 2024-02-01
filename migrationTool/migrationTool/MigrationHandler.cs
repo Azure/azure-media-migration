@@ -34,7 +34,7 @@ namespace AMSMigrate
             _logger = logger;
         }
 
-        public async Task Migrate(
+        public async Task<AssetMigrationResult> Migrate(
             string subscriptionId,
             string resourceGroup, 
             string accountName, 
@@ -66,7 +66,9 @@ namespace AMSMigrate
             var cancelationToken = new CancellationToken();
 
             var storageMigrator = new StorageMigrator(globaloptions, storageOptions, _tracker, _credential, _transformFactory, _logger);
-            await storageMigrator.MigrateAsync(cancelationToken);
+            var result = await storageMigrator.MigrateAsync(cancelationToken);
+
+            return result;
         }
 
         private static void ConfigureServices(IServiceCollection services)

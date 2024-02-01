@@ -31,7 +31,8 @@ Console.WriteLine("START");
 try
 {
     var message = await receiver.ReceiveMessageAsync();
-    var content = JsonSerializer.Deserialize<MigrateAssetMessage>(message.Body.ToString());
+    var body = message.Body.ToString();
+    var content = JsonSerializer.Deserialize<MigrateAssetMessage>(body);
 
     var subscriptionId = content?.SubscriptionId;
     var resourceGroup = content?.ResourceGroup;
@@ -39,17 +40,23 @@ try
     var targetStorageAccountName = content?.TargetStorageAccountName;
     var assetName = content?.AssetName;
 
-    Console.WriteLine("CALL MIGRATOR");
+    //var subscriptionId = "8b2d9c90-1d70-496f-a77a-f3433eb32999";
+    //var resourceGroup = "sloth-rg";
+    //var sourceStorageAccountName = "slothmedia";
+    //var targetStorageAccountName = "amsmigrationtarget";
+    //var assetName = "asset-f935fe12-02b5-45f7-a861-b1419a397f16";
 
-    await AMSMigrate.ContainerMigrator.MigrateAsset(subscriptionId!, resourceGroup!, sourceStorageAccountName!, targetStorageAccountName!, assetName!);
+    Console.WriteLine($"CALL MIGRATOR - message: {body}" );
 
-    Console.WriteLine("COMPLETE MESSAGE");
-    
+    var result = await AMSMigrate.ContainerMigrator.MigrateAsset(subscriptionId!, resourceGroup!, sourceStorageAccountName!, targetStorageAccountName!, assetName!);
+
+    Console.WriteLine($"COMPLETE MESSAGE - result: {result.OutputPath}");
+
     await receiver.CompleteMessageAsync(message);
 }
 catch (Exception ex)
 {
-    Console.WriteLine($"ERROR: {ex.Message}", ex);
+    Console.WriteLine($"ERROR: {ex.ToString()}", ex);
 }
 finally
 {
