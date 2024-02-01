@@ -1,0 +1,6 @@
+@migrationApi_HostAddress = http://localhost:5169
+
+GET {{migrationApi_HostAddress}}/weatherforecast/
+Accept: application/json
+
+###
