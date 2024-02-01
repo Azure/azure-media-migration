@@ -1,8 +1,8 @@
 ﻿using Azure.Identity;
-using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
 using migrationApi.Models;
 using migrationApi.Services;
+using System.Text.Json;
 
 namespace migrationApi.Controllers
 {
@@ -17,30 +17,33 @@ namespace migrationApi.Controllers
             _serviceBusService = serviceBusService;
         }
 
-        [HttpPost(Name = "MigrateAsset")]
-        public async Task<IActionResult> MigrateAsset(MigrationRequest migrationRequest)
-        {
-            try
-            {
-                await _serviceBusService.QueueMessage(migrationRequest);
-
-                return Ok();
-            }
-            catch (Exception ex)
-            {
-                Console.WriteLine(ex.Message);
-                Console.WriteLine(ex.ToString());
-                return BadRequest(ex.Message);
-            }
-        }
-
         [HttpPost(Name = "ListAssets")]
-        public async Task<IActionResult> ListAssets(ListAssetsRequest listAssetsRequest)
+        public async Task<IActionResult> ListAssets(MigrationRequest migrationRequest)
         {
-            var mediaService = new AmsService(new DefaultAzureCredential(), listAssetsRequest.SubscriptionId, listAssetsRequest.ResourceGroup);
-            var assets = await mediaService.GetAssets(listAssetsRequest.AzureMediaServicesAccountName);
+            var mediaService = new AmsService(new DefaultAzureCredential(), migrationRequest.SubscriptionId, migrationRequest.ResourceGroup);
+            var assets = await mediaService.GetAssets(migrationRequest.AzureMediaServicesAccountName);
 
-            return Ok(assets);
+            var asset = assets.Where(asset => asset.Data.Name == migrationRequest.AssetName).FirstOrDefault();
+
+            if (asset != null)
+            {
+                var message = new MigrationMessage()
+                {
+                    SubscriptionId = migrationRequest.SubscriptionId,
+                    ResourceGroup = migrationRequest.ResourceGroup,
+                    SourceStorageAccountName = migrationRequest.SourceStorageAccountName,
+                    TargetStorageAccountName = migrationRequest.TargetStorageAccountName,
+                    AssetName = asset.Data.Container
+                };
+
+                await _serviceBusService.QueueMessage(JsonSerializer.Serialize(message));
+
+                return Ok(assets);
+            }
+            else
+            {
+                return NotFound();
+            }
         }
     }
 }

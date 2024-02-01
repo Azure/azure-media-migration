@@ -1,6 +1,4 @@
 ﻿using Azure.Messaging.ServiceBus;
-using migrationApi.Models;
-using System.Text.Json;
 
 namespace migrationApi.Services
 {
@@ -15,14 +13,14 @@ namespace migrationApi.Services
             _configuration = configuration;
         }
 
-        public async Task QueueMessage(MigrationRequest migrationRequest)
+        public async Task QueueMessage(string message)
         {
             var sender = _serviceBusClient.CreateSender(_configuration.GetValue<string>("SERVICEBUS_QUEUE"));
 
             // create a batch 
             using ServiceBusMessageBatch messageBatch = await sender.CreateMessageBatchAsync();
 
-            if (!messageBatch.TryAddMessage(new ServiceBusMessage(JsonSerializer.Serialize(migrationRequest))))
+            if (!messageBatch.TryAddMessage(new ServiceBusMessage(message)))
             {
                 // if it is too large for the batch
                 throw new Exception($"The message is too large to fit in the batch.");

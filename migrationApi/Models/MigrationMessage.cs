@@ -1,6 +1,6 @@
 ﻿namespace migrationApi.Models
 {
-    public class MigrationRequest
+    public class MigrationMessage
     {
         public string SubscriptionId { get; set; }
 
@@ -9,8 +9,6 @@
         public string SourceStorageAccountName { get; set; }
 
         public string TargetStorageAccountName { get; set; }
-
-        public string AzureMediaServicesAccountName { get; set; }
 
         public string AssetName { get; set; }
     }
