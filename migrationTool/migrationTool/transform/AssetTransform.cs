@@ -40,5 +40,11 @@ namespace AMSMigrate.Transform
             var output = _templateMapper.ExpandAssetTemplate(record.Asset, _options.PathTemplate);
             return await _transform.RunAsync(record, output, cancellationToken);
         }
+
+        public async Task<AssetMigrationResult> RunAsync(AssetDetails details, BlobContainerClient container, CancellationToken cancellationToken)
+        {
+            var output = _templateMapper.ExpandPathTemplate(container, _options.PathTemplate);
+            return await _transform.RunAsync(details, output, cancellationToken);
+        }
     }
 }

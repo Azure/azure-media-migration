@@ -1,6 +1,10 @@
-﻿using Azure.Identity;
+﻿using AMSMigrate.Contracts;
+using Azure.Identity;
 using Azure.Messaging.ServiceBus;
+using Microsoft.Extensions.DependencyInjection;
 using MigrateAsset.models;
+using System.CommandLine.Invocation;
+using System.CommandLine.Parsing;
 using System.Text.Json;
 
 ServiceBusClient client;
@@ -27,32 +31,26 @@ Console.WriteLine("START");
 try
 {
     var message = await receiver.ReceiveMessageAsync();
-    var content = JsonSerializer.Deserialize<MigrateAssetMessage>(message.Body.ToString());
+    var body = message.Body.ToString();
+    var content = JsonSerializer.Deserialize<MigrateAssetMessage>(body);
 
-    var targetStorageAccount = $"https://{content?.TargetStorageAccountName}.blob.core.windows.net";
-    var filter = $"name eq '{content?.AssetName}'";
+    var subscriptionId = content?.SubscriptionId;
+    var resourceGroup = content?.ResourceGroup;
+    var sourceStorageAccountName = content?.SourceStorageAccountName;
+    var targetStorageAccountName = content?.TargetStorageAccountName;
+    var assetName = content?.AssetName;
 
-    var arguments = new string[]
-    {
-        "assets",
-        "-s", content?.SubscriptionId,
-        "-g", content?.ResourceGroup,
-        "-n", content?.MediaServiceName,
-        "-o", targetStorageAccount,
-        "-f", filter
-    };
+    Console.WriteLine($"CALL MIGRATOR - message: {body}" );
 
-    Console.WriteLine("CALL MIGRATOR");
+    var result = await AMSMigrate.ContainerMigrator.MigrateAsset(subscriptionId!, resourceGroup!, sourceStorageAccountName!, targetStorageAccountName!, assetName!);
 
-    var output = await AMSMigrate.Program.Main(arguments);
-
-    Console.WriteLine("COMPLETE MESSAGE");
+    Console.WriteLine($"COMPLETE MESSAGE - result: {result.OutputPath}");
 
     await receiver.CompleteMessageAsync(message);
 }
 catch (Exception ex)
 {
-    Console.WriteLine($"ERROR: {ex.Message}", ex);
+    Console.WriteLine($"ERROR: {ex.ToString()}", ex);
 }
 finally
 {

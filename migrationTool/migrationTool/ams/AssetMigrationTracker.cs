@@ -4,7 +4,7 @@ using Azure.Storage.Blobs.Models;
 
 namespace AMSMigrate.Ams
 {
-    class AssetMigrationResult : MigrationResult
+    public class AssetMigrationResult : MigrationResult
     {
         public const string AssetType_NonIsm = "non_ism";
         public const string AssetType_Encrypted = "encrypted";

@@ -1,6 +1,6 @@
 ﻿namespace AMSMigrate.Contracts
 {
-    class MigrationResult
+    public class MigrationResult
     {
         public MigrationResult(MigrationStatus status)
         {

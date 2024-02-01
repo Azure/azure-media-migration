@@ -21,7 +21,7 @@ namespace AMSMigrate.Ams
             TemplateMapper templateMapper,
             ICloudProvider cloudProvider,
             TokenCredential credential) :
-            base(globalOptions, console, credential, logger)
+            base(globalOptions, credential, logger)
         {
             _keyOptions = keyOptions;
             _templateMapper = templateMapper;
@@ -40,7 +40,6 @@ namespace AMSMigrate.Ams
 
             var locators = account.GetStreamingLocators().GetAllAsync(_keyOptions.ResourceFilter, cancellationToken: cancellationToken);
             var channel = Channel.CreateBounded<double>(1);
-            var progress = ShowProgressAsync("Migrate content keys", "Locators", 1.0, channel.Reader, cancellationToken);
             int count = 0;
             await MigrateInParallel(locators, null, async (locator, cancellationToken) =>
             {
@@ -53,7 +52,6 @@ namespace AMSMigrate.Ams
 
             _logger.LogInformation("Finished migration of keys for account: {name}", _keyOptions.AccountName);
             channel.Writer.Complete();
-            await progress;
         }
 
         private async Task MigrateLocatorAsync(StreamingLocatorResource locator, CancellationToken cancellationToken)

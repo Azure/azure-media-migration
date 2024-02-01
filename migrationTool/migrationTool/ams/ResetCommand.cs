@@ -24,7 +24,7 @@ namespace AMSMigrate.Ams
             TokenCredential credential,
             IMigrationTracker<BlobContainerClient, AssetMigrationResult> tracker,
             ILogger<ResetCommand> logger)
-         : base(globalOptions, console, credential, logger)
+         : base(globalOptions, credential, logger)
         {
             _options = resetOptions;
             _tracker = tracker;

@@ -294,6 +294,8 @@ namespace AMSMigrate.Azure
 
             blobName += MigrateLock;
 
+            blobName = MigrateLock;
+
             var lockBlob = container.GetBlockBlobClient(blobName);
 
             var exists = await lockBlob.ExistsAsync(cancellationToken);

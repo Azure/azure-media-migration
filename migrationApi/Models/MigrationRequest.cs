@@ -8,7 +8,7 @@ namespace migrationApi.Models
 
         public string ResourceGroup { get; set; }
 
-        public string MediaServiceName { get; set; }
+        public string SourceStorageAccountName { get; set; }
 
         public string TargetStorageAccountName { get; set; }
 
