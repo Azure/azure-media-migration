@@ -20,8 +20,6 @@ namespace AMSMigrate
 {
     public static class ContainerMigrator
     {
-        
-
         public static async Task<AssetMigrationResult> MigrateAsset(
             string subscriptionId, 
             string resourceGroup,
