@@ -14,3 +14,7 @@ export const ContainerRegistryServer = `${ContainerRegistryName}.azurecr.io`;
 export const ContainerAppJobImageName = getEnv("CONTAINER_APP_JOB_IMAGE_NAME");
 
 export const ContainerAppJobImageTag = getEnv("CONTAINER_APP_JOB_IMAGE_TAG");
+
+export const ContainerAppApiImageName = getEnv("CONTAINER_APP_API_IMAGE_NAME");
+
+export const ContainerAppApiImageTag = getEnv("CONTAINER_APP_API_IMAGE_TAG");

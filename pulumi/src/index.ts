@@ -3,6 +3,7 @@ import { LogAnalyticsWorkspace } from "./resources/logAnalyticsWorkspace";
 import { ContainerRegistry } from "./resources/containerRegistry";
 import { Servicebus } from "./resources/servicebus";
 import { ContainerAppJob } from "./resources/containerAppJob";
+import { ContainerApp } from "./resources/containerApp";
 
 const containerRegistry = new ContainerRegistry(resourceGroupName);
 
@@ -19,6 +20,15 @@ const containerAppJob = new ContainerAppJob(
   logAnalyticsWorkspaceSharedKey,
 );
 
+const containerAppApi = new ContainerApp(
+  resourceGroupName,
+  servicebus,
+  containerRegistry.containerRegistry,
+  logAnalyticsWorkspace.workspace,
+  logAnalyticsWorkspaceSharedKey,
+);
+
 export const servicebusNamespaceName = servicebus.namespace.name;
 export const servicebusQueueName = servicebus.queue.name;
 export const containerAppJobName = containerAppJob.job.name;
+export const containerAppApiName = containerAppApi.containerApp.name;
