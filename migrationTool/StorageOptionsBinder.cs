@@ -109,6 +109,12 @@ if it is not set, use input asset's manifest name.")
             description: "The key vault to store encryption keys."
             );
 
+        private readonly Option<string?> _keyUri = new(
+            aliases: new[] { "--key-uri" },
+            () => "/.clearkeys?kid=${KeyId}",
+            description: "The key URI to use for requesting the key. This is saved to the manifest."
+            );
+
         const int SegmentDurationInSeconds = 2;
 
         public StorageOptionsBinder()
@@ -154,6 +160,7 @@ if it is not set, use input asset's manifest name.")
             command.AddOption(_batchSize);
             command.AddOption(_encryptContent);
             command.AddOption(_keyVaultUri);
+            command.AddOption(_keyUri);
             return command;
         }
 
@@ -175,10 +182,13 @@ if it is not set, use input asset's manifest name.")
                 bindingContext.ParseResult.GetValueForOption(_breakOutputLease),
                 bindingContext.ParseResult.GetValueForOption(_keepWorkingFolder),
                 SegmentDurationInSeconds,
-                bindingContext.ParseResult.GetValueForOption(_batchSize),
-                bindingContext.ParseResult.GetValueForOption(_encryptContent),
-                bindingContext.ParseResult.GetValueForOption(_keyVaultUri)
-            );
+                bindingContext.ParseResult.GetValueForOption(_batchSize)
+            )
+            {
+                EncryptContent = bindingContext.ParseResult.GetValueForOption(_encryptContent),
+                KeyUri = bindingContext.ParseResult.GetValueForOption(_keyUri),
+                KeyVaultUri = bindingContext.ParseResult.GetValueForOption(_keyVaultUri)
+            };
         }
 
         public StorageOptions GetValue(BindingContext bindingContext) => GetBoundValue(bindingContext);
