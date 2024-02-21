@@ -6,6 +6,7 @@ using Azure.ResourceManager.Media;
 using Azure.Storage.Blobs;
 using Microsoft.Extensions.Logging;
 using Spectre.Console;
+using System.Collections.Concurrent;
 using System.Diagnostics;
 using System.Threading.Channels;
 
@@ -16,6 +17,7 @@ namespace AMSMigrate.Ams
         private readonly TransformFactory _transformFactory;
         private readonly AssetOptions _options;
         private readonly IMigrationTracker<BlobContainerClient, AssetMigrationResult> _tracker;
+        protected readonly TokenCredential _credentials;
 
         public AssetMigrator(
             GlobalOptions globalOptions,
@@ -30,6 +32,7 @@ namespace AMSMigrate.Ams
             _options = assetOptions;
             _tracker = tracker;
             _transformFactory = transformFactory;
+            _credentials = credential;
         }
 
         public override async Task MigrateAsync(CancellationToken cancellationToken)
@@ -83,11 +86,22 @@ namespace AMSMigrate.Ams
         private async Task<AssetStats> MigrateAsync(MediaServicesAccountResource account, AsyncPageable<MediaAssetResource> assets, List<MediaAssetResource>? filteredList, ChannelWriter<double> writer, CancellationToken cancellationToken)
         {
             var stats = new AssetStats();
+
+            // Dictionary to restrict spawning of too many BlobServiceClients
+            var storageAccounts = new ConcurrentDictionary<string, BlobServiceClient>();
+
             await MigrateInParallel(assets, filteredList, async (asset, cancellationToken) =>
             {
-                var storage = await _resourceProvider.GetStorageAccountAsync(account, asset, cancellationToken);
+                var storageAccountName = asset.Data.StorageAccountName;
+                if (!storageAccounts.ContainsKey(storageAccountName))
+                {
+                    BlobServiceClient newBlobServiceClient = new BlobServiceClient(new Uri($"https://{storageAccountName}.blob.core.windows.net"), _credentials);
+                    storageAccounts.TryAdd(storageAccountName, newBlobServiceClient);
+                }
 
-                var result = await MigrateAsync(account, storage, asset, cancellationToken);
+                BlobServiceClient blobServiceClient = storageAccounts[storageAccountName];
+
+                var result = await MigrateAsync(account, blobServiceClient, asset, cancellationToken);
                 stats.Update(result);
                 await writer.WriteAsync(stats.Total, cancellationToken);
 
