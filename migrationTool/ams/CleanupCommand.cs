@@ -56,7 +56,7 @@ namespace AMSMigrate.Ams
             var resourceFilter = _options.IsCleanUpAccount ? null : GetAssetResourceFilter(_options.ResourceFilter, null, null);
 
             var orderBy = "properties/created";
-            await _resourceProvider.SetStorageResourceGroupsAsync(account, cancellationToken);
+            await _resourceProvider.SetStorageAccountResourcesAsync(account, cancellationToken);
             assets = account.GetMediaAssets()
                 .GetAllAsync(resourceFilter, orderby: orderBy, cancellationToken: cancellationToken);
             List<MediaAssetResource>? assetList = await assets.ToListAsync(cancellationToken);
@@ -160,8 +160,7 @@ namespace AMSMigrate.Ams
         {
             try
             {
-
-                var storage = await _resourceProvider.GetStorageAccountAsync(account, asset, cancellationToken);
+                var storage = _resourceProvider.GetBlobServiceClient(asset);
                 var container = storage.GetContainer(asset);
                 if (!await container.ExistsAsync(cancellationToken))
                 {

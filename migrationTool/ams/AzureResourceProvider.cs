@@ -16,7 +16,7 @@ namespace AMSMigrate.Ams
         protected readonly TokenCredential _credentials;
         protected readonly ArmClient _armClient;
 
-        private Dictionary<string, ResourceGroupResource> _storageResourceGroups;
+        private Dictionary<string, StorageAccountResource> _storageAccountResources;
 
         public AzureResourceProvider(TokenCredential credential, GlobalOptions options)
         {
@@ -29,10 +29,10 @@ namespace AMSMigrate.Ams
                 options.SubscriptionId,
                 options.ResourceGroup);
             _resourceGroup = _armClient.GetResourceGroupResource(resourceGroupId);
-            _storageResourceGroups = new Dictionary<string, ResourceGroupResource>();
+            _storageAccountResources = new Dictionary<string, StorageAccountResource>();
         }
 
-        public async Task SetStorageResourceGroupsAsync(MediaServicesAccountResource account, CancellationToken cancellationToken)
+        public async Task SetStorageAccountResourcesAsync(MediaServicesAccountResource account, CancellationToken cancellationToken)
         {
             IList<MediaServicesStorageAccount> storageAccounts;
             var mediaServiceResource = await account.GetAsync(cancellationToken: cancellationToken);
@@ -47,9 +47,18 @@ namespace AMSMigrate.Ams
                             storageAccountId.SubscriptionId!,
                             storageAccountId.ResourceGroupName!);
                     var resourceGroup = _armClient.GetResourceGroupResource(resourceGroupId);
-                    _storageResourceGroups.Add(storageAccountId.Name, resourceGroup);
+                    StorageAccountResource storage = await resourceGroup.GetStorageAccountAsync(storageAccountId.Name,
+                        cancellationToken: cancellationToken);
+                    _storageAccountResources.Add(storageAccountId.Name, storage);
                 }
             }
+        }
+
+        public async Task SetStorageAccountResourcesAsync(string storageAccountName, CancellationToken cancellationToken)
+        {
+            StorageAccountResource storage = await _resourceGroup.GetStorageAccountAsync(storageAccountName,
+                cancellationToken: cancellationToken);
+            _storageAccountResources.Add(storageAccountName, storage);
         }
 
         public async Task<MediaServicesAccountResource> GetMediaAccountAsync(
@@ -60,22 +69,24 @@ namespace AMSMigrate.Ams
                mediaAccountName, cancellationToken);
         }
 
-        public async Task<BlobServiceClient> GetStorageAccountAsync(
-            MediaServicesAccountResource account,
-            MediaAssetResource asset,
-            CancellationToken cancellationToken)
+        public BlobServiceClient GetBlobServiceClient(MediaAssetResource asset)
         {
             string assetStorageAccountName = asset.Data.StorageAccountName;
-            _storageResourceGroups.TryGetValue(asset.Data.StorageAccountName, out var rg);
-            var resource = await rg.GetStorageAccountAsync(asset.Data.StorageAccountName, cancellationToken: cancellationToken);
-            return GetStorageAccount(resource);
+            if (_storageAccountResources.TryGetValue(assetStorageAccountName, out var resource))
+            {
+                return GetStorageAccount(resource);
+            }
+            throw new Exception($"Failed to get BlobServiceClient for storage account {assetStorageAccountName}.");
         }
 
-        public async Task<(BlobServiceClient, ResourceIdentifier)> GetStorageAccount(string storageAccountName, CancellationToken cancellationToken)
+        public (BlobServiceClient, ResourceIdentifier) GetBlobServiceClient(string storageAccountName)
         {
-            StorageAccountResource storage =
-                await _resourceGroup.GetStorageAccountAsync(storageAccountName, cancellationToken: cancellationToken);
-            return (GetStorageAccount(storage), storage.Id);
+            string assetStorageAccountName = storageAccountName;
+            if (_storageAccountResources.TryGetValue(assetStorageAccountName, out var resource))
+            {
+                return (GetStorageAccount(resource), resource.Id);
+            }
+            throw new Exception($"Failed to get BlobServiceClient for storage account {assetStorageAccountName}.");
         }
 
         private BlobServiceClient GetStorageAccount(StorageAccountResource storage)
