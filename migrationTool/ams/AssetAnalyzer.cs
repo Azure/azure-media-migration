@@ -144,7 +144,8 @@ namespace AMSMigrate.Ams
             var assetTypes = new ConcurrentDictionary<string, int>();
             if (!isAMSAcc)
             {
-                var (storageClient, accountId) = await _resourceProvider.GetStorageAccount(_analysisOptions.AccountName, cancellationToken);
+                await _resourceProvider.SetStorageAccountResourcesAsync(_analysisOptions.AccountName, cancellationToken);
+                var (storageClient, accountId) = _resourceProvider.GetBlobServiceClient(_analysisOptions.AccountName);
                 if (storageClient == null)
                 {
                     _logger.LogError("No valid storage account was found.");
@@ -167,7 +168,6 @@ namespace AMSMigrate.Ams
                 var writer = channel.Writer;
                 await MigrateInParallel(containers, filteredList, async (container, cancellationToken) =>
                 {
-                    //  var storage = await _resourceProvider.GetStorageAccountAsync(account, asset, cancellationToken);
                     var result = await AnalyzeAsync(container, storageClient, cancellationToken);
                     var assetType = result.AssetType ?? "unknown";
                     assetTypes.AddOrUpdate(assetType, 1, (key, value) => Interlocked.Increment(ref value));
@@ -197,7 +197,7 @@ namespace AMSMigrate.Ams
                 double totalAssets = await QueryMetricAsync(account.Id.ToString(), "AssetCount", cancellationToken);
                 _logger.LogInformation("The total asset count of the media account is {count}.", totalAssets);
 
-                await _resourceProvider.SetStorageResourceGroupsAsync(account, cancellationToken);
+                await _resourceProvider.SetStorageAccountResourcesAsync(account, cancellationToken);
                 var assets = account.GetMediaAssets()
                     .GetAllAsync(resourceFilter, cancellationToken: cancellationToken);
                 statistics = new AssetStats();
@@ -221,7 +221,7 @@ namespace AMSMigrate.Ams
                 var writer = channel.Writer;
                 await MigrateInParallel(assets, filteredList, async (asset, cancellationToken) =>
                 {
-                    var storage = await _resourceProvider.GetStorageAccountAsync(account, asset, cancellationToken);
+                    var storage = _resourceProvider.GetBlobServiceClient(asset);
                     var result = await AnalyzeAsync(asset, storage, cancellationToken);
                     var assetType = result.AssetType ?? "unknown";
                     assetTypes.AddOrUpdate(assetType, 1, (key, value) => Interlocked.Increment(ref value));

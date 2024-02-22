@@ -35,7 +35,8 @@ namespace AMSMigrate.Ams
         public override async Task MigrateAsync(CancellationToken cancellationToken)
         {
             var watch = Stopwatch.StartNew();
-            var (storageClient, accountId) = await _resourceProvider.GetStorageAccount(_storageOptions.AccountName, cancellationToken);
+            await _resourceProvider.SetStorageAccountResourcesAsync(_storageOptions.AccountName, cancellationToken);
+            var (storageClient, accountId) = _resourceProvider.GetBlobServiceClient(_storageOptions.AccountName);
             _logger.LogInformation("Begin migration of containers from account: {name}", storageClient.AccountName);
             double totalContainers = await GetStorageBlobMetricAsync(accountId, cancellationToken);
             _logger.LogInformation("The total count of containers of the storage account is {count}.", totalContainers);

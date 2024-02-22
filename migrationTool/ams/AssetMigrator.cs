@@ -55,7 +55,7 @@ namespace AMSMigrate.Ams
 
             var orderBy = "properties/created";
 
-            await _resourceProvider.SetStorageResourceGroupsAsync(account, cancellationToken);
+            await _resourceProvider.SetStorageAccountResourcesAsync(account, cancellationToken);
             var assets = account.GetMediaAssets().GetAllAsync(resourceFilter, orderby: orderBy, cancellationToken: cancellationToken);
 
             List<MediaAssetResource>? filteredList = null;
@@ -85,7 +85,7 @@ namespace AMSMigrate.Ams
             var stats = new AssetStats();
             await MigrateInParallel(assets, filteredList, async (asset, cancellationToken) =>
             {
-                var storage = await _resourceProvider.GetStorageAccountAsync(account, asset, cancellationToken);
+                var storage = _resourceProvider.GetBlobServiceClient(asset);
 
                 var result = await MigrateAsync(account, storage, asset, cancellationToken);
                 stats.Update(result);
