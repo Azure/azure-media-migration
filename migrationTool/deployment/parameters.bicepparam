@@ -1,14 +1,14 @@
 using './deployment.bicep'
 
 // The media services account being migrated.
-param mediaAccountName = 'provenanceuswc'
-param mediaAccountRG = 'provenance'
+param mediaAccountName = 'mvamsustxwhistler'
+param mediaAccountRG = 'Whistler'
 // If media account is in a different subscrtipion than where the migration is running.
 // param mediaAccountSubscription = ''
 
 // The storage account where migrated data is written.
-param storageAccountName = 'amsencodermsitest'
-param storageAccountRG = 'amsmediacore'
+param storageAccountName = 'mvmsustxwhistler'
+param storageAccountRG = 'Whistler'
 // If the storage account is in a different subscription than where the migration is running.
 // param storageAccountSubscription = ''
 
