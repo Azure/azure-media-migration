@@ -30,7 +30,7 @@ namespace AMSMigrate.Transform
             var manifest = assetDetails.Manifest!;
             var baseName = Path.GetFileNameWithoutExtension(manifest.FileName);
             var manifests = SelectedTracks
-                .Select((t, i) => $"{baseName}_{i}{HLS_MANIFEST}")
+                .Select((t, i) => $"{HLS_OUTPUT_FILENAME}_{i}{HLS_MANIFEST}")
                 .ToList();
 
             var outputManifest = assetDetails.OutputManifest ?? baseName;

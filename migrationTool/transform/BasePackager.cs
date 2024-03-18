@@ -24,6 +24,7 @@ namespace AMSMigrate.Transform
         public const string VTT_FILE = ".vtt";
         public const string CMFT_FILE = ".cmft";
         public const string TRANSCRIPT_SOURCE = "transcriptsrc";
+        public const string HLS_OUTPUT_FILENAME = "stream";
 
         protected readonly TransMuxer _transMuxer;
         protected readonly ILogger _logger;
@@ -120,13 +121,7 @@ namespace AMSMigrate.Transform
             Inputs = _fileToTrackMap.Keys.ToList();
             // outputs
             var baseName = Path.GetFileNameWithoutExtension(manifest.FileName);
-            Outputs = SelectedTracks.Select((t, i) =>
-            {
-                var ext = t is TextTrack ? VTT_FILE : MEDIA_FILE;
-                // TODO: if you want to keep original file names.
-                // var baseName = Path.GetFileNameWithoutExtension(t.Source);
-                return $"{baseName}_{i}{ext}";
-            }).ToList();
+            Outputs = TransformUtils.GenerateOutputs(SelectedTracks);
         }
 
         public abstract Task<bool> RunAsync(
