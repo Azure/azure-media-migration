@@ -35,7 +35,8 @@ param keyvaultSubscription string = subscription().subscriptionId
 param arguments array = []
 
 var tags = {
-  name: 'azure-media-migration'
+  name: 'azure-media-migration',
+  owner: 'Core-Platform'
 }
 
 // The identity to create and the roles to assign.

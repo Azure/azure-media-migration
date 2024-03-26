@@ -23,5 +23,11 @@ param keyvaultRG = 'provenance'
 //additional arguments.
 param arguments = [
   '-t'
-  '\${AssetName}'
+  '\${ContainerName}'
+  '-cs'
+  '2024-01-01'
+  '--skip-migrated'
+  'false'
+  '-b'
+  '3'
 ]
