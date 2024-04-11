@@ -9,7 +9,7 @@
         <DockerfileContext>..</DockerfileContext>
     </PropertyGroup>
     <ItemGroup>
-      <PackageReference Include="Azure.Identity" Version="1.10.3" />
+      <PackageReference Include="Azure.Identity" Version="1.11.0" />
       <PackageReference Include="Microsoft.Azure.Functions.Worker" Version="1.19.0" />
       <PackageReference Include="Microsoft.Azure.Functions.Worker.Extensions.Storage" Version="4.0.4" />
       <PackageReference Include="Microsoft.Azure.Functions.Worker.Sdk" Version="1.15.1" />
