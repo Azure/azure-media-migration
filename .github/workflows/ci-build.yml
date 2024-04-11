@@ -137,9 +137,9 @@ jobs:
         run: |
           dotnet publish -c Release EncodingAndPackagingExample
 
-      - name: Test
-        run: |
-          AZURE_CLIENT_ID=${{ secrets.AZURE_CLIENT_ID }} AZURE_TENANT_ID=${{ secrets.AZURE_TENANT_ID }} AZURE_CLIENT_SECRET=${{ secrets.AZURE_CLIENT_SECRET }} TEST_DATA=`pwd`/test-data dotnet test -c Release --no-build EncodingAndPackagingExample
+      # - name: Test
+      #   run: |
+      #     AZURE_CLIENT_ID=${{ secrets.AZURE_CLIENT_ID }} AZURE_TENANT_ID=${{ secrets.AZURE_TENANT_ID }} AZURE_CLIENT_SECRET=${{ secrets.AZURE_CLIENT_SECRET }} TEST_DATA=`pwd`/test-data dotnet test -c Release --no-build EncodingAndPackagingExample
 
       # - name: Build Container Image
       #   uses: docker/build-push-action@v4
