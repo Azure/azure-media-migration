@@ -28,5 +28,6 @@
             BreakOutputLease,
             KeepWorkingFolder,
             SegmentDuration,
-            BatchSize);
+            BatchSize,
+            OnlyAssetsWithAlternateId:false);
 }

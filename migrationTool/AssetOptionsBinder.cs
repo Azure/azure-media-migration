@@ -138,6 +138,11 @@ Visit https://learn.microsoft.com/en-us/azure/media-services/latest/filter-order
             () => "/.clearkeys?kid=${KeyId}",
             description: "The key URI to use for requesting the key. This is saved to the manifest."
             );
+        
+        private readonly Option<bool> _onlyAssetsWithAlternateId = new(
+            aliases: new[] { "--assets-with-alternateId" },
+            () => false,
+            description: @"Only migrate assets where AlternateId is not null or empty.");
 
         const int SegmentDurationInSeconds = 2;
 
@@ -187,6 +192,7 @@ Visit https://learn.microsoft.com/en-us/azure/media-services/latest/filter-order
             command.AddOption(_encryptContent);
             command.AddOption(_keyVaultUri);
             command.AddOption(_keyUri);
+            command.AddOption(_onlyAssetsWithAlternateId);
             command.AddValidator(result =>
             {
                 if (result.GetValueForOption(_encryptContent))
@@ -226,7 +232,8 @@ Visit https://learn.microsoft.com/en-us/azure/media-services/latest/filter-order
                 bindingContext.ParseResult.GetValueForOption(_breakOutputLease),
                 bindingContext.ParseResult.GetValueForOption(_keepWorkingFolder),
                 SegmentDurationInSeconds,
-                bindingContext.ParseResult.GetValueForOption(_batchSize)
+                bindingContext.ParseResult.GetValueForOption(_batchSize),
+                bindingContext.ParseResult.GetValueForOption(_onlyAssetsWithAlternateId)
             )
             {
                 EncryptContent = bindingContext.ParseResult.GetValueForOption(_encryptContent),
