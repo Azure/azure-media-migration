@@ -16,7 +16,8 @@
         bool BreakOutputLease,
         bool KeepWorkingFolder,
         int SegmentDuration,
-        int BatchSize)
+        int BatchSize,
+        bool OnlyAssetsWithAlternateId)
     {
         public bool EncryptContent { get; set; }
 

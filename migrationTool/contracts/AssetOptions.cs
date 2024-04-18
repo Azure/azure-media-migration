@@ -16,7 +16,8 @@
         bool BreakOutputLease,
         bool KeepWorkingFolder,
         int SegmentDuration,
-        int BatchSize)
+        int BatchSize,
+        bool OnlyAssetsWithAlternateId)
         : MigratorOptions(
             AccountName,
             StoragePath,
@@ -30,5 +31,6 @@
             BreakOutputLease,
             KeepWorkingFolder,
             SegmentDuration,
-            BatchSize);
+            BatchSize,
+            OnlyAssetsWithAlternateId);
 }
