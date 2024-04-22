@@ -146,6 +146,30 @@ namespace AMSMigrate.Transform
                     return "";
                 }
             }));
+            
+            // arguments.AddRange(SelectedTracks.Where(x => x.Type == StreamType.Video).Select((t , i) => 
+            // {
+            //     if (!string.IsNullOrEmpty(manifests[i]))
+            //     {
+            //         var source = t.Parameters?.SingleOrDefault(p => p.Name == TRANSCRIPT_SOURCE)?.Value ?? t.Source;
+            //         var ext = t.IsMultiFile ? (t is TextTrack ? VTT_FILE : MEDIA_FILE) : string.Empty;
+            //         var file = $"{source}{ext}";
+            //         var index = Inputs.IndexOf(file);
+            //         var multiTrack = TransmuxedSmooth && FileToTrackMap[file].Count > 1;
+            //         var inputFile = multiTrack ?
+            //             Path.Combine(Path.GetDirectoryName(inputs[index])!, $"{Path.GetFileNameWithoutExtension(file)}_{t.TrackID}{Path.GetExtension(file)}") :
+            //             inputs[index];
+            //         var stream = t.Type.ToString().ToLowerInvariant();
+            //         var language = string.IsNullOrEmpty(t.SystemLanguage) || t.SystemLanguage == "und" ? string.Empty : $",language={t.SystemLanguage},";
+            //         var role = t is TextTrack ? $",dash_role={values[text_tracks++ % values.Length].ToString().ToLowerInvariant()}" : string.Empty;
+            //         return $"stream={t.Type.ToString().ToLower()},in={inputFile},out={outputs[i].Replace("video","trick_video")},trick_play_factor=1";
+            //     }
+            //     else
+            //     {
+            //         return "";
+            //     }
+            // }));
+            
             var dash = manifests[manifests.Count - 1];
             var hls = manifests[manifests.Count - 2];
             var logging = false;
