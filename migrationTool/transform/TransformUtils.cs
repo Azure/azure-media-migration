@@ -26,6 +26,18 @@ public static class TransformUtils
                 return $"{t.Type.ToString().ToLowerInvariant()}{(grouping.Count() > 1 ? $"_{i}" : string.Empty)}{ext}";
             }).ToList());
         }
+        
+        // foreach (var grouping in tracksByType.Where(t => t.Key == StreamType.Video))
+        // {
+        //     outputs.AddRange(grouping.Select((t, i) =>
+        //     {
+        //         var ext = t is TextTrack ? VTT_FILE : MEDIA_FILE;
+        //         // TODO: if you want to keep original file names.
+        //         // var baseName = Path.GetFileNameWithoutExtension(t.Source);
+        //         return $"trick_{t.Type.ToString().ToLowerInvariant()}{(grouping.Count() > 1 ? $"_{i}" : string.Empty)}{ext}";
+        //     }).ToList());
+        // }
+        
         return outputs;
     }
 }
