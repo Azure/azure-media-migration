@@ -2,6 +2,8 @@
 using Microsoft.Extensions.Logging;
 using System.ComponentModel;
 using System.Text.RegularExpressions;
+using FFMpegCore;
+using MediaStream = AMSMigrate.Contracts.MediaStream;
 
 namespace AMSMigrate.Transform
 {
@@ -19,6 +21,7 @@ namespace AMSMigrate.Transform
         static readonly string PackagerDirectory = AppContext.BaseDirectory;
         static readonly string Executable = $"packager-{(OperatingSystem.IsLinux() ? "linux-x64" : OperatingSystem.IsMacOS() ? "osx-x64" : "win-x64.exe")}";
         public static readonly string Packager = Path.Combine(PackagerDirectory, Executable);
+        public static readonly List<int> MVP_SUPPORTED_RESOLUTIONS = new() { 180, 360, 1080};
 
         private readonly MigratorOptions _options;
 
@@ -304,7 +307,7 @@ namespace AMSMigrate.Transform
 
                 File.Copy(src, dest, true);
             }
-
+            
             if (disabledTracks.Count > 0)
             {
                 UsePipeForManifests = false;
@@ -358,6 +361,50 @@ namespace AMSMigrate.Transform
                 _ = match.Success && group.Success && LogLevels.TryGetValue(group.Value, out logLevel);
                 _logger.Log(logLevel, Events.ShakaPackager, line);
             }
+        }
+
+        public override async Task AdjustPackageFilesForSupportedResolutions(string workingDirectory,
+            CancellationToken cancellationToken)
+        {
+            var unsupportedTracksKvp = new Dictionary<int,Track?>();
+            var isSupportedResolution = true;
+            var ti = -1;
+
+            foreach (var track in SelectedTracks)
+            {
+                ti++;
+                if (track is not VideoTrack) continue;
+                var fileTrackMapping = FileToTrackMap.FirstOrDefault(x => x.Value.Contains(track));
+                if(fileTrackMapping.Key == null) return;
+
+                isSupportedResolution = await IsSupportedResolutionAsync(workingDirectory, fileTrackMapping.Key, cancellationToken);
+                if(!isSupportedResolution)
+                {
+                    if(fileTrackMapping.Value.All(x => x.Type != StreamType.Video)) return;
+                    unsupportedTracksKvp.Add(ti, fileTrackMapping.Value.FirstOrDefault( x=> x.Type == StreamType.Video));
+                }
+            }
+
+            foreach (var kvp in unsupportedTracksKvp)
+            {
+                // For each video of unsupported resolution,
+                // no .m3u8 file is generated for HLS,
+                // no stream is added for DASH manifest
+                var si = kvp.Key;
+                Manifests.RemoveAt(si);
+                if (kvp.Value != null) SelectedTracks.Remove(kvp.Value);
+            }
+
+            Outputs = TransformUtils.GenerateOutputs(SelectedTracks);
+        }
+
+        private async Task<bool> IsSupportedResolutionAsync(string workingDirectory, string file, CancellationToken cancellationToken)
+        {
+            var filePath = Path.Combine(workingDirectory, file);
+            if (!file.EndsWith(MEDIA_FILE)) return true;
+            var mediaAnalysis = await FFProbe.AnalyseAsync(filePath, null, cancellationToken);
+            if (mediaAnalysis.PrimaryVideoStream == null) return true;
+            return MVP_SUPPORTED_RESOLUTIONS.Contains(mediaAnalysis.PrimaryVideoStream.Height);
         }
     }
 }

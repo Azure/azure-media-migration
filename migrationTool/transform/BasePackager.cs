@@ -216,6 +216,14 @@ namespace AMSMigrate.Transform
             // Derived class can override it with its own logic.
             return;
         }
+        
+        public virtual Task AdjustPackageFilesForSupportedResolutions(string workingDirectory,
+            CancellationToken cancellationToken)
+        {
+            // Make it no-op in base class for adjusting package files.
+            // Derived class can override it with its own logic.
+            return Task.CompletedTask;
+        }
 
         private async Task DownloadAsync(string workingDirectory, string file, IList<Track> tracks, CancellationToken cancellationToken)
         {

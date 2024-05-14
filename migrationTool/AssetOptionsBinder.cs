@@ -141,7 +141,7 @@ Visit https://learn.microsoft.com/en-us/azure/media-services/latest/filter-order
         
         private readonly Option<bool> _onlyAssetsWithAlternateId = new(
             aliases: new[] { "--assets-with-alternateId" },
-            () => false,
+            () => true,
             description: @"Only migrate assets where AlternateId is not null or empty.");
 
         const int SegmentDurationInSeconds = 2;
