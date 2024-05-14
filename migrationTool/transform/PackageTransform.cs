@@ -112,7 +112,7 @@ namespace AMSMigrate.Transform
 
                 // Adjust the package files after the input files are all downloaded.
                 packager.AdjustPackageFiles(workingDirectory);
-                await packager.AdjustPackageFilesForSupportedResolutions(workingDirectory, cancellationToken);
+                //await packager.AdjustPackageFilesForSupportedResolutions(workingDirectory, cancellationToken);
 
                 var outputFiles = packager.Outputs;
                 var (outputContainerName, prefix) = outputPath;
