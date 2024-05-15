@@ -179,7 +179,9 @@ amsmigrate storage -s <subscription id> -g <resource group> -n <source storage a
                 .CreateLogger();
 
             collection
-                .AddSingleton<TokenCredential>(new DefaultAzureCredential(includeInteractiveCredentials: true))
+                .AddSingleton<TokenCredential>(new ChainedTokenCredential(
+                    new AzureCliCredential(),
+                    new DefaultAzureCredential()))
                 .AddSingleton(options)
                 .AddSingleton(console)
                 .AddSingleton<IMigrationTracker<BlobContainerClient, AssetMigrationResult>, AssetMigrationTracker>()
