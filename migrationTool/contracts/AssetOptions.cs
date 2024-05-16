@@ -30,5 +30,8 @@
             BreakOutputLease,
             KeepWorkingFolder,
             SegmentDuration,
-            BatchSize);
+            BatchSize)
+    {
+        public string? AssetIdListFile { get; set; }
+    }
 }

@@ -139,6 +139,11 @@ Visit https://learn.microsoft.com/en-us/azure/media-services/latest/filter-order
             description: "The key URI to use for requesting the key. This is saved to the manifest."
             );
 
+        private readonly Option<string?> _assetIdListFile = new(
+            aliases: new[] { "--assetid-list-file" },
+            description: "The file name that contains a list of asset IDs that should be processed."
+            );
+
         const int SegmentDurationInSeconds = 2;
 
         public AssetOptionsBinder()
@@ -146,9 +151,9 @@ Visit https://learn.microsoft.com/en-us/azure/media-services/latest/filter-order
             _batchSize.AddValidator(result =>
             {
                 var value = result.GetValueOrDefault<int>();
-                if (value < 1 || value > 10)
+                if (value < 1 || value > 20)
                 {
-                    result.ErrorMessage = "Invalid batch size. Only values 1..10 are supported";
+                    result.ErrorMessage = "Invalid batch size. Only values 1..20 are supported";
                 }
             });
 
@@ -187,6 +192,7 @@ Visit https://learn.microsoft.com/en-us/azure/media-services/latest/filter-order
             command.AddOption(_encryptContent);
             command.AddOption(_keyVaultUri);
             command.AddOption(_keyUri);
+            command.AddOption(_assetIdListFile);
             command.AddValidator(result =>
             {
                 if (result.GetValueForOption(_encryptContent))
@@ -231,7 +237,8 @@ Visit https://learn.microsoft.com/en-us/azure/media-services/latest/filter-order
             {
                 EncryptContent = bindingContext.ParseResult.GetValueForOption(_encryptContent),
                 KeyUri = bindingContext.ParseResult.GetValueForOption(_keyUri),
-                KeyVaultUri = bindingContext.ParseResult.GetValueForOption(_keyVaultUri)
+                KeyVaultUri = bindingContext.ParseResult.GetValueForOption(_keyVaultUri),
+                AssetIdListFile = bindingContext.ParseResult.GetValueForOption(_assetIdListFile),
             };
         }
     }

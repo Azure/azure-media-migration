@@ -69,6 +69,25 @@ namespace AMSMigrate.Ams
                 totalAssets = filteredList.Count;
             }
 
+            if (_options.AssetIdListFile is not null)
+            {
+                // Read asset id file and convert to list of GUIDs
+                string[] assetIds = await File.ReadAllLinesAsync(_options.AssetIdListFile, cancellationToken);
+                Guid[] assetGuids = assetIds.Select(assetId =>
+                {
+                    if (Guid.TryParse(assetId, out Guid assetGuid))
+                    {
+                        return (Guid?)assetGuid;
+                    }
+
+                    return null;
+                }).Where(x => x.HasValue).Select(x => x.Value).ToArray();
+
+                // Build filtered list
+                filteredList = await assets.Where(x => x.Data.AssetId.HasValue && assetGuids.Contains(x.Data.AssetId.Value)).ToListAsync(cancellationToken);
+                totalAssets = filteredList.Count;
+            }
+
             _logger.LogInformation("The total assets to handle in this run is {count}.", totalAssets);
 
             var status = Channel.CreateBounded<double>(1);
