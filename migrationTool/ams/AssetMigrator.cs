@@ -81,7 +81,7 @@ namespace AMSMigrate.Ams
                     }
 
                     return null;
-                }).Where(x => x.HasValue).Select(x => x.Value).ToArray();
+                }).Where(x => x.HasValue).Select(x => x!.Value).ToArray();
 
                 // Build filtered list
                 filteredList = await assets.Where(x => x.Data.AssetId.HasValue && assetGuids.Contains(x.Data.AssetId.Value)).ToListAsync(cancellationToken);
