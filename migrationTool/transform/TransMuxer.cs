@@ -245,13 +245,32 @@ namespace AMSMigrate.Transform
                         if (c.Type == MP4BoxType.traf)
                         {
                             offsetToTrun += moofBox.ComputeBaseSizeBox();
+
+                            // get defaultSampleDuration if exists
+                            bool hasDefaultSampleDuration = false;
+                            uint defaultSampleDuration = 0;
+                            foreach (var cc in c.Children)
+                            {
+                                if (cc.Type == MP4BoxType.tfhd)
+                                {
+                                    tfhdBox tfhdBox = (tfhdBox)cc;
+                                    if (tfhdBox.DefaultSampleDuration != null)
+                                    {
+                                        hasDefaultSampleDuration = true;
+                                        defaultSampleDuration = (uint) tfhdBox.DefaultSampleDuration!;
+                                    }
+                                }
+                            }
+
                             foreach (var cc in c.Children)
                             {
                                 if (cc.Type == MP4BoxType.trun)
                                 {
                                     trunBox trunBox = (trunBox)cc; // will throw
                                     trunBox.TrunFlags flag = (trunBox.TrunFlags)trunBox.Flags;
-                                    if ((flag & trunBox.TrunFlags.SampleDurationPresent) != trunBox.TrunFlags.SampleDurationPresent)
+
+                                    bool sampleDurationPresent = (flag & trunBox.TrunFlags.SampleDurationPresent) == trunBox.TrunFlags.SampleDurationPresent;
+                                    if (!sampleDurationPresent && !hasDefaultSampleDuration)
                                     {
                                         throw new InvalidDataException("Unexpected, sampleDurationPresent must be present");
                                     }
@@ -261,7 +280,14 @@ namespace AMSMigrate.Transform
                                     ulong totalDuration = 0;
                                     for (int i = 0; i < trunBox.Entries.Count; ++i)
                                     {
-                                        totalDuration += (ulong)trunBox.Entries[i].SampleDuration!;
+                                        if (sampleDurationPresent)
+                                        {
+                                            totalDuration += (ulong)trunBox.Entries[i].SampleDuration!;
+                                        }
+                                        else
+                                        {
+                                            totalDuration += defaultSampleDuration;
+                                        }
                                     }
                                     if (curDecodeTimesIndex + 1 < decodeTimes.Count)
                                     {
