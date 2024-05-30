@@ -1,6 +1,8 @@
 ﻿using Microsoft.Extensions.Logging;
 using System.Text;
 using System.Xml.Serialization;
+using Azure.Monitor.Query.Models;
+using Azure.ResourceManager.Media.Models;
 
 namespace AMSMigrate.Contracts
 {
@@ -130,6 +132,31 @@ namespace AMSMigrate.Contracts
                 {
                     track.SystemBitrate = systemBitrate;
                 }
+            }
+
+            // find tracks that have the same source and drop the audio track and the video tracks with the lowest bitrates
+            var tracksToRemove = new List<Track>();
+            var duplicateSourceGroups = manifest.Body.Tracks.GroupBy(x => x.Source).Where(x => x.Count() > 1);
+            foreach (var duplicateSourceGroup in duplicateSourceGroups)
+            {
+                var videoTracks = duplicateSourceGroup.Where(x => x.Type == StreamType.Video).OrderBy(x => x.SystemBitrate).ThenBy(x => x.TrackID).ToArray();
+                int videoTrackCount = videoTracks.Length;
+                if (videoTrackCount > 0)
+                {
+                    var audioTrack = duplicateSourceGroup.FirstOrDefault(x => x.Type == StreamType.Audio);
+                    if (audioTrack is not null)
+                    {
+                        tracksToRemove.Add(audioTrack);
+                    }
+                    if (videoTrackCount > 1)
+                    {
+                        tracksToRemove.AddRange(videoTracks.Take(videoTrackCount - 1));
+                    }
+                }
+            }
+            if (tracksToRemove.Any())
+            {
+                manifest.Body.Tracks = manifest.Body.Tracks.ToList().Except(tracksToRemove).ToArray();
             }
 
             return manifest;
