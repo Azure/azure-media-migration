@@ -46,8 +46,10 @@ namespace AMSMigrate.Ams
                 account.Id.ToString(),
                 "AssetCount",
                 cancellationToken: cancellationToken);
-
-            _logger.LogInformation("The total asset count of the media account is {count}.", totalAssets);
+            if (totalAssets > 0)
+            {
+                _logger.LogInformation("The total asset count of the media account is {count}.", totalAssets);
+            }
 
             var resourceFilter = GetAssetResourceFilter(_options.ResourceFilter,
                                                         _options.CreationTimeStart,
