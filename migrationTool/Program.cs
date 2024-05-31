@@ -178,8 +178,22 @@ amsmigrate storage -s <subscription id> -g <resource group> -n <source storage a
                 .WriteTo.File(options.LogFile)
                 .CreateLogger();
 
+            string tenantId = options.TenantId;
+            if (string.IsNullOrEmpty(tenantId))
+            {
+                collection
+                    .AddSingleton<TokenCredential>(new DefaultAzureCredential(includeInteractiveCredentials: true));
+            }
+            else
+            {
+                var credential = new DefaultAzureCredential(new DefaultAzureCredentialOptions()
+                {
+                    TenantId = tenantId,
+                });
+                collection.AddSingleton<TokenCredential>(credential);
+            }
+
             collection
-                .AddSingleton<TokenCredential>(new DefaultAzureCredential(includeInteractiveCredentials: true))
                 .AddSingleton(options)
                 .AddSingleton(console)
                 .AddSingleton<IMigrationTracker<BlobContainerClient, AssetMigrationResult>, AssetMigrationTracker>()

@@ -24,6 +24,13 @@ namespace AMSMigrate
             description: @"The directory where the logs are written. Defaults to the working directory"
             );
 
+        private static readonly Option<string> _tenant = new Option<string>(
+            aliases: new[] { "--tenant" },
+            description: "The azure tenant to use")
+        {
+            Arity = ArgumentArity.ExactlyOne
+        };
+
         private static readonly Option<string> _subscription = new Option<string>(
             aliases: new[] { "--subscription", "-s" },
             description: "The azure subscription to use")
@@ -51,6 +58,7 @@ namespace AMSMigrate
             var command = new RootCommand("Azure Media Services migration tool");
             command.AddGlobalOption(_logLevel);
             command.AddGlobalOption(_logDirectory);
+            command.AddGlobalOption(_tenant);
             command.AddGlobalOption(_subscription);
             command.AddGlobalOption(_resourceGroup);
 
@@ -60,6 +68,7 @@ namespace AMSMigrate
         public static GlobalOptions GetValue(BindingContext bindingContext)
         {
             return new GlobalOptions(
+                bindingContext.ParseResult.GetValueForOption(_tenant)!,
                 bindingContext.ParseResult.GetValueForOption(_subscription)!,
                 bindingContext.ParseResult.GetValueForOption(_resourceGroup)!,
                 CloudType.Azure, //TODO: add an option.

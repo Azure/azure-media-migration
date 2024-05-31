@@ -3,6 +3,7 @@
 namespace AMSMigrate.Contracts
 {
     public record GlobalOptions(
+        string TenantId,
         string SubscriptionId,
         string ResourceGroup,
         CloudType CloudType,
