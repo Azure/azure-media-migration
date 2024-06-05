@@ -85,7 +85,7 @@ namespace AMSMigrate.Transform
                 var inputPaths = inputFiles.Select(f => Path.Combine(workingDirectory, f))
                     .ToArray();
 
-                // Anything not package and can be uploaded is uploaded directly.
+                // Anything not packaged and can be uploaded is uploaded directly.
                 var blobs = await container.GetListOfBlobsRemainingAsync(manifest, cancellationToken);
                 allTasks.Add(Task.WhenAll(blobs.Select(async blob =>
                 {
