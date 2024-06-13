@@ -205,11 +205,21 @@ namespace AMSMigrate.Ams
 
                 List<MediaAssetResource>? filteredList = null;
 
-                if (resourceFilter != null)
+                if (resourceFilter != null || _analysisOptions.OnlyAssetsWithAlternateId)
                 {
                     // When a filter is used, it usually include a small list of assets,
                     // The total count of asset can be extracted in advance without much perf hit.
-                    filteredList = await assets.ToListAsync(cancellationToken);
+                    
+                    if (_analysisOptions.OnlyAssetsWithAlternateId)
+                    {
+                        filteredList = await assets
+                            .Where(a => !string.IsNullOrEmpty(a.Data.AlternateId))
+                            .ToListAsync(cancellationToken);
+                    }
+                    else
+                    {
+                        filteredList = await assets.ToListAsync(cancellationToken);
+                    }
 
                     totalAssets = filteredList.Count;
                 }

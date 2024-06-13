@@ -45,6 +45,11 @@ Visit https://learn.microsoft.com/en-us/azure/media-services/latest/filter-order
             () => DefaultBatchSize,
             description: @"Batch size for parallel processing.");
 
+        private readonly Option<bool> _onlyAssetsWithAlternateId = new(
+            aliases: new[] { "--assets-with-alternateId" },
+            () => true,
+            description: @"Only analyze assets where AlternateId is not null or empty.");
+
         public AnalysisOptions GetValue(BindingContext context) => GetBoundValue(context);
 
         public Command GetCommand(string name, string description)
@@ -55,6 +60,7 @@ Visit https://learn.microsoft.com/en-us/azure/media-services/latest/filter-order
             command.AddOption(_creationTimeEnd);
             command.AddOption(_filter);
             command.AddOption(_batchSize);
+            command.AddOption(_onlyAssetsWithAlternateId);
             return command;
         }
 
@@ -65,7 +71,8 @@ Visit https://learn.microsoft.com/en-us/azure/media-services/latest/filter-order
                 bindingContext.ParseResult.GetValueForOption(_creationTimeStart),
                 bindingContext.ParseResult.GetValueForOption(_creationTimeEnd),
                 bindingContext.ParseResult.GetValueForOption(_filter),
-                bindingContext.ParseResult.GetValueForOption(_batchSize)
+                bindingContext.ParseResult.GetValueForOption(_batchSize),
+                bindingContext.ParseResult.GetValueForOption(_onlyAssetsWithAlternateId)
             );
         }
     }
