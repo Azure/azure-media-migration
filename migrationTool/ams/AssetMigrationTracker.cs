@@ -86,12 +86,16 @@ namespace AMSMigrate.Ams
                 }
 
                 metadataList.TryGetValue(AssetTypeKey, out assetType);
-
+                
                 metadataList.TryGetValue(ManifestNameKey, out manifestName);
-
+                if (!string.IsNullOrEmpty(manifestName))
+                {
+                    manifestName = Uri.UnescapeDataString(manifestName);
+                }
+                
                 if (metadataList.TryGetValue(OutputPathKey, out value) && !string.IsNullOrEmpty(value))
                 {
-                    outputPath = new Uri(Uri.UnescapeDataString(value), UriKind.Absolute);
+                    outputPath = new Uri(value, UriKind.Absolute);
                 }
             }
 
@@ -126,12 +130,12 @@ namespace AMSMigrate.Ams
 
             if (!string.IsNullOrEmpty(result.ManifestName))
             {
-                metadata.Add(ManifestNameKey, result.ManifestName);
+                metadata.Add(ManifestNameKey, Uri.EscapeDataString(result.ManifestName));
             }
 
-            if (result.OutputPath != null && !string.IsNullOrEmpty(result.OutputPath.AbsoluteUri))
+            if (result.OutputPath != null)
             {
-                metadata.Add(OutputPathKey, Uri.EscapeDataString(result.OutputPath.AbsoluteUri));
+                metadata.Add(OutputPathKey, result.OutputPath.AbsoluteUri);
             }
 
             await container.SetMetadataAsync(metadata, cancellationToken: cancellationToken);
