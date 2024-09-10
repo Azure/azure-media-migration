@@ -91,7 +91,7 @@ namespace AMSMigrate.Ams
 
                 if (metadataList.TryGetValue(OutputPathKey, out value) && !string.IsNullOrEmpty(value))
                 {
-                    outputPath = new Uri(value, UriKind.Absolute);
+                    outputPath = new Uri(Uri.UnescapeDataString(value), UriKind.Absolute);
                 }
             }
 
@@ -129,9 +129,9 @@ namespace AMSMigrate.Ams
                 metadata.Add(ManifestNameKey, result.ManifestName);
             }
 
-            if (result.OutputPath != null)
+            if (result.OutputPath != null && !string.IsNullOrEmpty(result.OutputPath.AbsoluteUri))
             {
-                metadata.Add(OutputPathKey, result.OutputPath.AbsoluteUri);
+                metadata.Add(OutputPathKey, Uri.EscapeDataString(result.OutputPath.AbsoluteUri));
             }
 
             await container.SetMetadataAsync(metadata, cancellationToken: cancellationToken);
