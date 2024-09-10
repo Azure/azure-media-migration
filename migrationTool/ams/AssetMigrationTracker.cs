@@ -87,8 +87,7 @@ namespace AMSMigrate.Ams
 
                 metadataList.TryGetValue(AssetTypeKey, out assetType);
                 
-                metadataList.TryGetValue(ManifestNameKey, out manifestName);
-                if (!string.IsNullOrEmpty(manifestName))
+                if ( metadataList.TryGetValue(ManifestNameKey, out manifestName))
                 {
                     manifestName = Uri.UnescapeDataString(manifestName);
                 }
