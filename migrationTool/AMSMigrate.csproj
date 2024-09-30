@@ -69,9 +69,9 @@
     </None>
   </ItemGroup>
   <PropertyGroup>
-    <ShakaWin>https://github.com/shaka-project/shaka-packager/releases/download/v2.6.1/packager-win-x64.exe</ShakaWin>
-    <ShakaLinux>https://github.com/shaka-project/shaka-packager/releases/download/v2.6.1/packager-linux-x64</ShakaLinux>
-    <ShakaOSX>https://github.com/shaka-project/shaka-packager/releases/download/v2.6.1/packager-osx-x64</ShakaOSX>
+    <ShakaWin>https://github.com/shaka-project/shaka-packager/releases/download/v3.2.0/packager-win-x64.exe</ShakaWin>
+    <ShakaLinux>https://github.com/shaka-project/shaka-packager/releases/download/v3.2.0/packager-linux-x64</ShakaLinux>
+    <ShakaOSX>https://github.com/shaka-project/shaka-packager/releases/download/v3.2.0/packager-osx-x64</ShakaOSX>
     <Company>Microsoft Corporation</Company>
   </PropertyGroup>
   <Target Name="DownloadShakaPackager" BeforeTargets="Build">
